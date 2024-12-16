@@ -8,5 +8,9 @@ namespace Crypto.Interface
 {
     public interface ISymbol
     {
+        public string Symbol { get; }
+        public string Base { get; }
+        public string Quote { get; }
+
     }
 }
