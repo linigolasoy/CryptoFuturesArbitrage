@@ -11,5 +11,8 @@ namespace Crypto.Interface
         public ICryptoSetup Setup { get; }
 
         public Task<IFuturesSymbol[]?> GetSymbols();
+
+        public Task<IFundingRate?> GetFundingRates(IFuturesSymbol oSymbol);
+        public Task<IFundingRate[]?> GetFundingRates(IFuturesSymbol[] aSymbols);
     }
 }

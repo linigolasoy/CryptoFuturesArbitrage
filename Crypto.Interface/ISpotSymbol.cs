@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Interface
 {
-    public interface ICryptoSpotExchange
+    public interface ISpotSymbol: ISymbol
     {
-        public ICryptoSetup Setup { get; }
-
-        public Task<ISpotSymbol[]?> GetSymbols();
     }
 }

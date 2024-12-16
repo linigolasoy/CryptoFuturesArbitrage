@@ -1,4 +1,5 @@
-﻿using Crypto.Interface;
+﻿using Crypto.Exchange.Mexc.Spot;
+using Crypto.Interface;
 using Newtonsoft.Json.Linq;
 
 namespace Crypto.Exchange.Mexc
@@ -18,7 +19,7 @@ namespace Crypto.Exchange.Mexc
         }
         public ICryptoSetup Setup { get; }
 
-        public async Task<ISymbol[]?> GetSymbols()
+        public async Task<ISpotSymbol[]?> GetSymbols()
         {
             HttpClient oClient = MexcCommon.GetHttpClient();    
 
@@ -31,12 +32,12 @@ namespace Crypto.Exchange.Mexc
 
             JArray oArray = (JArray)oObject[eTags.symbols.ToString()]!;
 
-            List<ISymbol> aResult = new List<ISymbol>();
+            List<ISpotSymbol> aResult = new List<ISpotSymbol>();
             foreach( JToken oToken in oArray ) 
             { 
                 if( !(oToken is JObject)) continue;
-                JObject oJsonSymbol = (JObject)oToken;  
-                ISymbol? oSymbol = MexcSymbol.Create(oJsonSymbol);
+                JObject oJsonSymbol = (JObject)oToken;
+                ISpotSymbol? oSymbol = SpotSymbol.Create(oJsonSymbol);
                 if (oSymbol == null) continue;
                 aResult.Add(oSymbol);
 
