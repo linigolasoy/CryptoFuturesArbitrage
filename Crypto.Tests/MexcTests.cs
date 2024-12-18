@@ -29,14 +29,43 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup();
 
-            ICryptoFuturesExchange oSpot = new MexcFuturesExchange(oSetup);
+            ICryptoFuturesExchange oFutures = new MexcFuturesExchange(oSetup);
 
-            IFuturesSymbol[]? aSymbols = await oSpot.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
+            // IFuturesSymbol[] aFirst = aSymbols.Take(60).ToArray();
+
+            IFuturesSymbol? oToFind = aSymbols.FirstOrDefault(p => p.Base == "AKRO");
+            Assert.IsNotNull(oToFind);
+
+
+            IFundingRate[]? aHistorySingle = await oFutures.GetFundingRatesHistory(oToFind);
+            Assert.IsNotNull(aHistorySingle);
+            Assert.IsTrue(aHistorySingle.Length > 10);
+
+            IFundingRate[]? aHistoryMulti = await oFutures.GetFundingRatesHistory(aSymbols.Take(30).ToArray());
+            Assert.IsNotNull(aHistoryMulti);
+            Assert.IsTrue(aHistoryMulti.Length > 100);
+
+
+            IFundingRateSnapShot? oRateFound = await oFutures.GetFundingRates(oToFind);
+
+            IFundingRateSnapShot[]? aRates = await oFutures.GetFundingRates(aSymbols.Take(60).ToArray());    
+            Assert.IsNotNull(aRates);
+            Assert.IsTrue(aRates.Length >= 10);
+
+            IFundingRateSnapShot[] aOrdered = aRates.OrderByDescending(p => p.Rate).ToArray();
+            Assert.IsTrue(aOrdered.Any());
+
+
 
         }
+
+
+
+
 
     }
 }

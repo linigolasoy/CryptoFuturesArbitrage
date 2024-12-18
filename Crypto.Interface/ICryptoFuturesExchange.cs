@@ -12,7 +12,12 @@ namespace Crypto.Interface
 
         public Task<IFuturesSymbol[]?> GetSymbols();
 
-        public Task<IFundingRate?> GetFundingRates(IFuturesSymbol oSymbol);
-        public Task<IFundingRate[]?> GetFundingRates(IFuturesSymbol[] aSymbols);
+        public Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol);
+        public Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols);
+
+
+        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol);
+        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols);
+
     }
 }

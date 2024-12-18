@@ -6,15 +6,22 @@ using System.Threading.Tasks;
 
 namespace Crypto.Interface
 {
+
+
+    public interface IFundingRateSnapShot: IFundingRate
+    {
+        public decimal Maximum { get; }
+        public decimal Minimum { get; }
+
+        public DateTime NextSettle { get; }
+
+    }
+
     public interface IFundingRate
     {
         public IFuturesSymbol Symbol { get; }   
         public decimal Rate { get; }
-        public decimal Maximum { get; }
-        public decimal Minimum { get; }
-
-        public int Cycle { get; }   
-        public DateTime NextSettle { get; } 
-        public DateTime ActualDate { get; } 
+        public DateTime DateTime { get; }
+        public int Cycle { get; }
     }
 }

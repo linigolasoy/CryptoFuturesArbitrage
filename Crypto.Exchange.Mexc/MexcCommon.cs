@@ -9,12 +9,18 @@ namespace Crypto.Exchange.Mexc
     internal class MexcCommon
     {
         public const string URL_SPOT_BASE = "https://api.mexc.com";
-        public const string URL_FUTURES_BASE = "https://contract.mexc.com";
+        public const string URL_FUTURES_BASE = "https://contract.mexc.com/";
 
 
         public static HttpClient GetHttpClient()
         {
             return new HttpClient();
+        }
+
+        public static DateTime ParseUnixTimestamp(long nTimestamp)
+        {
+            var offset = DateTimeOffset.FromUnixTimeMilliseconds(nTimestamp);
+            return offset.LocalDateTime;
         }
 
     }
