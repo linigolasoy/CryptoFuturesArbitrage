@@ -24,10 +24,10 @@
 
 02 Exchange BINGX:
 
-	2.01 Exchange object.
-	2.02 Get symbols and fees.
+	OK 2.01 Exchange object.
+	OK 2.02 Get symbols and fees.
 	2.03 Get Funding Rates.
-	2.04 Get Funding Rates History.
+	OK 2.04 Get Funding Rates History.
 	2.05 Futures Funding Rate History To Database
 	2.06 Get Quotes.
 	2.07 Get Bars.

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Crypto.Common\Crypto.Common.csproj" />
+    <ProjectReference Include="..\Crypto.Exchange.Bingx\Crypto.Exchange.Bingx.csproj" />
     <ProjectReference Include="..\Crypto.Exchange.Mexc\Crypto.Exchange.Mexc.csproj" />
     <ProjectReference Include="..\Crypto.Interface\Crypto.Interface.csproj" />
   </ItemGroup>
