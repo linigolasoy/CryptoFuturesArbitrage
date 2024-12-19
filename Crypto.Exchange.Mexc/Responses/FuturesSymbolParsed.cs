@@ -18,17 +18,26 @@ namespace Crypto.Exchange.Mexc.Responses
         public string BaseAsset { get; set; } = string.Empty; // baseCoin	string	base currency such as BTC
 
         [JsonProperty("quoteCoin")]
-        public string QuoteAsset { get; set; } = string.Empty; // quoteAsset String  quote Asset
+        public string QuoteAsset { get; set; } = string.Empty; // quoteCoin String  quote Asset
+
+        [JsonProperty("minLeverage")]
+        public int MinLeverage { get; set; } = 0; // minLeverage	int	minimum leverage
+        [JsonProperty("maxLeverage")]
+        public int MaxLeverage { get; set; } = 0; // maxLeverage	int	maximum leverage
+
+        [JsonProperty("takerFeeRate")]
+        public double FeeTaker { get; set; } = 0; // takerFeeRate	decimal	taker rate
+        [JsonProperty("makerFeeRate")]
+        public double FeeMaker { get; set; } = 0; // makerFeeRate	decimal	maker rate
 
         /*
             [JsonProperty("month")]
             displayName	string	display name           
             positionOpenType	int	position open type,1：isolated，2：cross，3：both          
-            quoteCoin	string	quote currency such as USDT
             settleCoin	string	liquidation currency such as USDT
             contractSize	decimal	contract value
-            minLeverage	int	minimum leverage
-            maxLeverage	int	maximum leverage
+            
+            
             priceScale	int	price scale
             volScale	int	quantity scale
             amountScale	int	amount scale
@@ -38,8 +47,6 @@ namespace Crypto.Exchange.Mexc.Responses
             maxVol	decimal	maximum volume
             bidLimitPriceRate	decimal	bid limit price rate
             askLimitPriceRate	decimal	ask limit price rate
-            takerFeeRate	decimal	taker rate
-            makerFeeRate	decimal	maker rate
             maintenanceMarginRate	decimal	maintenance margin rate
             initialMarginRate	decimal	initial margin rate
             riskBaseVol	decimal	initial volume

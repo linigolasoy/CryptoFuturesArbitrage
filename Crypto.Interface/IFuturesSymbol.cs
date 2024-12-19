@@ -8,5 +8,11 @@ namespace Crypto.Interface
 {
     public interface IFuturesSymbol: ISymbol
     {
+
+        public int LeverageMax { get; }
+        public int LeverageMin { get; }
+
+        public decimal FeeMaker { get; }    
+        public decimal FeeTaker { get; }
     }
 }

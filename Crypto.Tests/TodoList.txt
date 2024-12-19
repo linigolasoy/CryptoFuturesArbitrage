@@ -1,7 +1,7 @@
 ﻿
 01 Exchange MEXC:
 
-	1.01 Futures fees.
+	OK 1.01 Futures fees.
 	1.02 Futures Funding Rate History To Database
 	1.03 Get Quotes.
 	1.04 Get Bars.

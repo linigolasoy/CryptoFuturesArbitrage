@@ -13,8 +13,12 @@ namespace Crypto.Exchange.Mexc.Futures
     internal class FuturesSymbol: BaseSymbol, IFuturesSymbol
     {
         internal FuturesSymbol(FuturesSymbolParsed oParsed ) : base(oParsed) 
-        { 
-        }    
+        {
+            LeverageMin = oParsed.MinLeverage;
+            LeverageMax = oParsed.MaxLeverage;
+            FeeMaker = (decimal)oParsed.FeeMaker * 100M;
+            FeeTaker = (decimal)oParsed.FeeTaker * 100M;
+        }
 
         public static IFuturesSymbol? Create( JObject oObject )
         {
@@ -23,5 +27,12 @@ namespace Crypto.Exchange.Mexc.Futures
             return new FuturesSymbol(oParsed);
 
         }
+
+        public int LeverageMax { get; }
+        public int LeverageMin { get; }
+
+        public decimal FeeMaker { get; }
+        public decimal FeeTaker { get; }
+
     }
 }
