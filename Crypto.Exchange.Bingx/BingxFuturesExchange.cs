@@ -4,6 +4,7 @@ using Crypto.Exchange.Bingx.Responses;
 using Crypto.Interface;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -16,6 +17,9 @@ namespace Crypto.Exchange.Bingx
 
         private const string ENDPOINT_SYMBOLS           = "openApi/swap/v2/quote/contracts";
         private const string ENDPOINT_FUNDING_HISTORY   = "openApi/swap/v2/quote/fundingRate";
+        private const string ENDPOINT_FUNDING           = "openApi/swap/v2/quote/premiumIndex";
+
+        private const int TASK_COUNT = 20;
 
         public BingxFuturesExchange( ICryptoSetup oSetup ) 
         { 
@@ -25,12 +29,45 @@ namespace Crypto.Exchange.Bingx
 
         public async Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol)
         {
-            throw new NotImplementedException();
+            var oParameters = new
+            {
+                symbol = oSymbol.Symbol
+            };
+            ResponseFutures? oResult = await DoPublicGet(ENDPOINT_FUNDING, oParameters);
+            if (oResult == null || oResult.Code != 0 || !string.IsNullOrEmpty(oResult.Message)) return null;
+            if (oResult.Data == null) return null;
+            if (!(oResult.Data is JObject)) return null;
+            JObject oObject = (JObject)oResult.Data;
+            FundingParsed? oParsed = oObject.ToObject<FundingParsed>(); 
+            if( oParsed == null ) return null;  
+            return new FuturesFundingSnapshot(oSymbol, oParsed);    
         }
 
+        /// <summary>
+        /// Funding rate symbol list
+        /// </summary>
+        /// <param name="aSymbols"></param>
+        /// <returns></returns>
         public async Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols)
         {
-            throw new NotImplementedException();
+            ResponseFutures? oResult = await DoPublicGet(ENDPOINT_FUNDING, null);
+            if (oResult == null || oResult.Code != 0 || !string.IsNullOrEmpty(oResult.Message)) return null;
+            if (oResult.Data == null) return null;
+            if (!(oResult.Data is JArray)) return null;
+            JArray oArray = (JArray)oResult.Data;
+            List<IFundingRateSnapShot> aResult = new List<IFundingRateSnapShot>();
+            foreach( JToken oToken in oArray )
+            {
+                if (!(oToken is JObject)) continue;
+                JObject oObject = (JObject)oToken;
+                FundingParsed? oParsed = oObject.ToObject<FundingParsed>();
+                if (oParsed == null) continue;
+                IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);
+                if (oSymbol == null) continue;
+                aResult.Add( new FuturesFundingSnapshot(oSymbol, oParsed) );
+            }
+
+            return aResult.ToArray();
         }
 
         /// <summary>
@@ -89,35 +126,21 @@ namespace Crypto.Exchange.Bingx
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols)
         {
-            int nTaskCount = 20;
-
-            List<Task<IFundingRate[]?>> aTasks = new List<Task<IFundingRate[]?>>();
+            ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(TASK_COUNT);
             List<IFundingRate> aResult = new List<IFundingRate>();
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                // await oLimiter.Wait();
-                if (aTasks.Count >= nTaskCount)
-                {
-                    await Task.WhenAll(aTasks);
-                    foreach (var oTask in aTasks)
-                    {
-                        if (oTask.Result != null) aResult.AddRange(oTask.Result);
-                    }
-                    aTasks.Clear();
-                }
-                aTasks.Add(GetFundingRatesHistory(oSymbol));
+                await oTaskManager.Add(GetFundingRatesHistory(oSymbol));
             }
-            if (aTasks.Count >= 0)
+
+            var aTaskResults = await oTaskManager.GetResults();
+            if (aTaskResults == null) return null;
+            foreach (var oResult in aTaskResults)
             {
-                await Task.WhenAll(aTasks);
-                foreach (var oTask in aTasks)
-                {
-                    if (oTask.Result != null) aResult.AddRange(oTask.Result);
-                }
+                if (oResult == null || oResult.Length <= 0) continue;
+                aResult.AddRange(oResult);
             }
-
-
             return aResult.ToArray();
         }
 
@@ -143,6 +166,14 @@ namespace Crypto.Exchange.Bingx
             return aResult.ToArray();
         }
 
+        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
+        {
+            throw new NotImplementedException();
+        }
 
         /// <summary>
         /// Get request

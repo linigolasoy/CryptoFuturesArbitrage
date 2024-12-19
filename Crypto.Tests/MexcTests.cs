@@ -63,6 +63,31 @@ namespace Crypto.Tests
 
         }
 
+        [TestMethod]
+        public async Task MexcFuturesBarsTests()
+        {
+            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+
+            ICryptoFuturesExchange oFutures = new MexcFuturesExchange(oSetup);
+
+            IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
+            Assert.IsNotNull(aSymbols);
+            Assert.IsTrue(aSymbols.Length > 100);
+
+            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BTC");
+            Assert.IsNotNull(oSymbol);
+
+            IFuturesBar[]? aBars = await oFutures.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
+            Assert.IsNotNull(aBars);
+            Assert.IsTrue(aBars.Length > 24);
+            Assert.IsTrue(aBars[aBars.Length-1].DateTime.Date == DateTime.Today);   
+
+            IFuturesBar[]? aBarsMulti = await oFutures.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
+            Assert.IsNotNull(aBarsMulti);
+            Assert.IsTrue(aBarsMulti.Length > 100);
+
+        }
+
 
 
 

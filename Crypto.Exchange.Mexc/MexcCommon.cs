@@ -17,9 +17,11 @@ namespace Crypto.Exchange.Mexc
             return new HttpClient();
         }
 
-        public static DateTime ParseUnixTimestamp(long nTimestamp)
+        public static DateTime ParseUnixTimestamp(long nTimestamp, bool bSeconds = false)
         {
-            var offset = DateTimeOffset.FromUnixTimeMilliseconds(nTimestamp);
+            var offset = ( bSeconds? 
+                            DateTimeOffset.FromUnixTimeSeconds(nTimestamp):
+                            DateTimeOffset.FromUnixTimeMilliseconds(nTimestamp) );
             return offset.LocalDateTime;
         }
 

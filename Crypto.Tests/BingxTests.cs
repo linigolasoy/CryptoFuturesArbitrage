@@ -56,7 +56,7 @@ namespace Crypto.Tests
 
             IFundingRateSnapShot? oRateFound = await oFutures.GetFundingRates(oToFind);
 
-            IFundingRateSnapShot[]? aRates = await oFutures.GetFundingRates(aSymbols.Take(60).ToArray());    
+            IFundingRateSnapShot[]? aRates = await oFutures.GetFundingRates(aSymbols);    
             Assert.IsNotNull(aRates);
             Assert.IsTrue(aRates.Length >= 10);
 

@@ -19,5 +19,9 @@ namespace Crypto.Interface
         public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol);
         public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols);
 
+        // Bars
+        public Task<IFuturesBar[]?> GetBars( IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo);
+        public Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo);
+
     }
 }
