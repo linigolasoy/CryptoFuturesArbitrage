@@ -19,6 +19,7 @@ namespace Crypto.Exchange.Mexc
             Setup = oSetup; 
         }
         public ICryptoSetup Setup { get; }
+        public ExchangeType ExchangeType { get => ExchangeType.MexcSpot; }
 
         public async Task<ISymbol[]?> GetRawSymbols()
         {

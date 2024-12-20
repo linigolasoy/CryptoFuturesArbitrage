@@ -32,9 +32,5 @@ namespace Crypto.Interface
         public ISpotSymbol Symbol { get; }
     }
 
-    public interface IFuturesBar : IBarData
-    {
-        public IFuturesSymbol Symbol { get; }
-    }
 
 }

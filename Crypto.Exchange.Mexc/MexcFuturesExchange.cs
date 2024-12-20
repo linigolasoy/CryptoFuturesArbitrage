@@ -1,8 +1,10 @@
 ﻿using Crypto.Common;
+using Crypto.Exchange.Mexc.Feeders;
 using Crypto.Exchange.Mexc.Futures;
 using Crypto.Exchange.Mexc.Responses;
 using Crypto.Exchange.Mexc.Websocket;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,26 +26,13 @@ namespace Crypto.Exchange.Mexc
         private const string ENDPOINT_CONTRACTS = "api/v1/contract/detail";
         private const string ENDPOINT_FUNDING = "{0}api/v1/contract/funding_rate/{1}";
         private const string ENDPOINT_FUNDING_HISTORY = "{0}api/v1/contract/funding_rate/history?symbol={1}&page_num={2}&page_size=100";
-        private const string ENDPOINT_BARS = "{0}api/v1/contract/kline/{1}?interval={2}&start={3}&end={4}";
 
 
-        private const int TASK_COUNT = 20;        
-        private enum eMexcFrames
-        {
-            Min1,
-            Min5,
-            Min15,
-            Min30,
-            Min60,
-            Hour4,
-            Hour8,
-            Day1,
-            Week1,
-            Month1
-        }
+        internal const int TASK_COUNT = 20;        
 
 
         private static IRequestHelper m_oRequestHelper = CommonFactory.CreateRequestHelper(MexcCommon.GetHttpClient(), 300);
+        private IFuturesBarFeeder m_oBarFeeder;
         private enum eTags
         {
             data
@@ -52,16 +41,20 @@ namespace Crypto.Exchange.Mexc
         public MexcFuturesExchange( ICryptoSetup setup)
         {
             Setup = setup;
+            m_oBarFeeder = new FuturesBarFeeder(this);
         }
 
         public ICryptoSetup Setup { get; }
+        public ExchangeType ExchangeType { get => ExchangeType.MexcFutures; }
+
+        public IFuturesBarFeeder BarFeeder { get => m_oBarFeeder; }
 
         /// <summary>
         /// Simple url-based get request
         /// </summary>
         /// <param name="strUrl"></param>
         /// <returns></returns>
-        private async Task<ResponseFutures?> PerformGet( string strUrl )
+        internal async Task<ResponseFutures?> PerformGet( string strUrl )
         {
             string? strResult = await m_oRequestHelper.GetRequest( strUrl );
             if (strResult == null) return null;
@@ -233,121 +226,6 @@ namespace Crypto.Exchange.Mexc
             return aResult.ToArray();
         }
 
-
-        /// <summary>
-        /// Conver to timeframe request
-        /// </summary>
-        /// <param name="eFrame"></param>
-        /// <returns></returns>
-        private string? TimeframeToMexc(Timeframe eFrame)
-        {
-            // Min1、Min5、Min15、Min30、Min60、Hour4、Hour8、Day1、Week1、Month1,default: Min1
-            switch (eFrame)
-            {
-                case Timeframe.M1:
-                    return eMexcFrames.Min1.ToString();
-                case Timeframe.M5:
-                    return eMexcFrames.Min5.ToString();
-                case Timeframe.M15:
-                    return eMexcFrames.Min15.ToString();
-                case Timeframe.H1:
-                    return eMexcFrames.Min60.ToString();
-                case Timeframe.H4:
-                    return eMexcFrames.Hour4.ToString();
-                case Timeframe.D1:
-                    return eMexcFrames.Day1.ToString();
-            }
-            return null;
-        }
-        /// <summary>
-        /// Get bars
-        /// </summary>
-        /// <param name="oSymbol"></param>
-        /// <param name="eTimeframe"></param>
-        /// <param name="dFrom"></param>
-        /// <param name="dTo"></param>
-        /// <returns></returns>
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
-        {
-            int nDays = CommonFactory.DaysFromTimeframe(eTimeframe);
-            string? strMexcFrame = TimeframeToMexc(eTimeframe);
-
-            if (nDays <= 0) return null;
-            if (strMexcFrame == null) return null;
-            DateTime dFromActual = dFrom.Date;
-            List<IFuturesBar> aResult = new List<IFuturesBar> ();   
-            while( dFromActual.Date <= dTo.Date )
-            {
-                DateTime dToActual = dFromActual.Date.AddDays(nDays).AddSeconds(-1);
-                if (dToActual > dTo) dToActual = dTo.Date.AddDays(1).AddSeconds(-1);
-
-                long nOffsetFrom = (new DateTimeOffset(dFromActual.ToUniversalTime())).ToUnixTimeSeconds();
-                long nOffsetTo = (new DateTimeOffset(dToActual.ToUniversalTime())).ToUnixTimeSeconds();
-                string strUrl = string.Format(ENDPOINT_BARS, MexcCommon.URL_FUTURES_BASE, oSymbol.Symbol, strMexcFrame, nOffsetFrom, nOffsetTo);
-
-                ResponseFutures? oResponse = await PerformGet(strUrl);
-                if (oResponse == null || !oResponse.Success || oResponse.Data == null) return null;
-                if( !(oResponse.Data is JObject)) return null;
-                JObject oData = (JObject)oResponse.Data;    
-                FuturesBarParsed? oParsed = oData.ToObject<FuturesBarParsed>(); 
-                if( oParsed == null ) return null;
-                if (oParsed.Open == null || oParsed.Close == null || oParsed.High == null || oParsed.Low == null || oParsed.Volume == null || oParsed.Times == null) return null;
-                if (oParsed.Times.Count != oParsed.Open.Count || 
-                    oParsed.Open.Count  != oParsed.High.Count || 
-                    oParsed.High.Count  != oParsed.Low.Count ||
-                    oParsed.Low.Count   != oParsed.Close.Count ||
-                    oParsed.Close.Count != oParsed.Volume.Count ) return null;
-                for( int i = 0; i < oParsed.Times.Count; i++ )
-                {
-                    IFuturesBar oNewBar =
-                        new FuturesBar(
-                            oSymbol,
-                            eTimeframe,
-                            oParsed.Times[i],
-                            oParsed.Open[i],
-                            oParsed.High[i],
-                            oParsed.Low[i],
-                            oParsed.Close[i],
-                            oParsed.Volume[i]
-                        );
-                    if (aResult.Any(p => p.DateTime == oNewBar.DateTime)) continue;
-                    aResult.Add(oNewBar);   
-                }
-
-                dFromActual = dToActual.Date.AddDays(1).Date;
-            }
-            // "{0}api/v1/contract/kline/{1}?interval={2}&start={3}&end={4}"
-
-            return aResult.ToArray();
-        }
-
-        /// <summary>
-        /// Multi symbol bars
-        /// </summary>
-        /// <param name="aSymbols"></param>
-        /// <param name="eTimeframe"></param>
-        /// <param name="dFrom"></param>
-        /// <param name="dTo"></param>
-        /// <returns></returns>
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
-        {
-            ITaskManager<IFuturesBar[]?> oTaskManager = CommonFactory.CreateTaskManager<IFuturesBar[]?>( TASK_COUNT );
-            List<IFuturesBar> aResult = new List<IFuturesBar>();    
-
-            foreach(IFuturesSymbol oSymbol in aSymbols)
-            {
-                await oTaskManager.Add(GetBars(oSymbol, eTimeframe, dFrom, dTo));   
-            }
-
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
-            return aResult.ToArray();
-        }
 
 
         public async Task<ICryptoWebsocket?> CreateWebsocket()

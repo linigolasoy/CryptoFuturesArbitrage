@@ -1,6 +1,7 @@
 ﻿using Crypto.Exchange.Mexc.Responses;
 using Crypto.Exchange.Mexc.Spot;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

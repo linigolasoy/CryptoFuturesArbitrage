@@ -1,5 +1,6 @@
 ﻿using Crypto.Exchange.Bingx.Responses;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using System;
 using System.Collections.Generic;
 using System.Globalization;

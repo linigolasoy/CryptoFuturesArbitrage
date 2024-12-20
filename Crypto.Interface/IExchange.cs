@@ -8,12 +8,22 @@ using System.Threading.Tasks;
 namespace Crypto.Interface
 {
 
+
+    public enum ExchangeType
+    {
+        MexcSpot,
+        MexcFutures,
+        BingxSpot,
+        BingxFutures
+    }
     /// <summary>
     /// Exchange base, independent of futures or spot
     /// </summary>
     public interface IExchange
     {
         public ICryptoSetup Setup { get; }
+
+        public ExchangeType ExchangeType { get; }   
 
         public Task<ICryptoWebsocket?> CreateWebsocket();
 

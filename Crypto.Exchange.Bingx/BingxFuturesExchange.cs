@@ -1,7 +1,9 @@
 ﻿using Crypto.Common;
+using Crypto.Exchange.Bingx.Feeders;
 using Crypto.Exchange.Bingx.Futures;
 using Crypto.Exchange.Bingx.Responses;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -19,16 +21,24 @@ namespace Crypto.Exchange.Bingx
         private const string ENDPOINT_SYMBOLS           = "openApi/swap/v2/quote/contracts";
         private const string ENDPOINT_FUNDING_HISTORY   = "openApi/swap/v2/quote/fundingRate";
         private const string ENDPOINT_FUNDING           = "openApi/swap/v2/quote/premiumIndex";
-        private const string ENDPOINT_BARS              = "openApi/swap/v3/quote/klines";
 
-        private const int TASK_COUNT = 20;
+        public const int TASK_COUNT = 20;
 
+        private IApiKey m_oApiKey;
+
+        private IFuturesBarFeeder m_oBarFeeder;
         public BingxFuturesExchange( ICryptoSetup oSetup ) 
         { 
             Setup = oSetup;
+            IApiKey? oKeyFound = oSetup.ApiKeys.FirstOrDefault(p => p.ExchangeType == this.ExchangeType);
+            if (oKeyFound == null) throw new Exception("No api key found");
+            m_oApiKey = oKeyFound;
+            m_oBarFeeder = new FuturesBarFeeder(this);  
         }
         public ICryptoSetup Setup { get; }
+        public ExchangeType ExchangeType { get => ExchangeType.BingxFutures; }
 
+        public IFuturesBarFeeder BarFeeder { get => m_oBarFeeder; }
         public async Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol)
         {
             var oParameters = new
@@ -182,117 +192,8 @@ namespace Crypto.Exchange.Bingx
             return aResult.ToArray();
         }
 
-        /// <summary>
-        /// Timeframe to string
-        /// </summary>
-        /// <param name="eTimeframe"></param>
-        /// <returns></returns>
-        private string? TimeframeToBingx( Timeframe eTimeframe)
-        {
-            switch(eTimeframe)
-            {
-                case Timeframe.M1:
-                    return "1m";
-                case Timeframe.M5:
-                    return "5m";
-                case Timeframe.M15:
-                    return "15m";
-                case Timeframe.M30:
-                    return "30m";
-                case Timeframe.H1:
-                    return "1h";
-                case Timeframe.H4:
-                    return "4h";
-                case Timeframe.D1:
-                    return "1d";
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Get bars single symbol
-        /// </summary>
-        /// <param name="oSymbol"></param>
-        /// <param name="eTimeframe"></param>
-        /// <param name="dFrom"></param>
-        /// <param name="dTo"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
-        {
-            int nDays = CommonFactory.DaysFromTimeframe(eTimeframe);
-            string? strFrame = TimeframeToBingx(eTimeframe);
-
-            if (nDays <= 0) return null;
-            if (strFrame == null) return null;
-            DateTime dFromActual = dFrom.Date;
-            List<IFuturesBar> aResult = new List<IFuturesBar>();
-            while (dFromActual.Date <= dTo.Date)
-            {
-                DateTime dToActual = dFromActual.Date.AddDays(nDays).AddSeconds(-1);
-                if (dToActual > dTo) dToActual = dTo.Date.AddDays(1).AddSeconds(-1);
 
 
-                long nOffsetFrom = (new DateTimeOffset(dFromActual.ToUniversalTime())).ToUnixTimeMilliseconds();
-                long nOffsetTo = (new DateTimeOffset(dToActual.ToUniversalTime())).ToUnixTimeMilliseconds();
-                var oParameters = new
-                {
-                    symbol = oSymbol.Symbol,
-                    interval = strFrame,
-                    startTime = nOffsetFrom,
-                    endTime = nOffsetTo,
-                    limit = 1440
-                };
-
-                ResponseFutures? oResult = await DoPublicGet(ENDPOINT_BARS, oParameters);
-                if (oResult == null || oResult.Code != 0 || !string.IsNullOrEmpty(oResult.Message)) break;
-                if (!(oResult.Data is JArray)) continue;
-                JArray oArray = (JArray)oResult.Data;   
-
-                foreach( var oToken in oArray )
-                {
-                    if (!(oToken is JObject)) continue;
-                    JObject oObject = (JObject)oToken;  
-                    FuturesBarParsed? oParsed = oObject.ToObject<FuturesBarParsed>();   
-                    if (oParsed == null) continue;
-                    IFuturesBar oBar = new FuturesBar(oSymbol, eTimeframe, oParsed);
-                    if (aResult.Any(p => p.DateTime == oBar.DateTime)) continue;
-                    aResult.Add(oBar);
-
-                }
-                dFromActual = dToActual.Date.AddDays(1).Date;
-            }
-
-            return aResult.ToArray();
-        }
-
-        /// <summary>
-        /// Futures bars multi symbol
-        /// </summary>
-        /// <param name="aSymbols"></param>
-        /// <param name="eTimeframe"></param>
-        /// <param name="dFrom"></param>
-        /// <param name="dTo"></param>
-        /// <returns></returns>
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
-        {
-            ITaskManager<IFuturesBar[]?> oTaskManager = CommonFactory.CreateTaskManager<IFuturesBar[]?>(TASK_COUNT);
-            List<IFuturesBar> aResult = new List<IFuturesBar>();
-
-            foreach (IFuturesSymbol oSymbol in aSymbols)
-            {
-                await oTaskManager.Add(GetBars(oSymbol, eTimeframe, dFrom, dTo));
-            }
-
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
-            return aResult.ToArray();
-        }
 
 
         public async Task<ICryptoWebsocket?> CreateWebsocket()
@@ -305,7 +206,7 @@ namespace Crypto.Exchange.Bingx
         /// <param name="strEndPoint"></param>
         /// <param name="oParameters"></param>
         /// <returns></returns>
-        private static async Task<ResponseFutures?> DoPublicGet( string strEndPoint, object? oParameters = null )
+        internal static async Task<ResponseFutures?> DoPublicGet( string strEndPoint, object? oParameters = null )
         {
             long nTimestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             StringBuilder oBuildParams = new StringBuilder();
@@ -323,30 +224,41 @@ namespace Crypto.Exchange.Bingx
             if (strResult == null) return null;
             return JsonConvert.DeserializeObject<ResponseFutures>(strResult);   
         }
-        /*
-        private static async Task DoRequest(string api, HttpMethod oMethod, object payload)
+
+
+        
+        /// <summary>
+        /// Send signed request
+        /// </summary>
+        /// <param name="strApi"></param>
+        /// <param name="oMethod"></param>
+        /// <param name="oPayLoad"></param>
+        /// <param name="oBody"></param>
+        /// <returns></returns>
+        private async Task<string?> SignRequest( string strApi, HttpMethod oMethod, object? oPayLoad, object? oBody)
+        //private static async Task DoRequest(string api, HttpMethod oMethod, object payload)
         {
             long timestamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             string parameters = $"timestamp={timestamp}";
 
-            if (payload != null)
+            if (oPayLoad != null)
             {
-                foreach (var property in payload.GetType().GetProperties())
+                foreach (var property in oPayLoad.GetType().GetProperties())
                 {
-                    parameters += $"&{property.Name}={property.GetValue(payload)}";
+                    parameters += $"&{property.Name}={property.GetValue(oPayLoad)}";
                 }
             }
 
-            string sign = CalculateHmacSha256(parameters, API_SECRET);
-            string url = $"{BingxCommon.URL_FUTURES_BASE}{api}?{parameters}&signature={sign}";
+            string sign = CalculateHmacSha256(parameters, m_oApiKey.ApiSecret);
+            string url = $"{BingxCommon.URL_FUTURES_BASE}{strApi}?{parameters}&signature={sign}";
 
-            Console.WriteLine("protocol: " + protocol);
-            Console.WriteLine("method: " + method);
-            Console.WriteLine("host: " + host);
-            Console.WriteLine("api: " + api);
-            Console.WriteLine("parameters: " + parameters);
-            Console.WriteLine("sign: " + sign);
-            Console.WriteLine(method + " " + url);
+            // Console.WriteLine("protocol: " + protocol);
+            // Console.WriteLine("method: " + method);
+            // Console.WriteLine("host: " + host);
+            // Console.WriteLine("api: " + api);
+            // Console.WriteLine("parameters: " + parameters);
+            // Console.WriteLine("sign: " + sign);
+            // Console.WriteLine(method + " " + url);
 
             using (HttpClientHandler handler = new HttpClientHandler())
             {
@@ -354,36 +266,37 @@ namespace Crypto.Exchange.Bingx
 
                 using (HttpClient client = new HttpClient(handler))
                 {
-                    client.DefaultRequestHeaders.Add("X-BX-APIKEY", API_KEY);
-                    HttpResponseMessage response;
-                    if (method.ToUpper() == "GET")
+                    client.DefaultRequestHeaders.Add("X-BX-APIKEY", m_oApiKey.ApiKey);
+                    HttpResponseMessage? oResponse = null;
+                    if ( oMethod == HttpMethod.Get )
                     {
-                        response = await client.GetAsync(url);
+                        oResponse = await client.GetAsync(url);
+
                     }
-                    else if (method.ToUpper() == "POST")
+                    else if ( oMethod == HttpMethod.Post )
                     {
-                        response = await client.PostAsync(url, null);
+                        oResponse = await client.PostAsync(url, null);
                     }
-                    else if (method.ToUpper() == "DELETE")
+                    else if ( oMethod == HttpMethod.Delete )
                     {
-                        response = await client.DeleteAsync(url);
+                        oResponse = await client.DeleteAsync(url);
                     }
-                    else if (method.ToUpper() == "PUT")
+                    else if (oMethod == HttpMethod.Put)
                     {
-                        response = await client.PutAsync(url, null);
+                        oResponse = await client.PutAsync(url, null);
                     }
                     else
                     {
-                        throw new NotSupportedException("Unsupported HTTP method: " + method);
+                        throw new NotSupportedException("Unsupported HTTP method: " + oMethod.Method);
                     }
-                    response.EnsureSuccessStatusCode();
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine("Response status code: " + response.StatusCode);
-                    Console.WriteLine("Response body: " + responseBody);
+                    oResponse.EnsureSuccessStatusCode();
+                    string responseBody = await oResponse.Content.ReadAsStringAsync();
+                    // Console.WriteLine("Response status code: " + response.StatusCode);
+                    // Console.WriteLine("Response body: " + responseBody);
+                    return responseBody;
                 }
             }
         }
-        */
 
         static string CalculateHmacSha256(string input, string key)
         {
@@ -395,5 +308,6 @@ namespace Crypto.Exchange.Bingx
                 return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
         }
+        
     }
 }

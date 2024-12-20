@@ -2,6 +2,7 @@ using Crypto.Common;
 using Crypto.Exchange.Bingx;
 using Crypto.Exchange.Mexc;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 
 namespace Crypto.Tests
 {
@@ -12,7 +13,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task MatchFundingTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oExchangeMexc  = new MexcFuturesExchange(oSetup);
             ICryptoFuturesExchange oExchangeBingx = new BingxFuturesExchange(oSetup);

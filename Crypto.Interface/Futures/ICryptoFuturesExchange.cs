@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface
+namespace Crypto.Interface.Futures
 {
     public interface ICryptoFuturesExchange : IExchange
     {
@@ -18,9 +18,6 @@ namespace Crypto.Interface
         public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol);
         public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols);
 
-        // Bars
-        public Task<IFuturesBar[]?> GetBars( IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo);
-        public Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo);
-
+        public IFuturesBarFeeder BarFeeder { get; } 
     }
 }

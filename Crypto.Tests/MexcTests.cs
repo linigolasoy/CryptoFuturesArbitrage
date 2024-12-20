@@ -1,6 +1,7 @@
 using Crypto.Common;
 using Crypto.Exchange.Mexc;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
 
 namespace Crypto.Tests
@@ -16,7 +17,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task MexcSpotMarketDataTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoSpotExchange oSpot = new MexcSpotExchange(oSetup);
 
@@ -37,7 +38,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task MexcFuturesMarketDataTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oFutures = new MexcFuturesExchange(oSetup);
 
@@ -81,7 +82,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task MexcFuturesBarsTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oFutures = new MexcFuturesExchange(oSetup);
 
@@ -92,12 +93,12 @@ namespace Crypto.Tests
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BTC");
             Assert.IsNotNull(oSymbol);
 
-            IFuturesBar[]? aBars = await oFutures.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
+            IFuturesBar[]? aBars = await oFutures.BarFeeder.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
             Assert.IsNotNull(aBars);
             Assert.IsTrue(aBars.Length > 24);
             Assert.IsTrue(aBars[aBars.Length - 1].DateTime.Date == DateTime.Today);
 
-            IFuturesBar[]? aBarsMulti = await oFutures.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
+            IFuturesBar[]? aBarsMulti = await oFutures.BarFeeder.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
             Assert.IsNotNull(aBarsMulti);
             Assert.IsTrue(aBarsMulti.Length > 100);
 
@@ -108,7 +109,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task MexcMarketWebsocketTest()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oExchange = new MexcFuturesExchange(oSetup);
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();

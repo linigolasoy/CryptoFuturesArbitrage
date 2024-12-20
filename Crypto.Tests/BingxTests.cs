@@ -2,6 +2,7 @@ using Crypto.Common;
 using Crypto.Exchange.Bingx;
 using Crypto.Exchange.Mexc;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 
 namespace Crypto.Tests
 {
@@ -31,7 +32,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task BingxFuturesMarketDataTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oFutures = new BingxFuturesExchange(oSetup);
 
@@ -71,7 +72,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task BingxFuturesBarsTests()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oFutures = new BingxFuturesExchange(oSetup);
 
@@ -82,12 +83,12 @@ namespace Crypto.Tests
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BTC");
             Assert.IsNotNull(oSymbol);
 
-            IFuturesBar[]? aBars = await oFutures.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
+            IFuturesBar[]? aBars = await oFutures.BarFeeder.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
             Assert.IsNotNull(aBars);
             Assert.IsTrue(aBars.Length > 24);
             Assert.IsTrue(aBars[aBars.Length - 1].DateTime.Date == DateTime.Today);
 
-            IFuturesBar[]? aBarsMulti = await oFutures.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
+            IFuturesBar[]? aBarsMulti = await oFutures.BarFeeder.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
             Assert.IsNotNull(aBarsMulti);
             Assert.IsTrue(aBarsMulti.Length > 100);
 

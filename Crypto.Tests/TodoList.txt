@@ -33,23 +33,24 @@
 	2.05 Futures Funding Rate History To Database
 	2.06 Get Quotes.
 	OK 2.07 Get Bars.
-	2.08 Public websockets Base.
-	2.09 Public websockets Tickers.
-	2.10 Public websockets Orderbook.
-	2.11 Public websockets Ping.
-	2.12 Authentification.
-	2.13 Subscribe to Funding Rates.
-	2.14 Subscribe to Orderbook.
-	2.15 Manager Funding Rate.
-	2.16 Manager Orderbook.
-	2.17 Create Market Order.
-	2.18 Create Limit Order.
-	2.19 Private websockets Base.
-	2.20 Private websockets Authentication.
-	2.21 Private websockets Ping.
-	2.22 Subscribe to orders.
-	2.23 Subscribe to balances.
-	2.24 Subscribe to positions.
+	2.08 Authentification.
+	2.09 Authentification Websockets Key.
+	2.10 Public websockets Base.
+	2.11 Public websockets Tickers.
+	2.12 Public websockets Orderbook.
+	2.13 Public websockets Ping.
+	2.14 Subscribe to Funding Rates.
+	2.15 Subscribe to Orderbook.
+	2.16 Manager Funding Rate.
+	2.17 Manager Orderbook.
+	2.18 Create Market Order.
+	2.19 Create Limit Order.
+	2.20 Private websockets Base.
+	2.21 Private websockets Authentication.
+	2.22 Private websockets Ping.
+	2.23 Subscribe to orders.
+	2.24 Subscribe to balances.
+	2.25 Subscribe to positions.
 
 03 Bot.
 
