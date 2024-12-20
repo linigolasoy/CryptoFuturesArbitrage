@@ -1,7 +1,9 @@
 ﻿using Crypto.Common;
 using Crypto.Exchange.Mexc.Futures;
 using Crypto.Exchange.Mexc.Responses;
+using Crypto.Exchange.Mexc.Websocket;
 using Crypto.Interface;
+using Crypto.Interface.Websockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -73,6 +75,12 @@ namespace Crypto.Exchange.Mexc
             ResponseFutures? oResult = JsonConvert.DeserializeObject<ResponseFutures?>(strResult);
             return oResult;
 
+        }
+
+
+        public async Task<ISymbol[]?> GetRawSymbols()
+        {
+            return await GetSymbols();  
         }
 
         /// <summary>
@@ -225,30 +233,6 @@ namespace Crypto.Exchange.Mexc
             return aResult.ToArray();
         }
 
-        /// <summary>
-        /// Number of days in single request
-        /// </summary>
-        /// <param name="eFrame"></param>
-        /// <returns></returns>
-        private int DaysFromTimeframe(Timeframe eFrame )
-        {
-            switch(eFrame)
-            {
-                case Timeframe.M1:
-                    return 1;
-                case Timeframe.M5:
-                    return 5;
-                case Timeframe.M15:
-                    return 15;
-                case Timeframe.H1:
-                    return 60;
-                case Timeframe.H4:
-                    return 240;
-                case Timeframe.D1:
-                    return 365 * 2;
-            }
-            return 0;
-        }
 
         /// <summary>
         /// Conver to timeframe request
@@ -285,7 +269,7 @@ namespace Crypto.Exchange.Mexc
         /// <returns></returns>
         public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
         {
-            int nDays = DaysFromTimeframe(eTimeframe);
+            int nDays = CommonFactory.DaysFromTimeframe(eTimeframe);
             string? strMexcFrame = TimeframeToMexc(eTimeframe);
 
             if (nDays <= 0) return null;
@@ -363,6 +347,12 @@ namespace Crypto.Exchange.Mexc
                 aResult.AddRange(oResult);
             }
             return aResult.ToArray();
+        }
+
+
+        public async Task<ICryptoWebsocket?> CreateWebsocket()
+        {
+            return new MexcFuturesWebsocket(this);
         }
 
 

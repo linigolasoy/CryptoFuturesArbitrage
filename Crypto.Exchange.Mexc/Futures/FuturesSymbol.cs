@@ -34,5 +34,10 @@ namespace Crypto.Exchange.Mexc.Futures
         public decimal FeeMaker { get; }
         public decimal FeeTaker { get; }
 
+        public override string ToString()
+        {
+            return Symbol;
+        }
+
     }
 }

@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Crypto.Interface
 {
-    public interface ICryptoFuturesExchange
+    public interface ICryptoFuturesExchange : IExchange
     {
-        public ICryptoSetup Setup { get; }
 
         public Task<IFuturesSymbol[]?> GetSymbols();
 

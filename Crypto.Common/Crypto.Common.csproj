@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="WatsonWebsocket" Version="4.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Crypto.Interface\Crypto.Interface.csproj" />
   </ItemGroup>
 

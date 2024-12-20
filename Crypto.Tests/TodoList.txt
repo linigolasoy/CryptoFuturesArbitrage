@@ -5,21 +5,23 @@
 	1.02 Futures Funding Rate History To Database
 	1.03 Get Quotes.
 	OK 1.04 Get Bars.
-	1.05 Public websockets Base.
-	1.06 Public websockets Ping.
-	1.07 Subscribe to Funding Rates.
-	1.08 Subscribe to Orderbook.
-	1.09 Manager Funding Rate.
-	1.10 Manager Orderbook.
-	1.11 Authentification.
-	1.11 Create Market Order.
-	1.12 Create Limit Order.
-	1.13 Private websockets Base.
-	1.14 Private websockets Authentication.
-	1.15 Private websockets Ping.
-	1.16 Subscribe to orders.
-	1.17 Subscribe to balances.
-	1.18 Subscribe to positions.
+	OK 1.05 Public websockets Base.
+	OK 1.06 Public websockets Tickers.
+	1.07 Public websockets Orderbook.
+	OK 1.08 Public websockets Ping.
+	1.09 Authentification.
+	1.10 Subscribe to Funding Rates.
+	1.11 Subscribe to Orderbook.
+	1.12 Manager Funding Rate.
+	1.13 Manager Orderbook.
+	1.14 Create Market Order.
+	1.15 Create Limit Order.
+	1.16 Private websockets Base.
+	1.17 Private websockets Authentication.
+	1.18 Private websockets Ping.
+	1.19 Subscribe to orders.
+	1.20 Subscribe to balances.
+	1.21 Subscribe to positions.
 
 
 02 Exchange BINGX:
@@ -30,21 +32,26 @@
 	OK 2.04 Get Funding Rates History.
 	2.05 Futures Funding Rate History To Database
 	2.06 Get Quotes.
-	2.07 Get Bars.
+	OK 2.07 Get Bars.
 	2.08 Public websockets Base.
-	2.09 Public websockets Ping.
-	2.10 Subscribe to Funding Rates.
-	2.11 Subscribe to Orderbook.
-	2.12 Manager Funding Rate.
-	2.13 Manager Orderbook.
-	2.14 Authentification.
-	2.15 Create Market Order.
-	2.16 Create Limit Order.
-	2.17 Private websockets Base.
-	2.18 Private websockets Authentication.
-	2.19 Private websockets Ping.
-	2.20 Subscribe to orders.
-	2.21 Subscribe to balances.
-	2.22 Subscribe to positions.
+	2.09 Public websockets Tickers.
+	2.10 Public websockets Orderbook.
+	2.11 Public websockets Ping.
+	2.12 Authentification.
+	2.13 Subscribe to Funding Rates.
+	2.14 Subscribe to Orderbook.
+	2.15 Manager Funding Rate.
+	2.16 Manager Orderbook.
+	2.17 Create Market Order.
+	2.18 Create Limit Order.
+	2.19 Private websockets Base.
+	2.20 Private websockets Authentication.
+	2.21 Private websockets Ping.
+	2.22 Subscribe to orders.
+	2.23 Subscribe to balances.
+	2.24 Subscribe to positions.
 
+03 Bot.
+
+	OK 3.01 Find opposite funding rates between exchanges test.
 

@@ -1,5 +1,6 @@
 ﻿using Crypto.Exchange.Mexc.Spot;
 using Crypto.Interface;
+using Crypto.Interface.Websockets;
 using Newtonsoft.Json.Linq;
 
 namespace Crypto.Exchange.Mexc
@@ -18,6 +19,11 @@ namespace Crypto.Exchange.Mexc
             Setup = oSetup; 
         }
         public ICryptoSetup Setup { get; }
+
+        public async Task<ISymbol[]?> GetRawSymbols()
+        {
+            return await GetSymbols();
+        }
 
         public async Task<ISpotSymbol[]?> GetSymbols()
         {
@@ -44,6 +50,11 @@ namespace Crypto.Exchange.Mexc
             }
 
             return aResult.ToArray();
+        }
+
+        public async Task<ICryptoWebsocket?> CreateWebsocket()
+        {
+            throw new NotImplementedException();    
         }
     }
 }

@@ -2,6 +2,7 @@
 using Crypto.Exchange.Bingx.Futures;
 using Crypto.Exchange.Bingx.Responses;
 using Crypto.Interface;
+using Crypto.Interface.Websockets;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Reflection.Metadata;
@@ -18,6 +19,7 @@ namespace Crypto.Exchange.Bingx
         private const string ENDPOINT_SYMBOLS           = "openApi/swap/v2/quote/contracts";
         private const string ENDPOINT_FUNDING_HISTORY   = "openApi/swap/v2/quote/fundingRate";
         private const string ENDPOINT_FUNDING           = "openApi/swap/v2/quote/premiumIndex";
+        private const string ENDPOINT_BARS              = "openApi/swap/v3/quote/klines";
 
         private const int TASK_COUNT = 20;
 
@@ -144,6 +146,20 @@ namespace Crypto.Exchange.Bingx
             return aResult.ToArray();
         }
 
+
+        /// <summary>
+        /// Raw symbols
+        /// </summary>
+        /// <returns></returns>
+        public async Task<ISymbol[]?> GetRawSymbols()
+        {
+            return await GetSymbols();
+        }
+
+        /// <summary>
+        /// Get symbols
+        /// </summary>
+        /// <returns></returns>
         public async Task<IFuturesSymbol[]?> GetSymbols()
         {
             ResponseFutures? oResult = await DoPublicGet(ENDPOINT_SYMBOLS, null);
@@ -166,15 +182,123 @@ namespace Crypto.Exchange.Bingx
             return aResult.ToArray();
         }
 
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
+        /// <summary>
+        /// Timeframe to string
+        /// </summary>
+        /// <param name="eTimeframe"></param>
+        /// <returns></returns>
+        private string? TimeframeToBingx( Timeframe eTimeframe)
         {
-            throw new NotImplementedException();
-        }
-        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
-        {
-            throw new NotImplementedException();
+            switch(eTimeframe)
+            {
+                case Timeframe.M1:
+                    return "1m";
+                case Timeframe.M5:
+                    return "5m";
+                case Timeframe.M15:
+                    return "15m";
+                case Timeframe.M30:
+                    return "30m";
+                case Timeframe.H1:
+                    return "1h";
+                case Timeframe.H4:
+                    return "4h";
+                case Timeframe.D1:
+                    return "1d";
+            }
+            return null;
         }
 
+        /// <summary>
+        /// Get bars single symbol
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="eTimeframe"></param>
+        /// <param name="dFrom"></param>
+        /// <param name="dTo"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
+        {
+            int nDays = CommonFactory.DaysFromTimeframe(eTimeframe);
+            string? strFrame = TimeframeToBingx(eTimeframe);
+
+            if (nDays <= 0) return null;
+            if (strFrame == null) return null;
+            DateTime dFromActual = dFrom.Date;
+            List<IFuturesBar> aResult = new List<IFuturesBar>();
+            while (dFromActual.Date <= dTo.Date)
+            {
+                DateTime dToActual = dFromActual.Date.AddDays(nDays).AddSeconds(-1);
+                if (dToActual > dTo) dToActual = dTo.Date.AddDays(1).AddSeconds(-1);
+
+
+                long nOffsetFrom = (new DateTimeOffset(dFromActual.ToUniversalTime())).ToUnixTimeMilliseconds();
+                long nOffsetTo = (new DateTimeOffset(dToActual.ToUniversalTime())).ToUnixTimeMilliseconds();
+                var oParameters = new
+                {
+                    symbol = oSymbol.Symbol,
+                    interval = strFrame,
+                    startTime = nOffsetFrom,
+                    endTime = nOffsetTo,
+                    limit = 1440
+                };
+
+                ResponseFutures? oResult = await DoPublicGet(ENDPOINT_BARS, oParameters);
+                if (oResult == null || oResult.Code != 0 || !string.IsNullOrEmpty(oResult.Message)) break;
+                if (!(oResult.Data is JArray)) continue;
+                JArray oArray = (JArray)oResult.Data;   
+
+                foreach( var oToken in oArray )
+                {
+                    if (!(oToken is JObject)) continue;
+                    JObject oObject = (JObject)oToken;  
+                    FuturesBarParsed? oParsed = oObject.ToObject<FuturesBarParsed>();   
+                    if (oParsed == null) continue;
+                    IFuturesBar oBar = new FuturesBar(oSymbol, eTimeframe, oParsed);
+                    if (aResult.Any(p => p.DateTime == oBar.DateTime)) continue;
+                    aResult.Add(oBar);
+
+                }
+                dFromActual = dToActual.Date.AddDays(1).Date;
+            }
+
+            return aResult.ToArray();
+        }
+
+        /// <summary>
+        /// Futures bars multi symbol
+        /// </summary>
+        /// <param name="aSymbols"></param>
+        /// <param name="eTimeframe"></param>
+        /// <param name="dFrom"></param>
+        /// <param name="dTo"></param>
+        /// <returns></returns>
+        public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
+        {
+            ITaskManager<IFuturesBar[]?> oTaskManager = CommonFactory.CreateTaskManager<IFuturesBar[]?>(TASK_COUNT);
+            List<IFuturesBar> aResult = new List<IFuturesBar>();
+
+            foreach (IFuturesSymbol oSymbol in aSymbols)
+            {
+                await oTaskManager.Add(GetBars(oSymbol, eTimeframe, dFrom, dTo));
+            }
+
+            var aTaskResults = await oTaskManager.GetResults();
+            if (aTaskResults == null) return null;
+            foreach (var oResult in aTaskResults)
+            {
+                if (oResult == null || oResult.Length <= 0) continue;
+                aResult.AddRange(oResult);
+            }
+            return aResult.ToArray();
+        }
+
+
+        public async Task<ICryptoWebsocket?> CreateWebsocket()
+        {
+            throw new NotImplementedException();    
+        }
         /// <summary>
         /// Get request
         /// </summary>
