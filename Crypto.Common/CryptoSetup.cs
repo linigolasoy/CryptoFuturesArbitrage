@@ -47,6 +47,13 @@ namespace Crypto.Common
         }
         public IApiKey[] ApiKeys { get; }
 
+
+        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.MexcFutures, ExchangeType.BingxFutures}; }
+        public decimal Amount { get => 100; }
+        public int Leverage { get => 10; }
+        public decimal PercentMinimum { get => 0.15M; }
+        public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
+
         public static ICryptoSetup? LoadFromFile( string strFile )
         {
             string? strContent = File.ReadAllText(strFile);

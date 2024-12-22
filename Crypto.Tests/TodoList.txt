@@ -55,4 +55,7 @@
 03 Bot.
 
 	OK 3.01 Find opposite funding rates between exchanges test.
+	OK 3.02 Find opposite funding rates between exchanges using websockets test.
+	OK 3.03 Raw bot
+	OK 3.04 Raw bot find chances
 

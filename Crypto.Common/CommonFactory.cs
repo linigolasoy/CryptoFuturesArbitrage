@@ -17,6 +17,11 @@ namespace Crypto.Common
             return oSetup; 
         }
 
+
+        public static ICommonLogger CreateLogger( ICryptoSetup oSetup, string strLoggerName, CancellationToken oToken )
+        {
+            return new CommonLogger(oSetup, strLoggerName, oToken); 
+        }
         public static IRequestHelper CreateRequestHelper(HttpClient oClient, int nRequestsMinute ) { return new BaseRequestHelper(oClient, nRequestsMinute); }
 
         public static ITaskManager<T> CreateTaskManager<T>( int nMaximum )

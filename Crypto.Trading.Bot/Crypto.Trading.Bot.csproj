@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Crypto.Common\Crypto.Common.csproj" />
+    <ProjectReference Include="..\Crypto.Exchange.Bingx\Crypto.Exchange.Bingx.csproj" />
+    <ProjectReference Include="..\Crypto.Exchange.Mexc\Crypto.Exchange.Mexc.csproj" />
     <ProjectReference Include="..\Crypto.Interface\Crypto.Interface.csproj" />
-    <ProjectReference Include="..\Crypto.Trading.Bot\Crypto.Trading.Bot.csproj" />
   </ItemGroup>
 
 </Project>

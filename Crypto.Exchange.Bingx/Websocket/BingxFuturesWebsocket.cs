@@ -19,21 +19,35 @@ namespace Crypto.Exchange.Bingx.Websocket
     internal class BingxFuturesWebsocket : ICryptoWebsocket
     {
 
+        private class WebsocketData
+        {
+            public WebsocketData( ICommonWebsocket oWebsocket )
+            {
+                Websocket = oWebsocket; 
+            }
+
+            public ICommonWebsocket Websocket { get; }
+
+            public ISymbol[]? Subscribed { get; set; } = null;
+        }
+
         // Constants
         private const string URL_PUBLIC = "wss://open-api-swap.bingx.com/swap-market";
 
+        private const int MAX_SUBSCRIBED = 200;
 
         private ICryptoFuturesExchange m_oExchange;
         private IFuturesSymbol[]? m_aSymbols = null;
 
-        private ICommonWebsocket? m_oMarketWs = null;
+        private List<WebsocketData>? m_aMarketWs = null;
+        // private ICommonWebsocket? m_oMarketWs = null;
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
         private ConcurrentQueue<JToken> m_oReceiveQueue = new ConcurrentQueue<JToken>();
         private Task? m_oReceiveTask = null;
 
         private int m_nId = 1000;
 
-        private List<ISymbol> m_aSubscribed = new List<ISymbol>();
+        // private List<ISymbol> m_aSubscribed = new List<ISymbol>();
         private TickerManager m_oTickerManager;
 
         public BingxFuturesWebsocket(ICryptoFuturesExchange oExchange)
@@ -47,6 +61,19 @@ namespace Crypto.Exchange.Bingx.Websocket
         public IWebsocketManager<ITicker> TickerManager { get => m_oTickerManager; }
 
         /// <summary>
+        /// Generates new websocket
+        /// </summary>
+        /// <returns></returns>
+        private async Task<WebsocketData> CreateNewMarketWebsocket()
+        {
+            ICommonWebsocket oWs = CommonFactory.CreateWebsocket(URL_PUBLIC, 0);
+            oWs.OnConnect += MarketOnConnect;
+            oWs.OnDisConnect += MarketOnDisConnect;
+            oWs.OnReceived += MarketOnReceived;
+            await oWs.Start();
+            return new WebsocketData(oWs);
+        }
+        /// <summary>
         /// Start websocket
         /// </summary>
         /// <returns></returns>
@@ -55,14 +82,12 @@ namespace Crypto.Exchange.Bingx.Websocket
         {
             await Stop();
             m_oCancelSource = new CancellationTokenSource();
-            m_oMarketWs = CommonFactory.CreateWebsocket(URL_PUBLIC, 0);
-            m_oMarketWs.OnConnect += MarketOnConnect;
-            m_oMarketWs.OnDisConnect += MarketOnDisConnect;
-            m_oMarketWs.OnReceived += MarketOnReceived;
+            WebsocketData oData = await CreateNewMarketWebsocket();
+
+            m_aMarketWs = new List<WebsocketData>() { oData };
             m_oReceiveTask = MainReceiveLoop();
 
-            bool bResult = await m_oMarketWs.Start();
-            return bResult;
+            return true;
         }
 
         /// <summary>
@@ -72,11 +97,14 @@ namespace Crypto.Exchange.Bingx.Websocket
         /// <exception cref="NotImplementedException"></exception>
         public async Task Stop()
         {
-            if (m_oMarketWs != null)
+            if (m_aMarketWs != null)
             {
-                await m_oMarketWs.Stop();
+                foreach( var oMarketWs in m_aMarketWs)
+                {
+                    await oMarketWs.Websocket.Stop();
+                }
                 await Task.Delay(1000);
-                m_oMarketWs = null;
+                m_aMarketWs = null;
             }
 
             if (m_oReceiveTask != null)
@@ -128,6 +156,24 @@ namespace Crypto.Exchange.Bingx.Websocket
         {
             return string.Format("FuturesWs{0}", m_nId++);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        private async Task SubscribeSingleWs( WebsocketData oData, ISymbol[] aSymbols )
+        {
+
+            foreach (ISymbol oSymbol in aSymbols)
+            {
+                SubscribeToTicker oSubs = new SubscribeToTicker(GetId(), oSymbol.Symbol, false);
+                JObject oObject = JObject.FromObject(oSubs);
+                await oData.Websocket.Send(oObject.ToString());
+            }
+            oData.Subscribed = aSymbols;
+
+        }
+
         /// <summary>
         /// Subscribe to market
         /// </summary>
@@ -135,7 +181,25 @@ namespace Crypto.Exchange.Bingx.Websocket
         /// <returns></returns>
         public async Task<bool> SubscribeToMarket(ISymbol[] aSymbols)
         {
-            if (m_oMarketWs == null) return false;
+            if (m_aMarketWs == null) return false;
+
+            int nAdded = 0;
+            foreach( var oWs in m_aMarketWs )
+            {
+                if( oWs.Subscribed != null ) throw new NotImplementedException();
+                await SubscribeSingleWs(oWs, aSymbols.Skip(nAdded).Take(MAX_SUBSCRIBED).ToArray());
+                nAdded += oWs.Subscribed!.Length;
+            }
+
+            while( nAdded < aSymbols.Length )
+            {
+                WebsocketData oNewData = await CreateNewMarketWebsocket();
+                m_aMarketWs.Add(oNewData);
+                await Task.Delay(1000);
+                await SubscribeSingleWs(oNewData, aSymbols.Skip(nAdded).Take(MAX_SUBSCRIBED).ToArray());
+                nAdded += oNewData.Subscribed!.Length;
+            }
+            /*
             ISymbol[] aDelete = m_aSubscribed.Where(p => !aSymbols.Any(q => p.Symbol == q.Symbol)).ToArray();
             ISymbol[] aAdd = aSymbols.Where(p => !m_aSubscribed.Any(q => p.Symbol == q.Symbol)).ToArray();
 
@@ -156,6 +220,7 @@ namespace Crypto.Exchange.Bingx.Websocket
                 }
 
             }
+            */
             return true;
         }
 
