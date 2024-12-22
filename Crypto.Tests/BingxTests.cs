@@ -3,6 +3,7 @@ using Crypto.Exchange.Bingx;
 using Crypto.Exchange.Mexc;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Websockets;
 
 namespace Crypto.Tests
 {
@@ -95,6 +96,57 @@ namespace Crypto.Tests
         }
 
 
+        [TestMethod]
+        public async Task BingxAccountTests()
+        {
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
+
+            ICryptoFuturesExchange oFutures = new BingxFuturesExchange(oSetup);
+
+            IFuturesBalance[]? aBalances = await oFutures.GetBalances();
+            Assert.IsNotNull(aBalances);
+
+        }
+
+
+        [TestMethod]
+        public async Task BingxMarketWebsocketTest()
+        {
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
+
+            ICryptoFuturesExchange oExchange = new BingxFuturesExchange(oSetup);
+            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            Assert.IsNotNull(aSymbols);
+
+            ICryptoWebsocket? oWebsockets = await oExchange.CreateWebsocket();
+            Assert.IsNotNull(oWebsockets);
+
+            bool bStarted = await oWebsockets.Start();
+            Assert.IsTrue(bStarted);
+
+
+            int nSymbols = 30;
+            await oWebsockets.SubscribeToMarket(aSymbols.Take(nSymbols).ToArray());
+
+
+            await Task.Delay(30000);
+
+            IWebsocketManager<ITicker> oTickerManager = oWebsockets.TickerManager;
+            ITicker[] aTickers = oTickerManager.GetData();
+            Assert.IsNotNull(aTickers);
+            Assert.IsTrue(aTickers.Length == nSymbols);
+            DateTime dMax = aTickers.Select(p=> p.DateTime).Max();  
+            double nDiff = (DateTime.Now - dMax).TotalSeconds;
+
+            Assert.IsTrue(nDiff <= 1.5);
+            Assert.IsTrue(!aTickers.Any(p => p.FundingRate == 0));
+
+            await Task.Delay(10000);
+
+
+            await oWebsockets.Stop();
+
+        }
 
     }
 }

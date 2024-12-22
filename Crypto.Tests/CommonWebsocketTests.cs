@@ -44,7 +44,7 @@ namespace Crypto.Tests
         public async Task BasicPingBingx()
         {
 
-            ICommonWebsocket oWs = CommonFactory.CreateWebsocket("wss://open-api-swap.bingx.com/swap-market", 20);
+            ICommonWebsocket oWs = CommonFactory.CreateWebsocket("wss://open-api-swap.bingx.com/swap-market", 0);
 
             oWs.OnReceived += BingxOnReceived;
             oWs.OnDisConnect += OWs_OnDisConnect;
@@ -56,11 +56,12 @@ namespace Crypto.Tests
             // Send subscribe
             // string strSend = "{\r\n    \"method\": \"SUBSCRIPTION\",\r\n    \"params\": [\r\n                \"spot@public.limit.depth.v3.api@BTCUSDT@5\"\r\n\r\n   ]\r\n}";
 
-            string strSend = "{ \"id\": \"id1\", \"reqType\": \"sub\", \"dataType\": \"BTC-USDT@lastPrice\" }";
+            // string strSend = "{ \"id\": \"id1\", \"reqType\": \"sub\", \"dataType\": \"BTC-USDT@lastPrice\" }";
+            string strSend = "{\"id\":\"Tururu\",\"reqType\": \"sub\",\"dataType\":\"BTC-USDT@bookTicker\"}";
             bool bSent = await oWs.Send(strSend);
             Assert.IsTrue(bSent);
             // Send subscribe message
-            await Task.Delay(50000);
+            await Task.Delay(200000);
 
             await oWs.Stop();
 
@@ -77,11 +78,16 @@ namespace Crypto.Tests
 
         private void OWs_OnDisConnect()
         {
-            throw new NotImplementedException();
+            return;
         }
 
         private void BingxOnReceived(string strMessage)
         {
+            if( string.IsNullOrEmpty(strMessage)) return;   
+            if( strMessage.ToUpper().Contains("PING"))
+            {
+                return;
+            }
             return;
         }
     }

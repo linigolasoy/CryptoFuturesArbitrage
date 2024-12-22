@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ namespace Crypto.Common.Websockets
     internal class BaseWebsocket : ICommonWebsocket
     {
 
+        private string PING = "PING";
+        private string PONG = "PONG";
         public BaseWebsocket( string strUrl, int nPingSeconds ) 
         { 
             Url = strUrl;   
@@ -50,18 +53,21 @@ namespace Crypto.Common.Websockets
             DateTime dLastPing = DateTime.Now;  
             while( !m_oTokenSource.IsCancellationRequested )
             {
-                DateTime dNow = DateTime.Now;
-                if( (dNow - dLastPing).TotalSeconds > PingSeconds )
-                {
-                    if( OnPing != null && m_oWsClient != null && m_oWsClient.Connected )
+                if( PingSeconds > 0 )
+                { 
+                    DateTime dNow = DateTime.Now;
+                    if ((dNow - dLastPing).TotalSeconds > PingSeconds)
                     {
-                        string strMessage = OnPing();
-                        await m_oWsClient.SendAsync( strMessage );
-                        m_oStatistics.PingCount++;
-                        m_oStatistics.SentCount++;  
+                        if (OnPing != null && m_oWsClient != null && m_oWsClient.Connected)
+                        {
+                            string strMessage = OnPing();
+                            await m_oWsClient.SendAsync(strMessage);
+                            m_oStatistics.PingCount++;
+                            m_oStatistics.SentCount++;
+                        }
+                        dLastPing = dNow;
+                        continue;
                     }
-                    dLastPing = dNow;
-                    continue;
                 }
 
                 string? oDequeued = null;
@@ -110,8 +116,25 @@ namespace Crypto.Common.Websockets
         private void ClientOnMessageReceived(object? sender, MessageReceivedEventArgs e)
         {
             m_oStatistics.ReceivedCount++;
-            if (e.MessageType != System.Net.WebSockets.WebSocketMessageType.Text) return;
-            string strText = m_oUtf8Encoder.GetString(e.Data.ToArray());
+            string? strText = null;
+            switch( e.MessageType )
+            {
+                case System.Net.WebSockets.WebSocketMessageType.Text:
+                    strText = m_oUtf8Encoder.GetString(e.Data.ToArray());
+                    break;
+                case System.Net.WebSockets.WebSocketMessageType.Binary:
+                    strText = HandleReceivedMessage(e.Data.ToArray(), e.Data.Count);    
+                    break;
+            }
+            if (strText == null) return;
+            if( strText.Length == PING.Length && strText.ToUpper() == PING)
+            {
+                m_oStatistics.PingCount++;  
+                m_oQueueSend.Enqueue(PONG);
+                return;
+            }
+            // if (e.MessageType != System.Net.WebSockets.WebSocketMessageType.Text) return;
+            // string strText = m_oUtf8Encoder.GetString(e.Data.ToArray());
             if( OnReceived != null )
             {
                 try
@@ -121,6 +144,36 @@ namespace Crypto.Common.Websockets
                 catch (Exception ex) { }
             }
         }
+
+        private static string HandleReceivedMessage(byte[] buffer, int length)
+        {
+            // Assuming the message might be compressed
+            byte[] data = new byte[length];
+            Array.Copy(buffer, data, length);
+
+            try
+            {
+                // Try to decompress if it's a GZIP compressed message
+                string decompressedMessage = DecompressGzip(data);
+                return decompressedMessage;
+            }
+            catch (Exception)
+            {
+                // If decompression fails, assume it's a plain text message
+                return Encoding.UTF8.GetString(data);
+            }
+        }
+
+        private static string DecompressGzip(byte[] compressedData)
+        {
+            using (var input = new MemoryStream(compressedData))
+            using (var gzip = new GZipStream(input, CompressionMode.Decompress))
+            using (var reader = new StreamReader(gzip, Encoding.UTF8))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
 
         private void ClientOnServerDisconnected(object? sender, EventArgs e)
         {

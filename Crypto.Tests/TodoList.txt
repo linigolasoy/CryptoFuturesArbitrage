@@ -33,12 +33,12 @@
 	2.05 Futures Funding Rate History To Database
 	2.06 Get Quotes.
 	OK 2.07 Get Bars.
-	2.08 Authentification.
+	OK 2.08 Authentification.
 	2.09 Authentification Websockets Key.
-	2.10 Public websockets Base.
-	2.11 Public websockets Tickers.
+	OK 2.10 Public websockets Base.
+	OK 2.11 Public websockets Tickers.
 	2.12 Public websockets Orderbook.
-	2.13 Public websockets Ping.
+	OK 2.13 Public websockets Ping.
 	2.14 Subscribe to Funding Rates.
 	2.15 Subscribe to Orderbook.
 	2.16 Manager Funding Rate.

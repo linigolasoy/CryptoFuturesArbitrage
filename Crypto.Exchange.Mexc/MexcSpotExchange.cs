@@ -57,5 +57,10 @@ namespace Crypto.Exchange.Mexc
         {
             throw new NotImplementedException();    
         }
+
+        public async Task<IBalance[]?> GetBalances()
+        {
+            throw new NotImplementedException();    
+        }
     }
 }

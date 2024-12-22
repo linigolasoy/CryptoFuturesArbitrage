@@ -28,5 +28,6 @@ namespace Crypto.Interface
         public Task<ICryptoWebsocket?> CreateWebsocket();
 
         public Task<ISymbol[]?> GetRawSymbols();
+
     }
 }

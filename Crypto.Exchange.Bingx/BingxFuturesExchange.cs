@@ -2,6 +2,7 @@
 using Crypto.Exchange.Bingx.Feeders;
 using Crypto.Exchange.Bingx.Futures;
 using Crypto.Exchange.Bingx.Responses;
+using Crypto.Exchange.Bingx.Websocket;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -21,10 +22,14 @@ namespace Crypto.Exchange.Bingx
         private const string ENDPOINT_SYMBOLS           = "openApi/swap/v2/quote/contracts";
         private const string ENDPOINT_FUNDING_HISTORY   = "openApi/swap/v2/quote/fundingRate";
         private const string ENDPOINT_FUNDING           = "openApi/swap/v2/quote/premiumIndex";
+        private const string ENDPOINT_BALANCE           = "openApi/swap/v3/user/balance";
+        private const string ENDPOINT_API_WS            = "openApi/user/auth/userDataStream";
 
         public const int TASK_COUNT = 20;
 
         private IApiKey m_oApiKey;
+
+        private static IFuturesSymbol[]? m_aSymbols = null;
 
         private IFuturesBarFeeder m_oBarFeeder;
         public BingxFuturesExchange( ICryptoSetup oSetup ) 
@@ -172,6 +177,7 @@ namespace Crypto.Exchange.Bingx
         /// <returns></returns>
         public async Task<IFuturesSymbol[]?> GetSymbols()
         {
+            if (m_aSymbols != null) return m_aSymbols;
             ResponseFutures? oResult = await DoPublicGet(ENDPOINT_SYMBOLS, null);
 
             if (oResult == null || oResult.Code != 0 || !string.IsNullOrEmpty(oResult.Message)) return null;
@@ -189,16 +195,21 @@ namespace Crypto.Exchange.Bingx
                 IFuturesSymbol oSymbol = new FuturesSymbol(oParsed);
                 aResult.Add(oSymbol);
             }
-            return aResult.ToArray();
+            m_aSymbols = aResult.ToArray(); 
+            return m_aSymbols;
         }
 
 
 
-
-
+        
+        /// <summary>
+        /// Creates a mew wensocket
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {
-            throw new NotImplementedException();    
+            return new BingxFuturesWebsocket(this);
         }
         /// <summary>
         /// Get request
@@ -308,6 +319,24 @@ namespace Crypto.Exchange.Bingx
                 return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
         }
-        
+
+
+        /// <summary>
+        /// Get balances
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<IFuturesBalance[]?> GetBalances()
+        {
+            string? strResponse = await SignRequest(ENDPOINT_BALANCE, HttpMethod.Get, null, null);
+            if (strResponse == null) return null;
+            ResponseFutures? oResponse = JsonConvert.DeserializeObject<ResponseFutures>(strResponse);
+            if (oResponse == null || oResponse.Code != 0 || !string.IsNullOrEmpty(oResponse.Message)) return null;
+            if (oResponse.Data == null) return null;
+            IFuturesBalance[]? aResult = FuturesBalance.Create(oResponse.Data);
+            if( aResult == null) return null;   
+            return aResult.ToArray();
+        }
+
     }
 }

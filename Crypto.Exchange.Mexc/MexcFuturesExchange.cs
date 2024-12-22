@@ -233,6 +233,10 @@ namespace Crypto.Exchange.Mexc
             return new MexcFuturesWebsocket(this);
         }
 
+        public async Task<IFuturesBalance[]?> GetBalances()
+        {
+            throw new NotImplementedException();
+        }
 
     }
 }
