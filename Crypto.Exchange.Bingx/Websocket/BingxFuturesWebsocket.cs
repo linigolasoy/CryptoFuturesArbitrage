@@ -1,4 +1,5 @@
 ﻿using Crypto.Common;
+using Crypto.Exchange.Bingx.Websocket.Private;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -40,7 +41,7 @@ namespace Crypto.Exchange.Bingx.Websocket
         private IFuturesSymbol[]? m_aSymbols = null;
 
         private List<WebsocketData>? m_aMarketWs = null;
-        // private ICommonWebsocket? m_oMarketWs = null;
+        private ICommonWebsocket? m_oPrivateWs = null;
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
         private ConcurrentQueue<JToken> m_oReceiveQueue = new ConcurrentQueue<JToken>();
         private Task? m_oReceiveTask = null;
@@ -49,16 +50,22 @@ namespace Crypto.Exchange.Bingx.Websocket
 
         // private List<ISymbol> m_aSubscribed = new List<ISymbol>();
         private TickerManager m_oTickerManager;
+        private FuturesOrderManager m_oFuturesOrderManager;
 
-        public BingxFuturesWebsocket(ICryptoFuturesExchange oExchange)
+        private string m_strListenKey;
+
+        public BingxFuturesWebsocket(ICryptoFuturesExchange oExchange, string strListenKey)
         {
             m_oExchange = oExchange;
+            m_strListenKey = strListenKey;  
             m_oTickerManager = new TickerManager(m_oExchange);
+            m_oFuturesOrderManager = new FuturesOrderManager(this);
         }
 
         public IExchange Exchange { get => m_oExchange; }
 
         public IWebsocketManager<ITicker> TickerManager { get => m_oTickerManager; }
+        public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get => m_oFuturesOrderManager; }
 
         /// <summary>
         /// Generates new websocket
@@ -85,9 +92,32 @@ namespace Crypto.Exchange.Bingx.Websocket
             WebsocketData oData = await CreateNewMarketWebsocket();
 
             m_aMarketWs = new List<WebsocketData>() { oData };
+
+            string strUrl = string.Format("{0}?listenKey={1}", URL_PUBLIC, m_strListenKey);
+
+            m_oPrivateWs = CommonFactory.CreateWebsocket(strUrl, 0);
+            m_oPrivateWs.OnReceived += PrivateOnReceived;
+            m_oPrivateWs.OnConnect += PrivateOnConnect;
+
+            await m_oPrivateWs.Start();   
+            
             m_oReceiveTask = MainReceiveLoop();
 
+
+
             return true;
+        }
+
+        private void PrivateOnConnect()
+        {
+            return;
+        }
+
+        private void PrivateOnReceived(string strMessage)
+        {
+            JToken? oParsed = JToken.Parse(strMessage);
+            if (oParsed != null) m_oReceiveQueue.Enqueue(oParsed);
+            return;
         }
 
         /// <summary>
@@ -97,6 +127,13 @@ namespace Crypto.Exchange.Bingx.Websocket
         /// <exception cref="NotImplementedException"></exception>
         public async Task Stop()
         {
+
+            if(m_oPrivateWs != null) 
+            { 
+                await m_oPrivateWs.Stop();
+                await Task.Delay(100);
+                m_oPrivateWs = null;
+            }
             if (m_aMarketWs != null)
             {
                 foreach( var oMarketWs in m_aMarketWs)
@@ -131,12 +168,17 @@ namespace Crypto.Exchange.Bingx.Websocket
                     IWebsocketMessage? oMessage = WsMessageFactory.Parse(oReceived, m_aSymbols!);
                     if (oMessage == null)
                     {
-                        continue;
+                        oMessage = WsMessageFactory.ParsePrivate(oReceived, m_aSymbols!);   
+                            
+                        if( oMessage == null ) continue;
                     }
                     switch (oMessage.MessageType)
                     {
                         case WebsocketMessageType.Ticker:
                             m_oTickerManager.Put(oMessage, m_aSymbols!);
+                            break;
+                        case WebsocketMessageType.PrivateOrder:
+                            m_oFuturesOrderManager.Put(oMessage);
                             break;
                         default:
                             break;

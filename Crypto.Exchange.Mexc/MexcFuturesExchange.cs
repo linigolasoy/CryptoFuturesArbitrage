@@ -20,7 +20,7 @@ namespace Crypto.Exchange.Mexc
     /// <summary>
     /// Mexc Futures exchange
     /// </summary>
-    public class MexcFuturesExchange : ICryptoFuturesExchange
+    public partial class MexcFuturesExchange : ICryptoFuturesExchange
     {
 
         private const string ENDPOINT_CONTRACTS = "api/v1/contract/detail";

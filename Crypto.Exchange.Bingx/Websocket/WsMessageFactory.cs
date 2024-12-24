@@ -1,4 +1,5 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Exchange.Bingx.Websocket.Private;
+using Crypto.Interface.Futures;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -13,6 +14,12 @@ namespace Crypto.Exchange.Bingx.Websocket
     internal enum eChannelTypes
     {
         bookTicker
+    }
+
+    internal enum eEventTypes
+    {
+        SNAPSHOT,
+        ORDER_TRADE_UPDATE
     }
 
     internal class WsCommonMessage
@@ -32,6 +39,16 @@ namespace Crypto.Exchange.Bingx.Websocket
 
     }
 
+
+    internal class WsCommonPrivateMessage
+    {
+        [JsonProperty("e")]
+        public string EventType { get; set; } = string.Empty;
+        [JsonProperty("E")]
+        public long EventTime { get; set; } = 0;
+
+    }
+
     internal class WsMessageFactory
     {
         public static IWebsocketMessage? Parse(JToken oToken, IFuturesSymbol[] aAllSymbols)
@@ -47,6 +64,25 @@ namespace Crypto.Exchange.Bingx.Websocket
             if( strType == eChannelTypes.bookTicker.ToString() )
             {
                 return TickerMessage.Create(strSymbol, oCommonMessage.Data);   
+            }
+            return null;
+        }
+
+        public static IWebsocketMessage? ParsePrivate(JToken oToken, IFuturesSymbol[] aAllSymbols)
+        {
+            if (!(oToken is JObject)) return null;
+            JObject oObject = (JObject)oToken;
+
+            WsCommonPrivateMessage? oCommon = oObject.ToObject<WsCommonPrivateMessage>();   
+            if (oCommon == null) return null;
+            if( string.IsNullOrEmpty(oCommon.EventType)) return null;   
+            if( oCommon.EventType == eEventTypes.SNAPSHOT.ToString() ) 
+            {
+                return null;
+            }
+            else if( oCommon.EventType == eEventTypes.ORDER_TRADE_UPDATE.ToString() )
+            {
+                return OrderMessage.Create(oObject, aAllSymbols);
             }
             return null;
         }

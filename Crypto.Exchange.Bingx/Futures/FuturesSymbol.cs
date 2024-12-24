@@ -32,5 +32,10 @@ namespace Crypto.Exchange.Bingx.Futures
         public string Base { get; }
 
         public string Quote { get; }
+
+        public override string ToString()
+        {
+            return Symbol;
+        }
     }
 }

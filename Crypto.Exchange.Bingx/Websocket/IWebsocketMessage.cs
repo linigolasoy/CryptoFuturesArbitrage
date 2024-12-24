@@ -8,7 +8,9 @@ namespace Crypto.Exchange.Bingx.Websocket
 {
     internal enum WebsocketMessageType
     {
-        Ticker
+        Ticker,
+        PrivateSnapshot,
+        PrivateOrder
     }
 
     internal interface IWebsocketMessage

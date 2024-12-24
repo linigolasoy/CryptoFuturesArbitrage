@@ -46,6 +46,8 @@ namespace Crypto.Exchange.Mexc.Websocket
 
         public IWebsocketManager<ITicker> TickerManager { get => m_oTickerManager; }
 
+        public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
+
         /// <summary>
         /// Receive loop so enqueuing never ends
         /// </summary>

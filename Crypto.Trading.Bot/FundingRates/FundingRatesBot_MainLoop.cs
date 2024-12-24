@@ -43,6 +43,7 @@ namespace Crypto.Trading.Bot.FundingRates
                         oData.FundingSnapshots = aNewFundings.ToArray();
                         Logger.Info(string.Format("             Got funding rates of {0}.- {1} dates expired", eType.ToString(), aExpired.Length));
                     }
+                    continue;
                 }
 
                 Logger.Info(string.Format("             Get funding rates of {0}", eType.ToString()));

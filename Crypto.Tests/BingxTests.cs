@@ -4,6 +4,7 @@ using Crypto.Exchange.Mexc;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
+using NuGet.Frameworks;
 
 namespace Crypto.Tests
 {
@@ -11,24 +12,35 @@ namespace Crypto.Tests
     public class BingxTests
     {
         
-        /*
         [TestMethod]
-        public async Task BingxSpotMarketDataTests()
+        public async Task BingxOrdersTest()
         {
-            ICryptoSetup oSetup = CommonFactory.CreateSetup();  
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);  
 
-            ICryptoSpotExchange oSpot = new BingxSpotExchange(oSetup);
+            ICryptoFuturesExchange oExchange = new BingxFuturesExchange(oSetup);
 
-            ISymbol[]? aSymbols = await oSpot.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
-            ISymbol? oEth = aSymbols.FirstOrDefault(p => p.Base == "ETH" && p.Quote == "USDT");
-            Assert.IsNotNull(oEth); 
+            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
+            Assert.IsNotNull(oSymbol);
 
+            ICryptoWebsocket? oWs = await oExchange.CreateWebsocket();
+            Assert.IsNotNull(oWs);
 
+            await oWs.Start(); 
+            await Task.Delay(5000); 
+
+            decimal nPrice = 1;
+
+            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 5, 5, nPrice);
+            // Assert.IsNotNull(oOrder);
+
+            await Task.Delay(50000);
+
+            await oWs.Stop();
         }
-        */
 
         [TestMethod]
         public async Task BingxFuturesMarketDataTests()

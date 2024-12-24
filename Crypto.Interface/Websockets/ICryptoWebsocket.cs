@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Crypto.Interface.Futures;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,5 +19,7 @@ namespace Crypto.Interface.Websockets
         public Task<bool> SubscribeToMarket(ISymbol[] aSymbols);
 
         public IWebsocketManager<ITicker> TickerManager { get; }    
+
+        public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }    
     }
 }

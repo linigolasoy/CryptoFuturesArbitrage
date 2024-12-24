@@ -14,7 +14,7 @@ using System.Text;
 
 namespace Crypto.Exchange.Bingx
 {
-    public class BingxFuturesExchange : ICryptoFuturesExchange
+    public partial class BingxFuturesExchange : ICryptoFuturesExchange
     {
 
         private static IRequestHelper m_oRequestHelper = CommonFactory.CreateRequestHelper(BingxCommon.GetHttpClient(), 500);
@@ -202,6 +202,25 @@ namespace Crypto.Exchange.Bingx
 
 
         
+
+        /// <summary>
+        /// Get private websocket listen key
+        /// </summary>
+        /// <returns></returns>
+        private async Task<string?> GetListenKey()
+        {
+            var oPayload = new { };
+
+            string? strResponse = await SignRequest(ENDPOINT_API_WS, HttpMethod.Post, oPayload, null);
+            if (strResponse == null) return null;
+            JObject? oObject = JObject.Parse(strResponse);   
+            if( oObject == null) return null;
+            if (!oObject.ContainsKey("listenKey")) return null;
+            string strKey = oObject["listenKey"]!.ToString();
+            return strKey;
+
+        }
+
         /// <summary>
         /// Creates a mew wensocket
         /// </summary>
@@ -209,7 +228,9 @@ namespace Crypto.Exchange.Bingx
         /// <exception cref="NotImplementedException"></exception>
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {
-            return new BingxFuturesWebsocket(this);
+            string? strListenKey = await GetListenKey();
+            if (strListenKey == null) return null;
+            return new BingxFuturesWebsocket(this,strListenKey);
         }
         /// <summary>
         /// Get request

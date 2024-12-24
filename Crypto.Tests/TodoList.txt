@@ -16,12 +16,14 @@
 	1.13 Manager Orderbook.
 	1.14 Create Market Order.
 	1.15 Create Limit Order.
-	1.16 Private websockets Base.
-	1.17 Private websockets Authentication.
-	1.18 Private websockets Ping.
-	1.19 Subscribe to orders.
-	1.20 Subscribe to balances.
-	1.21 Subscribe to positions.
+	1.16 Cancel Order.
+	1.17 Close Order.
+	1.18 Private websockets Base.
+	1.19 Private websockets Authentication.
+	1.20 Private websockets Ping.
+	1.21 Subscribe to orders.
+	1.22 Subscribe to balances.
+	1.23 Subscribe to positions.
 
 
 02 Exchange BINGX:
@@ -45,12 +47,14 @@
 	2.17 Manager Orderbook.
 	2.18 Create Market Order.
 	2.19 Create Limit Order.
-	2.20 Private websockets Base.
-	2.21 Private websockets Authentication.
-	2.22 Private websockets Ping.
-	2.23 Subscribe to orders.
-	2.24 Subscribe to balances.
-	2.25 Subscribe to positions.
+	2.20 Cancel Order.
+	2.21 Close Order.
+	2.22 Private websockets Base.
+	2.23 Private websockets Authentication.
+	2.24 Private websockets Ping.
+	2.25 Subscribe to orders.
+	2.26 Subscribe to balances.
+	2.27 Subscribe to positions.
 
 03 Bot.
 
