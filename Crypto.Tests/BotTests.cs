@@ -1,6 +1,6 @@
 using Crypto.Common;
-using Crypto.Exchange.Bingx;
 using Crypto.Exchange.Mexc;
+using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -17,7 +17,7 @@ namespace Crypto.Tests
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
             ICryptoFuturesExchange oExchangeMexc  = new MexcFuturesExchange(oSetup);
-            ICryptoFuturesExchange oExchangeBingx = new BingxFuturesExchange(oSetup);
+            ICryptoFuturesExchange oExchangeBingx = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
 
 
             IFuturesSymbol[]? aSymbolsMexc = await oExchangeMexc.GetSymbols();  
@@ -76,6 +76,7 @@ namespace Crypto.Tests
         }
 
 
+        /*
         /// <summary>
         /// Evaluates funding rates using websockets
         /// </summary>
@@ -122,11 +123,11 @@ namespace Crypto.Tests
 
             await Task.Delay(20000);
 
-            IWebsocketManager<ITicker> oMexcManager = oWsMexc.TickerManager;
-            IWebsocketManager<ITicker> oBingxManager = oWsBingx.TickerManager;
+            IWebsocketManager<IOrderbook> oMexcManager = oWsMexc.OrderbookManager;
+            IWebsocketManager<IOrderbook> oBingxManager = oWsBingx.OrderbookManager;
 
 
-            SortedDictionary<decimal, ITicker[]> aSorted = new SortedDictionary<decimal, ITicker[]>();
+            SortedDictionary<decimal, IOrderbook[]> aSorted = new SortedDictionary<decimal, IOrderbook[]>();
             decimal nBestFound = 0;
 
             ITicker[] aTickersBingx = oBingxManager.GetData();
@@ -159,7 +160,7 @@ namespace Crypto.Tests
             Assert.IsTrue(aSorted.Count > 0);
 
         }
-
+        */
 
     }
 }

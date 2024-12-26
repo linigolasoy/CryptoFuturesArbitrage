@@ -31,7 +31,6 @@ namespace Crypto.Exchange.Mexc.Websocket
 
         private List<ISymbol> m_aSubscribed = new List<ISymbol>();
 
-        private TickerManager m_oTickerManager = new TickerManager();   
 
         public MexcFuturesWebsocket(IExchange oExchange)
         {
@@ -44,9 +43,13 @@ namespace Crypto.Exchange.Mexc.Websocket
 
         private IFuturesSymbol[]? m_aSymbols = null;
 
-        public IWebsocketManager<ITicker> TickerManager { get => m_oTickerManager; }
+        public IWebsocketManager<IOrderbook> OrderbookManager => throw new NotImplementedException();
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
+
+        public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
+
+        public IWebsocketManager<IFuturesBalance> BalanceManager => throw new NotImplementedException();
 
         /// <summary>
         /// Receive loop so enqueuing never ends
@@ -67,9 +70,6 @@ namespace Crypto.Exchange.Mexc.Websocket
                     }
                     switch( oMessage.MessageType )
                     {
-                        case WebsocketMessageType.Ticker:
-                            m_oTickerManager.Put(oMessage, m_aSymbols!);
-                            break;
                         default:
                             break;
                     }

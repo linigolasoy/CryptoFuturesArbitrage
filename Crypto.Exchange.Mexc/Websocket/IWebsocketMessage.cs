@@ -9,8 +9,7 @@ namespace Crypto.Exchange.Mexc.Websocket
 
     internal enum WebsocketMessageType
     {
-        Ping,
-        Ticker
+        Ping
     }
 
     internal interface IWebsocketMessage

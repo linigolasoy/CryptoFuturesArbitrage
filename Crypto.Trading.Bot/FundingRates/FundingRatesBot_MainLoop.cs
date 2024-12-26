@@ -1,5 +1,4 @@
-﻿using Crypto.Exchange.Bingx;
-using Crypto.Exchange.Mexc;
+﻿using Crypto.Exchange.Mexc;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -61,6 +60,7 @@ namespace Crypto.Trading.Bot.FundingRates
         /// </summary>
         private void FindChances()
         {
+            /*
             List<FundingChance> aChances = new List<FundingChance>();
 
             if (m_aDictExchanges == null) return;
@@ -127,6 +127,7 @@ namespace Crypto.Trading.Bot.FundingRates
                     oBest.SellData.Price);
                 Logger.Info(strInfo);
             }
+            */
         }
 
 

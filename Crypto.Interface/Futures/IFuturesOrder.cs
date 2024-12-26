@@ -25,6 +25,25 @@ namespace Crypto.Interface.Futures
         Short
     }
 
+    public enum FuturesOrderEvent
+    {
+        New,
+        Canceled, // removed
+        Calculated, // order ADL or liquidation
+        Expired, // order lapsed
+        Trade // transaction
+
+    }
+
+    public enum FuturesOrderStatus
+    {
+        New,
+        PartialFilled,
+        Filled,
+        Canceled,
+        Expired
+    }
+
     public interface IFuturesOrder
     {
         public long Id { get; }
@@ -32,6 +51,9 @@ namespace Crypto.Interface.Futures
         public FuturesOrderDirection OrderDirection { get; }
         public FuturesPositionDirection PositionDirection { get; }
         public FuturesOrderType OrderType { get; }
+
+        public FuturesOrderEvent OrderEvent { get; }
+        public FuturesOrderStatus OrderStatus { get; }  
         public DateTime TimeCreated { get; }
         public DateTime TimeUpdated { get; }
         public decimal Quantity { get; }

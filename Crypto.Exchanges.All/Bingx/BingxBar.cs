@@ -1,4 +1,4 @@
-﻿using Crypto.Exchange.Bingx.Responses;
+﻿using BingX.Net.Objects.Models;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using System;
@@ -7,20 +7,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Exchange.Bingx.Futures
+namespace Crypto.Exchanges.All.Bingx
 {
-    internal class FuturesBar : IFuturesBar
+    internal class BingxBar : IFuturesBar
     {
-        public FuturesBar( IFuturesSymbol oSymbol, Timeframe eFrame, FuturesBarParsed oParsed ) 
+
+        public BingxBar(IFuturesSymbol oSymbol, Timeframe eFrame, BingXFuturesKline oKLine ) 
         { 
             Symbol = oSymbol;
             Timeframe = eFrame;
-            Open = (decimal)oParsed.Open;
-            High = (decimal)oParsed.High;
-            Low = (decimal)oParsed.Low;
-            Close = (decimal)oParsed.Close;
-            Volume = (decimal)oParsed.Volume;   
-            DateTime = BingxCommon.ParseUnixTimestamp(oParsed.UnixTime);
+            DateTime = oKLine.Timestamp.ToLocalTime();
+            Open = oKLine.OpenPrice;
+            Close = oKLine.ClosePrice;
+            High = oKLine.HighPrice;
+            Low = oKLine.LowPrice;
+            Volume = oKLine.Volume;
         }
         public IFuturesSymbol Symbol { get; }
 

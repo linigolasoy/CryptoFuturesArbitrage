@@ -1,5 +1,5 @@
-﻿using Crypto.Exchange.Bingx;
-using Crypto.Exchange.Mexc;
+﻿using Crypto.Exchange.Mexc;
+using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using System;
@@ -29,7 +29,7 @@ namespace Crypto.Trading.Bot.FundingRates
                         aExchanges.Add(new MexcFuturesExchange(oSetup));
                         break;
                     case ExchangeType.BingxFutures:
-                        aExchanges.Add(new BingxFuturesExchange(oSetup));
+                        aExchanges.Add(ExchangeFactory.CreateExchange( ExchangeType.BingxFutures, oSetup));
                         break;
                 }
             }

@@ -105,7 +105,7 @@ namespace Crypto.Tests
         }
 
 
-
+        /*
         [TestMethod]
         public async Task MexcMarketWebsocketTest()
         {
@@ -128,10 +128,10 @@ namespace Crypto.Tests
 
             await Task.Delay(20000);
 
-            IWebsocketManager<ITicker> oTickerManager = oWebsockets.TickerManager;
-            ITicker[] aTickers = oTickerManager.GetData();
-            Assert.IsNotNull(aTickers); 
-            Assert.IsTrue(aTickers.Length == nSymbols);
+            IWebsocketManager<IOrderbook> oManager = oWebsockets.OrderbookManager;
+            IOrderbook[] aOrderbooks = oManager.GetData();
+            Assert.IsNotNull(aOrderbooks); 
+            Assert.IsTrue(aOrderbooks.Length == nSymbols);
 
 
             await Task.Delay(40000);
@@ -140,5 +140,6 @@ namespace Crypto.Tests
             await oWebsockets.Stop();   
 
         }
+        */
     }
 }

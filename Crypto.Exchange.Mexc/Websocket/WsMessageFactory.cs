@@ -34,8 +34,8 @@ namespace Crypto.Exchange.Mexc.Websocket
                 case PUSH:
                     switch (aChannelSplit[1])
                     {
-                        case TICKER:
-                            return TickerMessage.Create(oChannelMessage);
+                        // case TICKER:
+                        //     return TickerMessage.Create(oChannelMessage);
                         default:
                             return null;
                     }

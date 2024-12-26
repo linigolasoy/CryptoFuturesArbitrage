@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Interface.Websockets
 {
+    /*
     public interface ITicker
     {
         public ISymbol Symbol { get; }
@@ -15,4 +16,5 @@ namespace Crypto.Interface.Websockets
         public decimal FundingRate { get; }
         public DateTime DateTime { get; }   
     }
+    */
 }

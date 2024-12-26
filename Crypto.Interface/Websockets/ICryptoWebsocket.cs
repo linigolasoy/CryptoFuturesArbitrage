@@ -18,8 +18,12 @@ namespace Crypto.Interface.Websockets
 
         public Task<bool> SubscribeToMarket(ISymbol[] aSymbols);
 
-        public IWebsocketManager<ITicker> TickerManager { get; }    
+        // public IWebsocketManager<ITicker> TickerManager { get; }    
 
-        public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }    
+        public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }
+        public IWebsocketManager<IFuturesPosition> FuturesPositionManager { get; }
+        // public IWebsocketManager<IOrderbook> OrderbookManager { get; }
+
+        public IWebsocketManager<IFuturesBalance> BalanceManager { get; }   
     }
 }
