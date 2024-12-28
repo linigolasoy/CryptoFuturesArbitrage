@@ -1,6 +1,7 @@
 using Crypto.Common;
-using Crypto.Exchange.Mexc;
 using Crypto.Interface;
+using CryptoClients.Net;
+using CryptoClients.Net.Interfaces;
 
 namespace Crypto.Tests
 {
@@ -10,6 +11,7 @@ namespace Crypto.Tests
         [TestMethod]
         public async Task BasicPingMexc()
         {
+
 
             ICommonWebsocket oWs = CommonFactory.CreateWebsocket("wss://contract.mexc.com/edge", 20);
 

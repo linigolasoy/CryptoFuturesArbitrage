@@ -7,15 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CryptoFuturesArbitrage.Cons
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Interface", "Crypto.Interface\Crypto.Interface.csproj", "{8EBFC161-A604-4EFD-BF93-5773DA7CFE78}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Exchange.Mexc", "Crypto.Exchange.Mexc\Crypto.Exchange.Mexc.csproj", "{7D9F0BB0-F574-42CE-825A-9EAB057D0C44}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Common", "Crypto.Common\Crypto.Common.csproj", "{E9F9E858-A76D-4F7A-A1A1-44CE6C3E4F6B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Tests", "Crypto.Tests\Crypto.Tests.csproj", "{A21ED5AB-B2DB-4B42-9993-E2355FE52520}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Trading.Bot", "Crypto.Trading.Bot\Crypto.Trading.Bot.csproj", "{5D6D30CC-DDDE-4C25-947A-CABA26D60E46}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crypto.Exchanges.All", "Crypto.Exchanges.All\Crypto.Exchanges.All.csproj", "{421161F3-571F-49E4-AD5D-E46029F52C26}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Crypto.Exchanges.All", "Crypto.Exchanges.All\Crypto.Exchanges.All.csproj", "{421161F3-571F-49E4-AD5D-E46029F52C26}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +29,6 @@ Global
 		{8EBFC161-A604-4EFD-BF93-5773DA7CFE78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EBFC161-A604-4EFD-BF93-5773DA7CFE78}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EBFC161-A604-4EFD-BF93-5773DA7CFE78}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7D9F0BB0-F574-42CE-825A-9EAB057D0C44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7D9F0BB0-F574-42CE-825A-9EAB057D0C44}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7D9F0BB0-F574-42CE-825A-9EAB057D0C44}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7D9F0BB0-F574-42CE-825A-9EAB057D0C44}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E9F9E858-A76D-4F7A-A1A1-44CE6C3E4F6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E9F9E858-A76D-4F7A-A1A1-44CE6C3E4F6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E9F9E858-A76D-4F7A-A1A1-44CE6C3E4F6B}.Release|Any CPU.ActiveCfg = Release|Any CPU

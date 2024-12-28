@@ -23,25 +23,34 @@ namespace Crypto.Tests
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
-            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
+            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "GMT" && p.Quote == "USDT");
             Assert.IsNotNull(oSymbol);
 
             ICryptoWebsocket? oWs = await oExchange.CreateWebsocket();
             Assert.IsNotNull(oWs);
 
-            await oWs.Start(); 
+            await oWs.Start();
+            await Task.Delay(1000);
+            await oWs.SubscribeToMarket(new IFuturesSymbol[] { oSymbol }); 
+
             await Task.Delay(5000);
+
+            IOrderbook? oOrderbook = oWs.OrderbookManager.GetData(oSymbol.Symbol);
+            Assert.IsNotNull(oOrderbook);
+
+            decimal nMoney = 20;
+            IOrderbookPrice? oPrice = oWs.OrderbookManager.GetBestAsk(oSymbol.Symbol, nMoney);  
+            Assert.IsNotNull(oPrice);   
 
             IFuturesBalance[]? aBalances = oWs.BalanceManager.GetData();
             Assert.IsNotNull(aBalances);
             Assert.IsTrue(aBalances.Length > 0);
 
-            decimal nPrice = 1;
 
-            // IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 5, 5, nPrice);
-            // Assert.IsNotNull(oOrder);
+            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 20, 1, oPrice.Price);
+            Assert.IsNotNull(oOrder);
 
-            await Task.Delay(50000);
+            await Task.Delay(5000);
 
             await oWs.Stop();
         }
@@ -126,7 +135,7 @@ namespace Crypto.Tests
 
         }
 
-        /*
+        
         [TestMethod]
         public async Task BingxMarketWebsocketTest()
         {
@@ -143,13 +152,15 @@ namespace Crypto.Tests
             Assert.IsTrue(bStarted);
 
 
-            int nSymbols = 30;
-            await oWebsockets.SubscribeToMarket(aSymbols.Take(nSymbols).ToArray());
+            int nSymbols = aSymbols.Length;
+            bool bSubscribed = await oWebsockets.SubscribeToMarket(aSymbols.Take(nSymbols).ToArray());
+
+            Assert.IsTrue(bSubscribed);
 
 
             await Task.Delay(30000);
 
-            IWebsocketManager<IOrderbook> oManager = oWebsockets.OrderbookManager;
+            IOrderbookManager oManager = oWebsockets.OrderbookManager;
             IOrderbook[] aBook = oManager.GetData();
             Assert.IsNotNull(aBook);
             Assert.IsTrue(aBook.Length == nSymbols);
@@ -158,13 +169,13 @@ namespace Crypto.Tests
 
             Assert.IsTrue(nDiff <= 1.5);
 
-            await Task.Delay(10000);
+            await Task.Delay(5000);
 
 
             await oWebsockets.Stop();
 
         }
-        */
+        
 
     }
 }

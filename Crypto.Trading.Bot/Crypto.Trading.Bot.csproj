@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Crypto.Common\Crypto.Common.csproj" />
-    <ProjectReference Include="..\Crypto.Exchange.Mexc\Crypto.Exchange.Mexc.csproj" />
     <ProjectReference Include="..\Crypto.Exchanges.All\Crypto.Exchanges.All.csproj" />
     <ProjectReference Include="..\Crypto.Interface\Crypto.Interface.csproj" />
   </ItemGroup>

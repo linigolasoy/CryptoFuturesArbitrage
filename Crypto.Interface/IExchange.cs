@@ -11,9 +11,10 @@ namespace Crypto.Interface
 
     public enum ExchangeType
     {
-        MexcSpot,
-        MexcFutures,
-        BingxSpot,
+        // MexcSpot,
+        // MexcFutures,
+        //BingxSpot,
+        CoinExFutures,
         BingxFutures
     }
     /// <summary>

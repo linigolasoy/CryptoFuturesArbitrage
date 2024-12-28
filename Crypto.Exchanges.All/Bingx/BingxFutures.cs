@@ -51,14 +51,28 @@ namespace Crypto.Exchanges.All.Bingx
 
         public IExchangeRestClient GlobalClient { get => m_oGlobalClient; } 
 
+        /// <summary>
+        /// Set leverage
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="bBuy"></param>
+        /// <param name="nMargin"></param>
+        /// <param name="nLeverage"></param>
+        /// <param name="nPrice"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice)
         {
+            // m_oGlobalClient.BingX.PerpetualFuturesApi.Account
+            m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync()
             throw new NotImplementedException();
         }
 
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {
-            return new BingxWebsocket(this);
+            IFuturesSymbol[]? aSymbols = await GetSymbols();
+            if (aSymbols == null) return null;
+            return new BingxWebsocket(this, aSymbols);
         }
 
 

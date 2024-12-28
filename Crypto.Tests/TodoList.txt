@@ -1,14 +1,14 @@
 ﻿
-01 Exchange MEXC:
+01 Exchange COINEX:
 
-	OK 1.01 Futures fees.
+	1.01 Futures fees.
 	1.02 Futures Funding Rate History To Database
 	1.03 Get Quotes.
-	OK 1.04 Get Bars.
-	OK 1.05 Public websockets Base.
-	OK 1.06 Public websockets Tickers.
+	1.04 Get Bars.
+	1.05 Public websockets Base.
+	1.06 Public websockets Tickers.
 	1.07 Public websockets Orderbook.
-	OK 1.08 Public websockets Ping.
+	1.08 Public websockets Ping.
 	1.09 Authentification.
 	1.10 Subscribe to Funding Rates.
 	1.11 Subscribe to Orderbook.
@@ -36,13 +36,13 @@
 	2.06 Get Quotes.
 	OK 2.07 Get Bars.
 	OK 2.08 Authentification.
-	2.09 Authentification Websockets Key.
+	OK 2.09 Authentification Websockets Key.
 	OK 2.10 Public websockets Base.
 	OK 2.11 Public websockets Tickers.
-	2.12 Public websockets Orderbook.
+	OK 2.12 Public websockets Orderbook.
 	OK 2.13 Public websockets Ping.
 	2.14 Subscribe to Funding Rates.
-	2.15 Subscribe to Orderbook.
+	OK 2.15 Subscribe to Orderbook.
 	2.16 Manager Funding Rate.
 	2.17 Manager Orderbook.
 	2.18 Create Market Order.

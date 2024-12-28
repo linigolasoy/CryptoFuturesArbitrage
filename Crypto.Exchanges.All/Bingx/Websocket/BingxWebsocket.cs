@@ -15,23 +15,40 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
     internal class BingxWebsocket : ICryptoWebsocket
     {
 
+        private class MarketSockets
+        {
+            public MarketSockets(BingXSocketClient oClient) 
+            { 
+                SocketClient = oClient; 
+            }
+            public BingXSocketClient SocketClient { get; }
+
+            public List<IFuturesSymbol> Symbols { get; } = new List<IFuturesSymbol>();
+        }
+
         private BingXSocketClient? m_oAccountSocketClient = null;
+        private List<MarketSockets> m_aMarketSockets = new List<MarketSockets>();
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
         private string? m_strListenKey = null;
+        private IFuturesSymbol[] m_aSymbols;
 
         private BingxBalanceManager m_oBalanceManager;
-        public BingxWebsocket(BingxFutures oExchange) 
+        private BingxOrderbookManager m_oOrderbookManager;
+        public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols) 
         { 
             m_oExchange = oExchange;
+            m_aSymbols = aSymbols;  
             m_oBalanceManager = new BingxBalanceManager(this);
+            m_oOrderbookManager = new BingxOrderbookManager(this);  
         }
         private BingxFutures m_oExchange;
         public IExchange Exchange { get => m_oExchange; }
+        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }   
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
 
-        public IWebsocketManager<IOrderbook> OrderbookManager => throw new NotImplementedException();
+        public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
         public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
 
@@ -65,6 +82,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 );
 
             if( oResultSubscribe == null ||  !oResultSubscribe.Success) return false;   
+
+
             return true;
         }
 
@@ -116,15 +135,62 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             await Task.Delay(500);
             if( m_oAccountSocketClient != null)
             {
+                await m_oAccountSocketClient.UnsubscribeAllAsync();
+                await Task.Delay(1000);
                 m_oAccountSocketClient.Dispose();
                 await Task.Delay(1000);
                 m_oAccountSocketClient = null;
             }
+
+            foreach( var oMarket in m_aMarketSockets )
+            {
+                await oMarket.SocketClient.UnsubscribeAllAsync();
+                await Task.Delay(1000);
+                oMarket.SocketClient.Dispose();
+            }
+            m_aMarketSockets.Clear();
+
+
         }
 
+        /// <summary>
+        /// Subscribe to market
+        /// </summary>
+        /// <param name="aSymbols"></param>
+        /// <returns></returns>
         public async Task<bool> SubscribeToMarket(ISymbol[] aSymbols)
         {
-            throw new NotImplementedException();
+            int nTotal = 0;
+            int nMax = 200;
+
+            while( nTotal < aSymbols.Length )
+            {
+                ISymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
+                nTotal += aPartial.Length;
+                BingXSocketClient oClient = new BingXSocketClient();
+                MarketSockets oMarketSocket = new MarketSockets(oClient);
+                foreach ( var oSymbol in aPartial) 
+                {
+                    var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
+                    if ( oResult == null || !oResult.Success ) return false;
+                    oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
+                }
+
+                m_aMarketSockets.Add(oMarketSocket);
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Update loop
+        /// </summary>
+        /// <param name="oUpdate"></param>
+        private void OnOrderbookUpdate( DataEvent<BingXOrderBook> oUpdate) 
+        {
+            if (oUpdate.Symbol == null) return;
+            if( oUpdate.Data == null) return;   
+            BingXOrderBook oData = oUpdate.Data;
+            m_oOrderbookManager.Put(oUpdate.Symbol, oUpdate.Timestamp.ToLocalTime(), oData); 
         }
     }
 }

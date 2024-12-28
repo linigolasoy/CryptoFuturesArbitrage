@@ -48,7 +48,7 @@ namespace Crypto.Common
         public IApiKey[] ApiKeys { get; }
 
 
-        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.MexcFutures, ExchangeType.BingxFutures}; }
+        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures}; }
         public decimal Amount { get => 100; }
         public int Leverage { get => 10; }
         public decimal PercentMinimum { get => 0.15M; }
@@ -63,7 +63,7 @@ namespace Crypto.Common
             List<IApiKey> aFound = new List<IApiKey>();
             foreach( var oKey in oSetupParsed.ApiKeys )
             {
-                ExchangeType eType = ExchangeType.MexcSpot;
+                ExchangeType eType = ExchangeType.BingxFutures;
                 if( Enum.TryParse<ExchangeType>(oKey.ExchangeType, out eType ) )
                 {
                     aFound.Add(new CryptoApiKey(eType, oKey.ApiKey, oKey.ApiSecret));

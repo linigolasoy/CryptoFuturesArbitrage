@@ -12,6 +12,8 @@ namespace Crypto.Interface.Websockets
 
         public IExchange Exchange { get; }  
 
+        public IFuturesSymbol[] FuturesSymbols { get; }
+
         public Task<bool> Start();
 
         public Task Stop();
@@ -22,7 +24,7 @@ namespace Crypto.Interface.Websockets
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }
         public IWebsocketManager<IFuturesPosition> FuturesPositionManager { get; }
-        // public IWebsocketManager<IOrderbook> OrderbookManager { get; }
+        public IOrderbookManager OrderbookManager { get; }
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get; }   
     }
