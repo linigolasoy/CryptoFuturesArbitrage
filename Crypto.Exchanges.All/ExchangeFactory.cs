@@ -1,4 +1,5 @@
 ﻿using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.CoinEx;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 
@@ -14,8 +15,8 @@ namespace Crypto.Exchanges.All
             {
                 case ExchangeType.BingxFutures:
                     return new BingxFutures(oSetup);
-                case ExchangeType.MexcFutures:
-                    throw new NotImplementedException();
+                case ExchangeType.CoinExFutures:
+                    return new CoinexFutures(oSetup);
                 default:
                     throw new NotImplementedException();
             }

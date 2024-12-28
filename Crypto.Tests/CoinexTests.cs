@@ -8,15 +8,15 @@ using NuGet.Frameworks;
 namespace Crypto.Tests
 {
     [TestClass]
-    public class BingxTests
+    public class CoinexTests
     {
         
         [TestMethod]
-        public async Task BingxOrdersTest()
+        public async Task CoinexOrdersTest()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);  
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange( ExchangeType.BingxFutures, oSetup);  
+            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange( ExchangeType.CoinExFutures, oSetup);  
 
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -55,11 +55,11 @@ namespace Crypto.Tests
         }
 
         [TestMethod]
-        public async Task BingxFuturesMarketDataTests()
+        public async Task CoinExFuturesMarketDataTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -97,11 +97,11 @@ namespace Crypto.Tests
 
 
         [TestMethod]
-        public async Task BingxFuturesBarsTests()
+        public async Task CoinExFuturesBarsTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -123,11 +123,11 @@ namespace Crypto.Tests
 
 
         [TestMethod]
-        public async Task BingxAccountTests()
+        public async Task CoinexAccountTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
 
             IFuturesBalance[]? aBalances = await oFutures.GetBalances();
             Assert.IsNotNull(aBalances);
@@ -136,11 +136,11 @@ namespace Crypto.Tests
 
         
         [TestMethod]
-        public async Task BingxMarketWebsocketTest()
+        public async Task CoinexMarketWebsocketTest()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
 

@@ -1,5 +1,4 @@
-﻿using Crypto.Exchange.Mexc;
-using Crypto.Interface;
+﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
 using System;

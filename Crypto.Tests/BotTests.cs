@@ -1,5 +1,4 @@
 using Crypto.Common;
-using Crypto.Exchange.Mexc;
 using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
@@ -11,6 +10,7 @@ namespace Crypto.Tests
     public class BotTests
     {
 
+        /*
         [TestMethod]
         public async Task MatchFundingTests()
         {
@@ -74,7 +74,7 @@ namespace Crypto.Tests
             Assert.IsTrue( aSorted.Count > 0 ); 
 
         }
-
+        */
 
         /*
         /// <summary>

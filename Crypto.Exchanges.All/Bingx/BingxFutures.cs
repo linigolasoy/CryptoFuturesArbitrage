@@ -64,7 +64,7 @@ namespace Crypto.Exchanges.All.Bingx
         public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice)
         {
             // m_oGlobalClient.BingX.PerpetualFuturesApi.Account
-            m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync()
+            // m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync()
             throw new NotImplementedException();
         }
 

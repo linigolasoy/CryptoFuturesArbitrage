@@ -1,8 +1,8 @@
 ﻿
 01 Exchange COINEX:
 
-	1.01 Futures fees.
-	1.02 Futures Funding Rate History To Database
+	OK 1.01 Futures fees.
+	OK 1.02 Futures Funding Rate History
 	1.03 Get Quotes.
 	1.04 Get Bars.
 	1.05 Public websockets Base.
@@ -32,7 +32,7 @@
 	OK 2.02 Get symbols and fees.
 	OK 2.03 Get Funding Rates.
 	OK 2.04 Get Funding Rates History.
-	2.05 Futures Funding Rate History To Database
+	OK 2.05 Futures Funding Rate History 
 	2.06 Get Quotes.
 	OK 2.07 Get Bars.
 	OK 2.08 Authentification.
