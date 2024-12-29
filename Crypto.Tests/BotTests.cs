@@ -10,54 +10,72 @@ namespace Crypto.Tests
     public class BotTests
     {
 
-        /*
+        
         [TestMethod]
         public async Task MatchFundingTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchangeMexc  = new MexcFuturesExchange(oSetup);
+            ICryptoFuturesExchange oExchangeCoinex = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
             ICryptoFuturesExchange oExchangeBingx = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
 
 
-            IFuturesSymbol[]? aSymbolsMexc = await oExchangeMexc.GetSymbols();  
-            Assert.IsNotNull(aSymbolsMexc);
+            IFuturesSymbol[]? aSymbolsCoinex = await oExchangeCoinex.GetSymbols();  
+            Assert.IsNotNull(aSymbolsCoinex);
 
             IFuturesSymbol[]? aSymbolsBingx = await oExchangeBingx.GetSymbols();
             Assert.IsNotNull(aSymbolsBingx);
 
-            string strBaseFind  = "LUNC";
-            string strQuoteFind = "USDT";
 
-            IFuturesSymbol? oSymbolMexc = aSymbolsMexc.FirstOrDefault(p => p.Base == strBaseFind && p.Quote == strQuoteFind);
-            Assert.IsNotNull(oSymbolMexc);
+            // Common symbols 
+            aSymbolsCoinex = aSymbolsCoinex.Where(p => aSymbolsBingx.Any(q => p.Base == q.Base && p.Quote == q.Quote)).ToArray();
+            aSymbolsBingx = aSymbolsBingx.Where(p => aSymbolsCoinex.Any(q => p.Base == q.Base && p.Quote == q.Quote)).ToArray();
 
-            IFuturesSymbol? oSymbolBingx = aSymbolsBingx.FirstOrDefault(p => p.Base == strBaseFind && p.Quote == strQuoteFind);
-            Assert.IsNotNull(oSymbolBingx);
 
-            IFundingRateSnapShot? oShotMex = await oExchangeMexc.GetFundingRates(oSymbolMexc);
-            Assert.IsNotNull(oShotMex);
+            // Websockets y subscribe symbols
+            ICryptoWebsocket? oWsCoinex = await oExchangeCoinex.CreateWebsocket();
+            Assert.IsNotNull(oWsCoinex);
 
-            IFundingRateSnapShot? oShotBing = await oExchangeBingx.GetFundingRates(oSymbolBingx);
-            Assert.IsNotNull(oShotBing);
+            ICryptoWebsocket? oWsBingx = await oExchangeBingx.CreateWebsocket();
+            Assert.IsNotNull(oWsBingx);
 
-            IFundingRateSnapShot[]? aFundingMexc = await oExchangeMexc.GetFundingRates(aSymbolsMexc);
-            Assert.IsNotNull(aFundingMexc);
+            await oWsCoinex.Start();
+            await oWsCoinex.SubscribeToMarket(aSymbolsCoinex);
 
-            IFundingRateSnapShot[]? aFundingBingx = await oExchangeBingx.GetFundingRates(aSymbolsBingx);
-            Assert.IsNotNull(aFundingBingx);
+            await oWsBingx.Start();
+            await oWsBingx.SubscribeToMarket(aSymbolsBingx);
+
+
+            await Task.Delay(10000);
+
+            IFundingRateSnapShot[] aFundingsCoinex = oWsCoinex.FundingRateManager.GetData();
+            IFundingRateSnapShot[] aFundingsBingx  = oWsBingx.FundingRateManager.GetData();
+
+
 
             SortedDictionary<decimal, IFundingRate[]> aSorted = new SortedDictionary<decimal, IFundingRate[]>();
             decimal nBestFound = 0;
-            foreach( IFundingRateSnapShot oFundingBing in aFundingBingx )
+            foreach( IFundingRateSnapShot oFundingBing in aFundingsBingx)
             {
                 string strBase = oFundingBing.Symbol.Base;
                 string strQuote = oFundingBing.Symbol.Quote;
 
-                IFundingRateSnapShot? oFundingMexc = aFundingMexc.Where( p=> p.Symbol.Base == strBase && p.Symbol.Quote == strQuote ).FirstOrDefault();
-                if (oFundingMexc == null) continue;
+                IFundingRateSnapShot? oFundingCoinex = aFundingsCoinex.Where( p=> p.Symbol.Base == strBase && p.Symbol.Quote == strQuote ).FirstOrDefault();
+                if (oFundingCoinex == null) continue;
 
-                decimal nRate = Math.Abs(oFundingBing.Rate - oFundingMexc.Rate) * 100M;
+                decimal nRate = 0;
+                if (oFundingBing.NextSettle < oFundingCoinex.NextSettle)
+                {
+                    Console.WriteLine("Pinx");
+                }
+                else if (oFundingBing.NextSettle > oFundingCoinex.NextSettle)
+                {
+                    Console.WriteLine("Poinex");
+                }
+                else
+                {
+                    nRate = Math.Abs(oFundingBing.Rate - oFundingCoinex.Rate) * 100M;
+                }
 
                 if (nRate > nBestFound)
                 {
@@ -66,7 +84,7 @@ namespace Crypto.Tests
 
                 if ( nRate > 0.10M )
                 {
-                    aSorted[nRate] = new IFundingRate[] { oFundingBing, oFundingMexc };
+                    aSorted[nRate] = new IFundingRate[] { oFundingBing, oFundingCoinex };
                 }
 
             }
@@ -74,7 +92,7 @@ namespace Crypto.Tests
             Assert.IsTrue( aSorted.Count > 0 ); 
 
         }
-        */
+        
 
         /*
         /// <summary>

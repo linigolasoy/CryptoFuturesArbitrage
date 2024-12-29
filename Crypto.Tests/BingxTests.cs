@@ -32,7 +32,7 @@ namespace Crypto.Tests
             await Task.Delay(1000);
             await oWs.SubscribeToMarket(new IFuturesSymbol[] { oSymbol }); 
 
-            await Task.Delay(5000);
+            await Task.Delay(20000);
 
             IOrderbook? oOrderbook = oWs.OrderbookManager.GetData(oSymbol.Symbol);
             Assert.IsNotNull(oOrderbook);

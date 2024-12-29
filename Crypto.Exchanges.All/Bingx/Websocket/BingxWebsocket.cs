@@ -35,12 +35,14 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private BingxBalanceManager m_oBalanceManager;
         private BingxOrderbookManager m_oOrderbookManager;
+        private BingxFundingRateManager m_oFundingManager;
         public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols) 
         { 
             m_oExchange = oExchange;
             m_aSymbols = aSymbols;  
             m_oBalanceManager = new BingxBalanceManager(this);
             m_oOrderbookManager = new BingxOrderbookManager(this);  
+            m_oFundingManager = new BingxFundingRateManager(oExchange, aSymbols);
         }
         private BingxFutures m_oExchange;
         public IExchange Exchange { get => m_oExchange; }
@@ -54,6 +56,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
+        public IWebsocketManager<IFundingRateSnapShot> FundingRateManager { get=> m_oFundingManager; }  
       
 
 
@@ -67,6 +70,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             await Stop();
 
+            await m_oFundingManager.Start();
             m_oCancelSource = new CancellationTokenSource();
             var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
             if (oResult == null || !oResult.Success) return false;
@@ -132,6 +136,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public async Task Stop()
         {
             m_oCancelSource.Cancel();
+            await m_oFundingManager.Stop(); 
             await Task.Delay(500);
             if( m_oAccountSocketClient != null)
             {

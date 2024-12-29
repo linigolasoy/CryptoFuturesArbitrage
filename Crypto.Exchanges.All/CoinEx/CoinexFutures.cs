@@ -3,6 +3,7 @@ using CoinEx.Net.Clients;
 using CoinEx.Net.Objects.Models.V2;
 using Crypto.Common;
 using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.CoinEx.Websocket;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -25,6 +26,7 @@ namespace Crypto.Exchanges.All.CoinEx
         private IExchangeRestClient m_oGlobalClient;
 
         private IFuturesSymbol[]? m_aSymbols = null;
+        private ApiCredentials m_oApiCredentials;
 
         public CoinexFutures( ICryptoSetup oSetup ) 
         {
@@ -33,15 +35,18 @@ namespace Crypto.Exchanges.All.CoinEx
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
 
+            m_oApiCredentials = new ApiCredentials(m_oApiKey.ApiKey, m_oApiKey.ApiSecret);
+
             CoinExRestClient.SetDefaultOptions(options =>
             {
-                options.ApiCredentials = new ApiCredentials(m_oApiKey.ApiKey, m_oApiKey.ApiSecret);
+                options.ApiCredentials = m_oApiCredentials;
             });
             m_oGlobalClient = new ExchangeRestClient();
             // m_oBarFeeder = new BingxBarFeeder(this);
         }
         public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
 
+        internal ApiCredentials ApiCredentials { get => m_oApiCredentials; }
         public ICryptoSetup Setup { get; }
 
         public ExchangeType ExchangeType { get => ExchangeType.CoinExFutures; }
@@ -51,9 +56,16 @@ namespace Crypto.Exchanges.All.CoinEx
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Creates websocket
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {
-            throw new NotImplementedException();
+            IFuturesSymbol[]? aSymbols = await GetSymbols();    
+            if( aSymbols == null ) return null; 
+            return new CoinexWebsocket(this, aSymbols); 
         }
 
         public async Task<IFuturesBalance[]?> GetBalances()
