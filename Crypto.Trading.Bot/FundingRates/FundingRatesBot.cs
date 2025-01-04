@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.FundingRates
 {
-    internal partial class FundingRatesBot : ITradingBot
+    internal partial class FundingRatesBot // : ITradingBot
     {
 
         private ICryptoFuturesExchange[] m_aExchanges;

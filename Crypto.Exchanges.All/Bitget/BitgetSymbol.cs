@@ -1,4 +1,4 @@
-﻿using CoinEx.Net.Objects.Models.V2;
+﻿using Bitget.Net.Objects.Models.V2;
 using Crypto.Interface.Futures;
 using System;
 using System.Collections.Generic;
@@ -6,22 +6,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Exchanges.All.CoinEx
+namespace Crypto.Exchanges.All.Bitget
 {
-    internal class CoinexSymbol : IFuturesSymbol
+    internal class BitgetSymbol : IFuturesSymbol
     {
-
-        public CoinexSymbol(ICryptoFuturesExchange oExchange, CoinExFuturesSymbol oParsed) 
+        public BitgetSymbol( ICryptoFuturesExchange oExchange, BitgetContract oParsed) 
         {
             Exchange = oExchange;
             Symbol = oParsed.Symbol;
             Base = oParsed.BaseAsset;
             Quote = oParsed.QuoteAsset;
-            LeverageMax = oParsed.Leverage.Max();
-            LeverageMin = oParsed.Leverage.Min();   
+            LeverageMax = (oParsed.MaxLeverage == null? 1: (int)(oParsed.MaxLeverage.Value));
+            LeverageMin = 1;
             FeeMaker = oParsed.MakerFeeRate;
-            FeeTaker = oParsed.MakerFeeRate;    
+            FeeTaker = oParsed.TakerFeeRate;    
         }
+
         public ICryptoFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
 

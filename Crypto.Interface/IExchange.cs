@@ -15,7 +15,9 @@ namespace Crypto.Interface
         // MexcFutures,
         //BingxSpot,
         CoinExFutures,
-        BingxFutures
+        BingxFutures,
+        BitgetFutures
+        // ByBitFutures
     }
     /// <summary>
     /// Exchange base, independent of futures or spot

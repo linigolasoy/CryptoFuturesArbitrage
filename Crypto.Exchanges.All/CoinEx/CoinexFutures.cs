@@ -68,9 +68,24 @@ namespace Crypto.Exchanges.All.CoinEx
             return new CoinexWebsocket(this, aSymbols); 
         }
 
+        /// <summary>
+        /// Get balances
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task<IFuturesBalance[]?> GetBalances()
         {
-            throw new NotImplementedException();
+            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Account.GetBalancesAsync();
+
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null ) return null;
+            List<IFuturesBalance> aResult = new List<IFuturesBalance>();
+            foreach( var oData in oResult.Data )
+            {
+                aResult.Add( new CoinexBalance( oData ) );  
+            }
+
+            return aResult.ToArray();
         }
 
         /// <summary>
@@ -108,10 +123,10 @@ namespace Crypto.Exchanges.All.CoinEx
             return aResult.ToArray();
         }
 
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol)
+        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
 
-            DateTime dFromActual = DateTime.Today.AddYears(-2);
+            DateTime dFromActual = dFrom.Date;
             DateTime dToActual = DateTime.Now;
 
             int nLimit = 1000;
@@ -144,14 +159,14 @@ namespace Crypto.Exchanges.All.CoinEx
         /// </summary>
         /// <param name="aSymbols"></param>
         /// <returns></returns>
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols)
+        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
             ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(TASK_COUNT);
             List<IFundingRate> aResult = new List<IFundingRate>();
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol));
+                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
             }
 
             var aTaskResults = await oTaskManager.GetResults();
@@ -184,7 +199,7 @@ namespace Crypto.Exchanges.All.CoinEx
             List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
             foreach( CoinExFuturesSymbol oParsed in oResult.Data ) 
             { 
-                aResult.Add(new CoinexSymbol(oParsed)); 
+                aResult.Add(new CoinexSymbol(this, oParsed)); 
             }
             m_aSymbols = aResult.ToArray();
             return m_aSymbols;

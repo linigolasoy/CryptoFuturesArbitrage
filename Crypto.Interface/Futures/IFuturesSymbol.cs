@@ -9,6 +9,7 @@ namespace Crypto.Interface.Futures
     public interface IFuturesSymbol: ISymbol
     {
 
+        public ICryptoFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
         public int LeverageMin { get; }
 

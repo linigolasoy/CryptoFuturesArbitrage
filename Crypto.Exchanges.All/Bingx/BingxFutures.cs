@@ -136,9 +136,9 @@ namespace Crypto.Exchanges.All.Bingx
         /// </summary>
         /// <param name="oSymbol"></param>
         /// <returns></returns>
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol)
+        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
-            DateTime dFromActual = DateTime.Today.AddYears(-2);
+            DateTime dFromActual = dFrom.Date;
             DateTime dToActual = DateTime.Now;
 
             int nLimit = 1000;
@@ -174,7 +174,7 @@ namespace Crypto.Exchanges.All.Bingx
         /// </summary>
         /// <param name="aSymbols"></param>
         /// <returns></returns>
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols)
+        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
 
             ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(TASK_COUNT);
@@ -182,7 +182,7 @@ namespace Crypto.Exchanges.All.Bingx
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol));
+                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
             }
 
             var aTaskResults = await oTaskManager.GetResults();
@@ -220,7 +220,7 @@ namespace Crypto.Exchanges.All.Bingx
             List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
             foreach( BingXContract oData in oResult.Data )
             {
-                aResult.Add( new BingxSymbol( oData ) );    
+                aResult.Add( new BingxSymbol(this, oData ) );    
             }
 
             m_aSymbols = aResult.ToArray(); 

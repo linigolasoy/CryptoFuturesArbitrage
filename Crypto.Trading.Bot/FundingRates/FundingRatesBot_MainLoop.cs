@@ -1,6 +1,7 @@
 ﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
+using CryptoExchange.Net.CommonObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,39 +16,23 @@ namespace Crypto.Trading.Bot.FundingRates
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
         private Task? m_oMainTask = null;
 
+
+        private List<FundingChance> m_aChances = new List<FundingChance>(); 
         /// <summary>
         /// Update funding rates
         /// </summary>
         /// <returns></returns>
-        private async Task UpdateFundingRates()
+        private void UpdateFundingRates()
         {
             if (m_aDictExchanges == null) return;
             foreach (ExchangeType eType in m_aDictExchanges.Keys)
             {
                 FundingBotExchangeData oData = m_aDictExchanges[eType];
-                if( oData.FundingSnapshots != null )
-                {
-                    DateTime dNow = DateTime.Now;
-                    IFundingRateSnapShot[] aExpired = oData.FundingSnapshots.Where(p => p.NextSettle <= dNow).ToArray();
-                    IFundingRateSnapShot[] aCurrent = oData.FundingSnapshots.Where(p => p.NextSettle > dNow).ToArray();
-                    if (aExpired.Length <= 0) continue;
-                    Logger.Info(string.Format("             Get funding rates of {0}.- {1} dates expired", eType.ToString(), aExpired.Length));
-                    IFundingRateSnapShot[]? aNewExpired = await oData.Exchange.GetFundingRates( aExpired.Select(p=> p.Symbol).ToArray() ); 
-                    if( aNewExpired != null )
-                    {
-                        List<IFundingRateSnapShot> aNewFundings = new List<IFundingRateSnapShot>();
-                        aNewFundings.AddRange( aNewExpired );   
-                        aNewFundings.AddRange( aCurrent );
-                        oData.FundingSnapshots = aNewFundings.ToArray();
-                        Logger.Info(string.Format("             Got funding rates of {0}.- {1} dates expired", eType.ToString(), aExpired.Length));
-                    }
-                    continue;
-                }
 
-                Logger.Info(string.Format("             Get funding rates of {0}", eType.ToString()));
-                IFundingRateSnapShot[]? oNew = await oData.Exchange.GetFundingRates(oData.Symbols!);
-                if( oNew == null ) { Logger.Error("No funding rates"); }
-                else { oData.FundingSnapshots = oNew; } 
+                if( oData.Websocket != null )
+                {
+                    oData.FundingSnapshots = oData.Websocket.FundingRateManager.GetData();
+                }
 
             }
 
@@ -59,10 +44,10 @@ namespace Crypto.Trading.Bot.FundingRates
         /// </summary>
         private void FindChances()
         {
-            /*
             List<FundingChance> aChances = new List<FundingChance>();
 
             if (m_aDictExchanges == null) return;
+
             ExchangeType eType1 = m_aDictExchanges.Keys.First();
             ExchangeType eType2 = m_aDictExchanges.Keys.Last();
 
@@ -70,53 +55,80 @@ namespace Crypto.Trading.Bot.FundingRates
             if (oData1.Websocket == null) return;
             if (oData1.FundingSnapshots == null) return;
 
+
             FundingBotExchangeData oData2 = m_aDictExchanges[eType2];
             if (oData2.Websocket == null) return;
             if (oData2.FundingSnapshots == null) return;
 
-            IWebsocketManager<ITicker> oManager1 = oData1.Websocket.TickerManager;
-            IWebsocketManager<ITicker> oManager2 = oData2.Websocket.TickerManager;
+            IOrderbookManager oManager1 = oData1.Websocket.OrderbookManager;
+            IOrderbookManager oManager2 = oData2.Websocket.OrderbookManager;
 
-            ITicker[] aTikers2 = oManager2.GetData();
-            int nFound1 = 0;
-            int nFound2 = 0;
+            decimal nMoney = Setup.Leverage * Setup.Amount;
 
-            foreach( ITicker oTicker1 in oManager1.GetData())
+            foreach( IFundingRateSnapShot oShot1 in oData1.FundingSnapshots ) 
             {
-                nFound1++;  
-                ITicker? oTicker2 = aTikers2.FirstOrDefault(p => p.Symbol.Base == oTicker1.Symbol.Base && p.Symbol.Quote == oTicker1.Symbol.Quote);
-                if (oTicker2 == null) continue;
-                if( oTicker1.FundingRate == 0 || oTicker2.FundingRate == 0 ) continue;
-                nFound2++;  
-                bool bFirstBuy = (oTicker1.FundingRate < oTicker2.FundingRate);
-                decimal nRate = Math.Abs(oTicker1.FundingRate - oTicker2.FundingRate) * 100;
+                IFundingRateSnapShot? oShot2 = oData2.FundingSnapshots.FirstOrDefault(p => p.Symbol.Base == oShot1.Symbol.Base && p.Symbol.Quote == oShot1.Symbol.Quote);
+                if (oShot2 == null) continue;
 
-                if (nRate < Setup.PercentMinimum) continue;
-                FundingChance? oChance = null;
-                if( bFirstBuy)
+                decimal nRate = 0;
+                bool bFirstBuy = (oShot1.Rate < oShot2.Rate);
+                if ( oShot1.NextSettle < oShot2.NextSettle )
                 {
-                    FundingChanceData oChanceBuyData = new FundingChanceData(oData1.Exchange.ExchangeType, (IFuturesSymbol)oTicker1.Symbol, oTicker1.Ask, oTicker1.FundingRate, DateTime.Now);
-                    FundingChanceData oChanceSellData = new FundingChanceData(oData2.Exchange.ExchangeType, (IFuturesSymbol)oTicker2.Symbol, oTicker2.Bid, oTicker2.FundingRate, DateTime.Now);
+                    nRate = Math.Abs( oShot1.Rate );
+                    bFirstBuy = (oShot1.Rate < 0);
+                }
+                else if (oShot1.NextSettle > oShot2.NextSettle)
+                {
+                    nRate = Math.Abs(oShot2.Rate);
+                    bFirstBuy = (oShot2.Rate > 0);
+                }
+                else
+                {
+                    nRate = Math.Abs(oShot1.Rate - oShot2.Rate) * 100;
+                }
+                    
+                if (nRate < Setup.PercentMinimum) continue;
+
+                FundingChance? oChance = null;
+                if ( bFirstBuy )
+                {
+                    IOrderbookPrice? oPrice1 = oData1.Websocket.OrderbookManager.GetBestAsk(oShot1.Symbol.Symbol, nMoney);
+                    if (oPrice1 == null) continue;
+                    IOrderbookPrice? oPrice2 = oData2.Websocket.OrderbookManager.GetBestBid(oShot2.Symbol.Symbol, nMoney);
+                    if (oPrice2 == null) continue;
+                    FundingChanceData oChanceBuyData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.NextSettle);
+                    FundingChanceData oChanceSellData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.NextSettle);
                     oChance = new FundingChance(nRate, oChanceBuyData, oChanceSellData);
                 }
                 else
                 {
-                    FundingChanceData oChanceBuyData = new FundingChanceData(oData2.Exchange.ExchangeType, (IFuturesSymbol)oTicker2.Symbol, oTicker2.Ask, oTicker2.FundingRate, DateTime.Now);
-                    FundingChanceData oChanceSellData = new FundingChanceData(oData1.Exchange.ExchangeType, (IFuturesSymbol)oTicker1.Symbol, oTicker1.Bid, oTicker1.FundingRate, DateTime.Now);
+                    IOrderbookPrice? oPrice1 = oData1.Websocket.OrderbookManager.GetBestBid(oShot1.Symbol.Symbol, nMoney);
+                    if (oPrice1 == null) continue;
+                    IOrderbookPrice? oPrice2 = oData2.Websocket.OrderbookManager.GetBestAsk(oShot2.Symbol.Symbol, nMoney);
+                    if (oPrice2 == null) continue;
+                    FundingChanceData oChanceSellData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.NextSettle);
+                    FundingChanceData oChanceBuyData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.NextSettle);
                     oChance = new FundingChance(nRate, oChanceBuyData, oChanceSellData);
+
                 }
+
                 if (oChance != null)
                 {
-                    if( oChance.BuyData.Price < oChance.SellData.Price) 
+                    //if (oChance.BuyData.Price < oChance.SellData.Price)
                     {
                         aChances.Add(oChance);
                     }
 
                 }
+
+
             }
-            if( aChances.Count > 0 )
+
+            FundingChance[] aNewChances = aChances.Where( p=> !m_aChances.Any(q=> p.Base == q.Base && p.Quote == q.Quote)).ToArray(); 
+            if( aNewChances.Length > 0 )
             {
-                FundingChance oBest = aChances.OrderByDescending(p => p.RatePercent).First();
+                FundingChance oBest = aNewChances.OrderByDescending(p => p.RatePercent).First();
+                m_aChances.Add(oBest);
 
                 string strInfo = string.Format(" -- Best chance {0:0.000}% Buy {1} price {2}... Sell {3} price {4}",
                     oBest.RatePercent,
@@ -126,7 +138,6 @@ namespace Crypto.Trading.Bot.FundingRates
                     oBest.SellData.Price);
                 Logger.Info(strInfo);
             }
-            */
         }
 
 
@@ -148,14 +159,14 @@ namespace Crypto.Trading.Bot.FundingRates
                         Logger.Info("     ....");
                         dLastRun = dNow;    
                     }
-                    await UpdateFundingRates();
+                    UpdateFundingRates();
                     FindChances();
                 }
                 catch (Exception ex)
                 {
                     Logger.Error("Error on main loop",ex);
                 }
-                await Task.Delay(5000);
+                await Task.Delay(500);
             }
         }
 

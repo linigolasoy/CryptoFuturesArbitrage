@@ -36,7 +36,12 @@ namespace Crypto.Trading.Bot.FundingRates
             RatePercent = ratePercent;
             BuyData = buyData;
             SellData = sellData;
+            Base = buyData.Symbol.Base;
+            Quote = buyData.Symbol.Quote;
         }
+
+        public string Base { get; }
+        public string Quote { get; }
 
         public decimal RatePercent { get; } 
 

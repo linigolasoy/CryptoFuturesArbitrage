@@ -70,12 +70,12 @@ namespace Crypto.Tests
             IFuturesSymbol? oToFind = aSymbols.FirstOrDefault(p => p.Base == "XRP");
             Assert.IsNotNull(oToFind);
 
-
-            IFundingRate[]? aHistorySingle = await oFutures.GetFundingRatesHistory(oToFind);
+            DateTime dFrom = DateTime.Today.AddMonths(-2);
+            IFundingRate[]? aHistorySingle = await oFutures.GetFundingRatesHistory(oToFind, dFrom);
             Assert.IsNotNull(aHistorySingle);
             Assert.IsTrue(aHistorySingle.Length > 10);
 
-            IFundingRate[]? aHistoryMulti = await oFutures.GetFundingRatesHistory(aSymbols.Take(30).ToArray());
+            IFundingRate[]? aHistoryMulti = await oFutures.GetFundingRatesHistory(aSymbols.Take(30).ToArray(), dFrom);
             Assert.IsNotNull(aHistoryMulti);
             Assert.IsTrue(aHistoryMulti.Length > 100);
 

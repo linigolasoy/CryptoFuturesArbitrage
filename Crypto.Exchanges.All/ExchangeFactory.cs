@@ -1,4 +1,6 @@
 ﻿using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.Bitget;
+using Crypto.Exchanges.All.Bybit;
 using Crypto.Exchanges.All.CoinEx;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
@@ -17,6 +19,10 @@ namespace Crypto.Exchanges.All
                     return new BingxFutures(oSetup);
                 case ExchangeType.CoinExFutures:
                     return new CoinexFutures(oSetup);
+                case ExchangeType.BitgetFutures:
+                    return new BitgetFutures(oSetup);
+                // case ExchangeType.ByBitFutures:
+                //     return new BybitFutures(oSetup);
                 default:
                     throw new NotImplementedException();
             }

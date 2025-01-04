@@ -15,7 +15,9 @@ namespace Crypto.Trading.Bot
     {
         public ICryptoSetup Setup { get; }  
 
-        public IExchange[] Exchanges { get; }
+        public IBotExchangeData[] ExchangeData { get; }
+
+        public IBotStrategy? Strategy { get; }
 
         public ICommonLogger Logger { get; }    
         public Task Start();

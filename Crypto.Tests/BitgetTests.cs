@@ -8,15 +8,15 @@ using NuGet.Frameworks;
 namespace Crypto.Tests
 {
     [TestClass]
-    public class BingxTests
+    public class BitgetTests
     {
         
         [TestMethod]
-        public async Task BingxOrdersTest()
+        public async Task BitgetOrdersTest()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);  
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange( ExchangeType.BingxFutures, oSetup);  
+            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange( ExchangeType.BitgetFutures, oSetup);  
 
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -55,11 +55,11 @@ namespace Crypto.Tests
         }
 
         [TestMethod]
-        public async Task BingxFuturesMarketDataTests()
+        public async Task BitgetFuturesMarketDataTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -70,6 +70,13 @@ namespace Crypto.Tests
             IFuturesSymbol? oToFind = aSymbols.FirstOrDefault(p => p.Base == "XRP");
             Assert.IsNotNull(oToFind);
 
+            IFundingRateSnapShot? oRateFound = await oFutures.GetFundingRates(oToFind);
+            Assert.IsNotNull(oRateFound);
+
+
+            IFundingRateSnapShot[]? aRates = await oFutures.GetFundingRates(aSymbols);
+            Assert.IsNotNull(aRates);
+            Assert.IsTrue(aRates.Length >= 10);
 
             DateTime dFrom = DateTime.Today.AddMonths(-2);
             IFundingRate[]? aHistorySingle = await oFutures.GetFundingRatesHistory(oToFind, dFrom);
@@ -81,13 +88,6 @@ namespace Crypto.Tests
             Assert.IsTrue(aHistoryMulti.Length > 100);
 
 
-            IFundingRateSnapShot? oRateFound = await oFutures.GetFundingRates(oToFind);
-            Assert.IsNotNull(oRateFound);
-
-
-            IFundingRateSnapShot[]? aRates = await oFutures.GetFundingRates(aSymbols);    
-            Assert.IsNotNull(aRates);
-            Assert.IsTrue(aRates.Length >= 10);
 
             IFundingRateSnapShot[] aOrdered = aRates.OrderByDescending(p => p.Rate).ToArray();
             Assert.IsTrue(aOrdered.Any());
@@ -98,11 +98,11 @@ namespace Crypto.Tests
 
 
         [TestMethod]
-        public async Task BingxFuturesBarsTests()
+        public async Task BitgetFuturesBarsTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -124,11 +124,11 @@ namespace Crypto.Tests
 
 
         [TestMethod]
-        public async Task BingxAccountTests()
+        public async Task BitgetAccountTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesBalance[]? aBalances = await oFutures.GetBalances();
             Assert.IsNotNull(aBalances);
@@ -137,11 +137,11 @@ namespace Crypto.Tests
 
         
         [TestMethod]
-        public async Task BingxMarketWebsocketTest()
+        public async Task BitgetMarketWebsocketTest()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
 

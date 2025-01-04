@@ -15,8 +15,8 @@ namespace Crypto.Interface.Futures
         public Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols);
 
 
-        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol);
-        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols);
+        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom);
+        public Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom);
 
         public IFuturesBarFeeder BarFeeder { get; }
 
