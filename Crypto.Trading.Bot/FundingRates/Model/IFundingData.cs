@@ -11,6 +11,6 @@ namespace Crypto.Trading.Bot.FundingRates.Model
     {
         public ICryptoFuturesExchange[] Exchanges { get; }
 
-        public IFundingDate? GetNext(DateTime? dActual);
+        public Task<IFundingDate?> GetNext(DateTime? dActual);
     }
 }

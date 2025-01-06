@@ -12,7 +12,7 @@ namespace CryptoFuturesArbitrage.Console
     public class Program
     {
         private const string SETUP_FILE = "D:/Data/CryptoFutures/FuturesSetup.json";
-        private static bool TEST = true;
+        private static bool TEST = false;
 
 
 
@@ -87,7 +87,7 @@ namespace CryptoFuturesArbitrage.Console
             Dictionary<DateTime, decimal> aFound = new Dictionary<DateTime, decimal>();
             // Start processing
             IFundingDate? oDate = null;
-            while ( ( oDate = oTestData.GetNext( (oDate == null ? null : oDate.DateTime) ) )!= null )
+            while ( ( oDate = await oTestData.GetNext( (oDate == null ? null : oDate.DateTime) ) )!= null )
             {
                 IFundingPair? oPair = oDate.GetBest();
                 string strBest = "NONE";
@@ -124,6 +124,83 @@ namespace CryptoFuturesArbitrage.Console
         }
 
 
+        private static void LogFundingPair( ICommonLogger oLogger, IFundingPair oPair )
+        {
+
+            StringBuilder oBuild = new StringBuilder();
+            oBuild.Append($"Next {oPair.FundingDate.DateTime.ToShortTimeString()}: {oPair.BuySymbol.Base} {oPair.Percent.ToString("0.###")} % ");
+            oBuild.Append($" Long on {oPair.BuySymbol.Exchange.ExchangeType.ToString()} Short on {oPair.SellSymbol.Exchange.ExchangeType.ToString()}");
+
+            oLogger.Info(oBuild.ToString());
+
+        }
+
+        private static async Task DoWebsocketFundingData(ICryptoSetup oSetup, ICommonLogger oLogger)
+        {
+            IFundingSocketData oSocketData = BotFactory.CreateFundingSocket(oSetup, oLogger);
+
+            bool bStarted = await oSocketData.Start();
+            if( !bStarted ) { oLogger.Error("Could not start funding socket data"); return; }
+
+
+            IFundingPair? oLast = null;
+
+
+            await Task.Delay(5000);
+
+            DateTime dLast = DateTime.Now;  
+
+            bool bResult = true;
+            while (bResult)
+            {
+                bResult = !NeedsCancel();
+                IFundingDate[]? aDates = await oSocketData.GetFundingDates();
+                if (aDates == null) continue;
+                IFundingDate? oNext = await oSocketData.GetNext(null);
+                if (oNext == null) continue;
+                IFundingPair? oPair = oNext.GetBest();
+                if (oPair == null) continue;
+                bool bLog = true;
+
+                if( oLast != null )
+                {
+                    if( oLast.Percent == oPair.Percent )
+                    {
+                        if( oLast.BuySymbol.Symbol == oPair.BuySymbol.Symbol && oLast.SellSymbol.Symbol == oPair.SellSymbol.Symbol )
+                        {
+                            if (oLast.BuySymbol.Exchange.ExchangeType == oPair.BuySymbol.Exchange.ExchangeType && oLast.SellSymbol.Exchange.ExchangeType == oPair.SellSymbol.Exchange.ExchangeType)
+                            {
+                                bLog = false;   
+                            }
+
+                        }
+                    }
+                }
+
+                if( bLog )
+                {
+                    LogFundingPair(oLogger, oPair);
+                }
+
+                if( (DateTime.Now - dLast).TotalMinutes >= 5 )
+                {
+                    dLast = DateTime.Now;
+                    oLogger.Info("...");
+                }
+
+                oLast = oPair;
+
+                await Task.Delay(30000);
+            }
+
+
+            await oSocketData.Stop();
+
+            await Task.Delay(2000);
+
+        }
+
+
         public static async Task<int> Main(string[] args)
         {
 
@@ -132,8 +209,12 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
-            if( TEST ) await DoTester(oSetup, oLogger); 
-            else await DoBot(oSetup, oLogger);  
+            if (TEST) await DoTester(oSetup, oLogger);
+            else
+            {
+                await DoWebsocketFundingData(oSetup, oLogger);  
+                // await DoBot(oSetup, oLogger);
+            }
 
             return 0;
         }

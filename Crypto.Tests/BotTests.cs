@@ -30,7 +30,21 @@ namespace Crypto.Tests
             await Task.Delay(5000);
             Assert.IsNotNull(oSocketData.Websockets);
 
+            IFundingDate[]? aDates = await oSocketData.GetFundingDates();   
+            Assert.IsNotNull(aDates);
+            Assert.IsTrue(aDates.Any());
 
+            IFundingDate? oNext = await oSocketData.GetNext(null);
+            Assert.IsNotNull(oNext);
+
+            IFundingPair? oPair = oNext.GetBest();
+            Assert.IsNotNull(oPair);    
+
+            foreach( var oDate in aDates )
+            {
+                IFundingPair? oBest = oDate.GetBest();  
+                Assert.IsNotNull(oBest);    
+            }
 
             await oSocketData.Stop();
 

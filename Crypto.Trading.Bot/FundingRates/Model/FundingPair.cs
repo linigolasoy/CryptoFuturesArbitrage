@@ -59,7 +59,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                 return;
             }
             decimal nFees = BuySymbol.FeeTaker + BuySymbol.FeeMaker + SellSymbol.FeeMaker + SellSymbol.FeeTaker;
-            Percent = (nRate - nFees) * 100M;
+            Percent = Math.Round( (nRate - nFees) * 100M, 3);
             return;
         }
         public IFundingDate FundingDate { get; }

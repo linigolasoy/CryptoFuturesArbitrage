@@ -54,17 +54,20 @@ namespace Crypto.Tests
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
-            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "GMT" && p.Quote == "USDT");
+            List<IFuturesSymbol> aToSubscribe = aSymbols.Take(30).ToList(); 
+
+            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "ARK" && p.Quote == "USDT");
             Assert.IsNotNull(oSymbol);
+            if( !aToSubscribe.Any(p=> p.Symbol == oSymbol.Symbol) ) aToSubscribe.Add(oSymbol);
 
             ICryptoWebsocket? oWs = await oExchange.CreateWebsocket();
             Assert.IsNotNull(oWs);
 
             await oWs.Start();
             await Task.Delay(1000);
-            await oWs.SubscribeToMarket(new IFuturesSymbol[] { oSymbol }); 
+            await oWs.SubscribeToMarket(aToSubscribe.ToArray()); 
 
-            await Task.Delay(20000);
+            await Task.Delay(5000);
 
             IOrderbook? oOrderbook = oWs.OrderbookManager.GetData(oSymbol.Symbol);
             Assert.IsNotNull(oOrderbook);
@@ -78,7 +81,10 @@ namespace Crypto.Tests
             Assert.IsTrue(aBalances.Length > 0);
 
 
-            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 20, 1, oPrice.Price);
+            bool bLeverage = await oExchange.SetLeverage(oSymbol, 10);
+            Assert.IsTrue(bLeverage);
+            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 5, oPrice.Price);
+            Assert.IsNotNull(oOrder);
             Assert.IsNotNull(oOrder);
 
             await Task.Delay(5000);

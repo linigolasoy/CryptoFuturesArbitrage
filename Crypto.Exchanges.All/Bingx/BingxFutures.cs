@@ -49,24 +49,22 @@ namespace Crypto.Exchanges.All.Bingx
 
         public ExchangeType ExchangeType { get => ExchangeType.BingxFutures; }
 
-        public IExchangeRestClient GlobalClient { get => m_oGlobalClient; } 
+        public IExchangeRestClient GlobalClient { get => m_oGlobalClient; }
 
-        /// <summary>
-        /// Set leverage
-        /// </summary>
-        /// <param name="oSymbol"></param>
-        /// <param name="bBuy"></param>
-        /// <param name="nMargin"></param>
-        /// <param name="nLeverage"></param>
-        /// <param name="nPrice"></param>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice)
+
+        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
         {
-            // m_oGlobalClient.BingX.PerpetualFuturesApi.Account
-            // m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync()
+            throw new NotImplementedException();    
+        }
+        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
+        {
             throw new NotImplementedException();
         }
+        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
+        {
+            throw new NotImplementedException();
+        }
+
 
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {

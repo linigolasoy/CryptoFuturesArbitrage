@@ -22,6 +22,8 @@ namespace Crypto.Interface.Futures
 
         public Task<IFuturesBalance[]?> GetBalances();
 
-        public Task<IFuturesOrder?> CreateLimitOrder( IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice );
+        public Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage);
+        public Task<IFuturesOrder?> CreateLimitOrder( IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice );
+        public Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice);
     }
 }

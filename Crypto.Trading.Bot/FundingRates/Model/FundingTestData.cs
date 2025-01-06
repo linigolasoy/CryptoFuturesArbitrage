@@ -53,7 +53,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         /// <param name="dActual"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public IFundingDate? GetNext(DateTime? dActual)
+        public async Task<IFundingDate?> GetNext(DateTime? dActual)
         {
             if (dActual == null)
             {

@@ -19,16 +19,20 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         private BitgetSocketClient? m_oPrivateClient = null;
         private BitgetSocketClient? m_oFundingClient = null;
+        private BitgetSocketClient? m_oMarketClient = null;
 
         private BitgetFutures m_oExchange;
 
         private BitgetFundingRateManager m_oFundingManager;
-
+        private BitgetBalanceManager m_oBalanceManager;
+        private BitgetOrderbookManager m_oOrderbookManager;
         public BitgetWebsocket( BitgetFutures oExchange, IFuturesSymbol[] aSymbols ) 
         { 
             m_oExchange = oExchange;
             FuturesSymbols = aSymbols;
             m_oFundingManager = new BitgetFundingRateManager(aSymbols);
+            m_oBalanceManager = new BitgetBalanceManager();
+            m_oOrderbookManager = new BitgetOrderbookManager(aSymbols);
         }
         public IExchange Exchange { get => m_oExchange; }
 
@@ -38,11 +42,11 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
 
-        public IOrderbookManager OrderbookManager => throw new NotImplementedException();
+        public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
         public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager => throw new NotImplementedException();
+        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
         public async Task<bool> Start()
         {
@@ -100,7 +104,25 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public async Task<bool> SubscribeToMarket(ISymbol[] aSymbols)
         {
-            throw new NotImplementedException();
+            if (m_oMarketClient == null)
+            {
+                m_oMarketClient = new BitgetSocketClient();
+            }
+            await m_oMarketClient.UnsubscribeAllAsync();
+            foreach( var symbol in aSymbols) 
+            {
+                var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync(BitgetProductTypeV2.UsdtFutures, symbol.Symbol, 5, OnOrderBook);
+                if (oResult == null || !oResult.Success) return false;
+            }
+            
+            return true;
+        }
+
+        private void OnOrderBook( DataEvent<BitgetOrderBookUpdate> oEvent )
+        {
+            if( oEvent == null || oEvent.Data == null ) return; 
+            if( oEvent.Symbol == null ) return; 
+            m_oOrderbookManager.Put(oEvent.Symbol, oEvent.Data);
         }
 
         private void OnTicker(DataEvent<BitgetFuturesTickerUpdate> oEvent)
@@ -111,6 +133,10 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         private void OnBalance( DataEvent<IEnumerable<BitgetFuturesBalanceUpdate>> oEvent )
         {
             if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
+            foreach( var oData in oEvent.Data )
+            {
+                m_oBalanceManager.Put(oData);
+            }
             return;
         }
         private void OnOrder(DataEvent<IEnumerable<BitgetFuturesOrderUpdate>> oEvent)

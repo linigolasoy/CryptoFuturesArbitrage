@@ -1,6 +1,7 @@
 ﻿using BingX.Net.Clients;
 using Bitget.Net.Clients;
 using Bitget.Net.Enums;
+using Bitget.Net.Enums.V2;
 using Bitget.Net.Objects;
 using Crypto.Common;
 using Crypto.Exchanges.All.Bitget.Websocket;
@@ -20,7 +21,7 @@ namespace Crypto.Exchanges.All.Bitget
 {
     internal class BitgetFutures : ICryptoFuturesExchange
     {
-
+        private const string USDT = "USDT";
         private const int TASK_COUNT = 20;
         private IApiKey m_oApiKey;
         private IExchangeRestClient m_oGlobalClient;
@@ -52,7 +53,32 @@ namespace Crypto.Exchanges.All.Bitget
 
         public ExchangeType ExchangeType { get => ExchangeType.BitgetFutures; }
 
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice)
+        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
+        {
+            var oResultLong = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
+                BitgetProductTypeV2.UsdtFutures,
+                oSymbol.Symbol,
+                USDT,
+                nLeverage,
+                PositionSide.Long
+                );
+            var oResultShort = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
+                BitgetProductTypeV2.UsdtFutures,
+                oSymbol.Symbol,
+                USDT,
+                nLeverage,
+                PositionSide.Long
+                );
+
+            if (oResultLong == null || oResultShort == null) return false;
+            if (oResultLong.Success && oResultShort.Success) return true;
+            return false;
+        }
+        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
         {
             throw new NotImplementedException();
         }

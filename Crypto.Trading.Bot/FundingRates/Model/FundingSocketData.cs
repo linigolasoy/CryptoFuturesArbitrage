@@ -143,15 +143,88 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             return;
         }
 
-        public Task<IFundingDate[]?> GetFundingDates()
+        /// <summary>
+        /// Put date
+        /// </summary>
+        /// <param name="aResult"></param>
+        /// <param name="aPair"></param>
+        /// <param name="aRates"></param>
+        private void PutDate(List<IFundingDate> aResult, IFuturesSymbol[] aPair, IFundingRate[] aRates)
         {
-            throw new NotImplementedException();
+            DateTime[] aDates = aRates.Select(p=> p.SettleDate).Distinct().OrderBy(p=> p).ToArray();  
+            foreach( DateTime dDate in aDates) 
+            {
+                IFundingRate[] aRatesDate = aRates.Where(p=> p.SettleDate == dDate).ToArray();  
+
+                IFundingDate? oFound = aResult.FirstOrDefault(p=> p.DateTime == dDate);
+                if( oFound == null )
+                {
+                    oFound = new FundingDate(dDate);    
+                    aResult.Add(oFound);    
+                }
+                ((FundingDate)oFound).Put(aPair, aRatesDate);
+            }
+        }
+
+        /// <summary>
+        /// Get funding dates
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IFundingDate[]?> GetFundingDates()
+        {
+            if (Websockets == null || m_aSymbols == null ) return null;
+            foreach( var oWs in Websockets )
+            {
+                IFundingRate[]? aRates = oWs.FundingRateManager.GetData();
+                if (aRates == null) return null;
+            }
+
+
+            List<IFundingDate> aResult = new List<IFundingDate>();
+
+            foreach( string strKey in m_aSymbols.Keys )
+            {
+                IFuturesSymbol[] aSymbols = m_aSymbols[strKey];
+                List<IFundingRate> aRates = new List<IFundingRate>();
+                bool bOk = true;
+
+                foreach( var oSymbol in aSymbols )
+                {
+                    ICryptoWebsocket? oSocket = Websockets.FirstOrDefault(p => p.Exchange.ExchangeType == oSymbol.Exchange.ExchangeType);
+                    if( oSocket == null )
+                    {
+                        bOk = false;
+                        break;
+                    }
+                    IFundingRate? oRate = oSocket.FundingRateManager.GetData(oSymbol.Symbol);
+                    if( oRate == null )
+                    {
+                        bOk = false;
+                        break;
+                    }
+                    aRates.Add( oRate );    
+                }
+
+
+                if (!bOk) continue;
+                PutDate(aResult, aSymbols, aRates.ToArray());
+            }
+
+            return aResult.ToArray();
         }
 
 
-        public IFundingDate? GetNext(DateTime? dActual)
+        /// <summary>
+        /// Get next funding 
+        /// </summary>
+        /// <param name="dActual"></param>
+        /// <returns></returns>
+        public async Task<IFundingDate?> GetNext(DateTime? dActual)
         {
-            throw new NotImplementedException();
+            IFundingDate[]? aData = await GetFundingDates();
+            if( aData == null || aData.Length <= 0 ) return null;    
+            return aData.OrderBy(p=> p.DateTime).First(); 
+
         }
     }
 }

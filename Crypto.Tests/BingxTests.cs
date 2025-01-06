@@ -45,8 +45,9 @@ namespace Crypto.Tests
             Assert.IsNotNull(aBalances);
             Assert.IsTrue(aBalances.Length > 0);
 
-
-            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 20, 1, oPrice.Price);
+            bool bLeverage = await oExchange.SetLeverage(oSymbol, 10);
+            Assert.IsTrue(bLeverage);
+            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 5, oPrice.Price);
             Assert.IsNotNull(oOrder);
 
             await Task.Delay(5000);

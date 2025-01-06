@@ -51,7 +51,15 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public ExchangeType ExchangeType { get => ExchangeType.CoinExFutures; }
 
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nMargin, int nLeverage, decimal nPrice)
+        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
         {
             throw new NotImplementedException();
         }
