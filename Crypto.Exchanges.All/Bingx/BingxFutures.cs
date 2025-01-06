@@ -158,7 +158,7 @@ namespace Crypto.Exchanges.All.Bingx
                 }
 
                 if (aPartial.Count <= 0) break;
-                DateTime dMinimum = aPartial.Select(p => p.DateTime).Min();
+                DateTime dMinimum = aPartial.Select(p => p.SettleDate).Min();
                 dToActual = dMinimum.AddHours(-1);
                 aResult.AddRange(aPartial);
                 if (dMinimum.Date <= dFromActual.Date) break;

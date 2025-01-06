@@ -46,7 +46,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public IFuturesSymbol[] FuturesSymbols { get; }
 
-        public IWebsocketManager<IFundingRateSnapShot> FundingRateManager { get => m_oFundingManager; }
+        public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
 
         public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
@@ -58,7 +58,6 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         public async Task<bool> Start()
         {
             await Stop();
-            await m_oFundingManager.Start();    
             m_oPrivateClient = new CoinExSocketClient();
             m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
 
@@ -89,7 +88,6 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public async Task Stop()
         {
-            await m_oFundingManager.Stop();
             return;
         }
 
@@ -112,6 +110,36 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             if(oEvent == null) return;  
             if(oEvent.Data == null) return;
             m_oOrderbookManager.Put(oEvent.Data);
+        }
+
+        /// <summary>
+        /// Subscribe to tickers, no funding rates on Coinex
+        /// </summary>
+        /// <param name="aSymbols"></param>
+        /// <returns></returns>
+        public async Task<bool> SubscribeToFundingRates(IFuturesSymbol[] aSymbols)
+        {
+            MarketWebsocket oNewWs = new MarketWebsocket(new CoinExSocketClient());
+
+            string[] aSymbolString = aSymbols.Select(p=> p.Symbol).ToArray();
+
+            var oResult = await oNewWs.Client.FuturesApi.SubscribeToTickerUpdatesAsync(aSymbolString, OnTicker);
+            if( oResult == null || !oResult.Success ) return false;    
+            oNewWs.Symbols.AddRange(aSymbols);
+            m_aMarketWebsockets.Add(oNewWs);
+            return true;
+        }
+
+        /// <summary>
+        /// Put on manager
+        /// </summary>
+        /// <param name="oEvent"></param>
+        private void OnTicker(DataEvent<IEnumerable<CoinExFuturesTickerUpdate>> oEvent)
+        {
+            if( oEvent == null) return;
+            if( oEvent.Data == null) return;
+            if (oEvent.Data.Count() <= 0) return;
+            m_oFundingManager.Put(oEvent.Data);
         }
     }
 }

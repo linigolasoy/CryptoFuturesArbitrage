@@ -63,11 +63,11 @@ namespace Crypto.Trading.Bot.FundingRates
                 Bot.Logger.Info($"   MaxSell {nMaxSell}");
             }
 
-            if (oBuySymbol.FundingRate.NextSettle < oSellSymbol.FundingRate.NextSettle)
+            if (oBuySymbol.FundingRate.SettleDate < oSellSymbol.FundingRate.SettleDate)
             {
                 return nBuyPercent;
             }
-            if (oBuySymbol.FundingRate.NextSettle > oSellSymbol.FundingRate.NextSettle)
+            if (oBuySymbol.FundingRate.SettleDate > oSellSymbol.FundingRate.SettleDate)
             {
                 return nSellPercent;
             }

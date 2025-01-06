@@ -14,21 +14,21 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxFundingRateSnapshot(IFuturesSymbol oSymbol, BingXFundingRate oRate )
         {
             Symbol = oSymbol;
-            DateTime = DateTime.Now;
+            SnapshotDate = DateTime.Now;
             Rate = oRate.LastFundingRate;
-            NextSettle = oRate.NextFundingTime.ToLocalTime();
+            SettleDate = oRate.NextFundingTime.ToLocalTime();
         }
         public decimal Maximum { get => 100.0M; }
 
         public decimal Minimum { get => -100.0M; }
 
-        public DateTime NextSettle { get; }
+        public DateTime SettleDate { get; }
 
         public IFuturesSymbol Symbol { get; }
 
         public decimal Rate { get;}
 
-        public DateTime DateTime { get; }
+        public DateTime SnapshotDate { get; }
 
         public int Cycle { get => 8; }
     }
@@ -39,14 +39,14 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxFundingRate(IFuturesSymbol oSymbol, BingXFundingRateHistory oRate)
         {
             Symbol = oSymbol;
-            DateTime = oRate.FundingTime.ToLocalTime();
+            SettleDate = oRate.FundingTime.ToLocalTime();
             Rate = oRate.FundingRate;
         }
         public IFuturesSymbol Symbol { get; }
 
         public decimal Rate { get; }
 
-        public DateTime DateTime { get; }
+        public DateTime SettleDate { get; }
 
         public int Cycle { get => 8; }
     }

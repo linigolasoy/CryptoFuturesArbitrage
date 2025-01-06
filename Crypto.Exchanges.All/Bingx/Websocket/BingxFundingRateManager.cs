@@ -9,14 +9,14 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx.Websocket
 {
-    internal class BingxFundingRateManager : IWebsocketManager<IFundingRateSnapShot>
+    internal class BingxFundingRateManager : IWebsocketManager<IFundingRate>
     {
 
         private Task? m_oMainTask = null;
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
 
-        private ConcurrentDictionary<string, IFundingRateSnapShot> m_aFundingRates = new ConcurrentDictionary<string, IFundingRateSnapShot>();
+        private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
 
         private ICryptoFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
@@ -31,12 +31,12 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// Get all data
         /// </summary>
         /// <returns></returns>
-        public IFundingRateSnapShot[] GetData()
+        public IFundingRate[] GetData()
         {
-            List<IFundingRateSnapShot> aResult = new List<IFundingRateSnapShot> (); 
+            List<IFundingRate> aResult = new List<IFundingRate> (); 
             foreach( string strKey in m_aFundingRates.Keys ) 
             {
-                IFundingRateSnapShot? oFound = GetData(strKey);
+                IFundingRate? oFound = GetData(strKey);
                 if (oFound == null) continue;
                 aResult.Add(oFound);
             }
@@ -48,9 +48,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// </summary>
         /// <param name="strSymbol"></param>
         /// <returns></returns>
-        public IFundingRateSnapShot? GetData(string strSymbol)
+        public IFundingRate? GetData(string strSymbol)
         {
-            IFundingRateSnapShot? oFound = null;
+            IFundingRate? oFound = null;
             if (m_aFundingRates.TryGetValue(strSymbol, out oFound)) return oFound;
             return null;
         }
@@ -84,7 +84,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                         m_aFundingRates.AddOrUpdate(oShot.Symbol.Symbol, p => oShot, (p, s) => oShot);
                     }
                 }
-                await Task.Delay(3000);
+                await Task.Delay(2000);
             }
         }
 

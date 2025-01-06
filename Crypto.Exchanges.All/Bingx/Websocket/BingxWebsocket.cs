@@ -17,9 +17,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private class MarketSockets
         {
-            public MarketSockets(BingXSocketClient oClient) 
-            { 
-                SocketClient = oClient; 
+            public MarketSockets(BingXSocketClient oClient)
+            {
+                SocketClient = oClient;
             }
             public BingXSocketClient SocketClient { get; }
 
@@ -36,17 +36,17 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private BingxBalanceManager m_oBalanceManager;
         private BingxOrderbookManager m_oOrderbookManager;
         private BingxFundingRateManager m_oFundingManager;
-        public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols) 
-        { 
+        public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols)
+        {
             m_oExchange = oExchange;
-            m_aSymbols = aSymbols;  
+            m_aSymbols = aSymbols;
             m_oBalanceManager = new BingxBalanceManager(this);
-            m_oOrderbookManager = new BingxOrderbookManager(this);  
+            m_oOrderbookManager = new BingxOrderbookManager(this);
             m_oFundingManager = new BingxFundingRateManager(oExchange, aSymbols);
         }
         private BingxFutures m_oExchange;
         public IExchange Exchange { get => m_oExchange; }
-        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }   
+        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
 
@@ -56,8 +56,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
-        public IWebsocketManager<IFundingRateSnapShot> FundingRateManager { get=> m_oFundingManager; }  
-      
+        public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
+
 
 
 
@@ -85,7 +85,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 null
                 );
 
-            if( oResultSubscribe == null ||  !oResultSubscribe.Success) return false;   
+            if (oResultSubscribe == null || !oResultSubscribe.Success) return false;
 
 
             return true;
@@ -97,14 +97,14 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// </summary>
         /// <param name="oUpdate"></param>
         /// <exception cref="NotImplementedException"></exception>
-        private void OnAccountUpdate( DataEvent<BingXFuturesAccountUpdate> oUpdate )
+        private void OnAccountUpdate(DataEvent<BingXFuturesAccountUpdate> oUpdate)
         {
-            DateTime dDate = oUpdate.Timestamp.ToLocalTime();   
-            if( oUpdate.Data == null ) return;
+            DateTime dDate = oUpdate.Timestamp.ToLocalTime();
+            if (oUpdate.Data == null) return;
             if (oUpdate.Data.Update == null) return;
-            if( oUpdate.Data.Update.Balances != null )
+            if (oUpdate.Data.Update.Balances != null)
             {
-                foreach( var oBalance in oUpdate.Data.Update.Balances )
+                foreach (var oBalance in oUpdate.Data.Update.Balances)
                 {
                     m_oBalanceManager.Put(oBalance);
                 }
@@ -136,9 +136,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public async Task Stop()
         {
             m_oCancelSource.Cancel();
-            await m_oFundingManager.Stop(); 
+            await m_oFundingManager.Stop();
             await Task.Delay(500);
-            if( m_oAccountSocketClient != null)
+            if (m_oAccountSocketClient != null)
             {
                 await m_oAccountSocketClient.UnsubscribeAllAsync();
                 await Task.Delay(1000);
@@ -147,7 +147,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 m_oAccountSocketClient = null;
             }
 
-            foreach( var oMarket in m_aMarketSockets )
+            foreach (var oMarket in m_aMarketSockets)
             {
                 await oMarket.SocketClient.UnsubscribeAllAsync();
                 await Task.Delay(1000);
@@ -168,16 +168,16 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             int nTotal = 0;
             int nMax = 200;
 
-            while( nTotal < aSymbols.Length )
+            while (nTotal < aSymbols.Length)
             {
                 ISymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
                 nTotal += aPartial.Length;
                 BingXSocketClient oClient = new BingXSocketClient();
                 MarketSockets oMarketSocket = new MarketSockets(oClient);
-                foreach ( var oSymbol in aPartial) 
+                foreach (var oSymbol in aPartial)
                 {
                     var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
-                    if ( oResult == null || !oResult.Success ) return false;
+                    if (oResult == null || !oResult.Success) return false;
                     oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
                 }
 
@@ -190,12 +190,21 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// Update loop
         /// </summary>
         /// <param name="oUpdate"></param>
-        private void OnOrderbookUpdate( DataEvent<BingXOrderBook> oUpdate) 
+        private void OnOrderbookUpdate(DataEvent<BingXOrderBook> oUpdate)
         {
             if (oUpdate.Symbol == null) return;
-            if( oUpdate.Data == null) return;   
+            if (oUpdate.Data == null) return;
             BingXOrderBook oData = oUpdate.Data;
-            m_oOrderbookManager.Put(oUpdate.Symbol, oUpdate.Timestamp.ToLocalTime(), oData); 
+            m_oOrderbookManager.Put(oUpdate.Symbol, oUpdate.Timestamp.ToLocalTime(), oData);
         }
+
+
+        public async Task<bool> SubscribeToFundingRates(IFuturesSymbol[] aSymbols)
+        {
+            await Task.Delay(500);
+            return true;
+
+        }
+
     }
 }

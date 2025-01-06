@@ -19,7 +19,7 @@ namespace Crypto.Trading.Bot.Common
 
         public IFuturesSymbol Symbol { get; }
 
-        public IFundingRateSnapShot? FundingRate { get; internal set; } = null;
+        public IFundingRate? FundingRate { get; internal set; } = null;
 
         public IOrderbook? Orderbook { get; internal set; } = null;
 

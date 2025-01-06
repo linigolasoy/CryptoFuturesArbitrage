@@ -21,6 +21,7 @@
     <ProjectReference Include="..\Crypto.Common\Crypto.Common.csproj" />
     <ProjectReference Include="..\Crypto.Exchanges.All\Crypto.Exchanges.All.csproj" />
     <ProjectReference Include="..\Crypto.Interface\Crypto.Interface.csproj" />
+    <ProjectReference Include="..\Crypto.Trading.Bot\Crypto.Trading.Bot.csproj" />
   </ItemGroup>
 
   <ItemGroup>

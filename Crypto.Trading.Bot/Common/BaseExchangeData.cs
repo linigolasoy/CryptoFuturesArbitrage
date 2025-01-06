@@ -33,14 +33,14 @@ namespace Crypto.Trading.Bot.Common
             if (Websocket == null) return false;
             if (Symbols == null) return false;
 
-            IFundingRateSnapShot[]? aFundingRates = Websocket.FundingRateManager.GetData(); 
+            IFundingRate[]? aFundingRates = Websocket.FundingRateManager.GetData(); 
             if (aFundingRates == null || aFundingRates.Length <= (Symbols.Length / 2)) return false;
 
             IOrderbook[]? aOrderbooks = Websocket.OrderbookManager.GetData();
             // if (aOrderbooks == null || aOrderbooks.Length <= (Symbols.Length / 2)) return false;
             foreach( var oSymbolRaw in Symbols )
             {
-                IFundingRateSnapShot? oFunding = aFundingRates.FirstOrDefault(p=> p.Symbol.Symbol == oSymbolRaw.Symbol.Symbol );
+                IFundingRate? oFunding = aFundingRates.FirstOrDefault(p=> p.Symbol.Symbol == oSymbolRaw.Symbol.Symbol );
 
                 IOrderbook? oOrderbook = aOrderbooks.FirstOrDefault(p=> p.Symbol.Symbol == oSymbolRaw.Symbol.Symbol );
 

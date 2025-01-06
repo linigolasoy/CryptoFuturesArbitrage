@@ -65,19 +65,19 @@ namespace Crypto.Trading.Bot.FundingRates
 
             decimal nMoney = Setup.Leverage * Setup.Amount;
 
-            foreach( IFundingRateSnapShot oShot1 in oData1.FundingSnapshots ) 
+            foreach( IFundingRate oShot1 in oData1.FundingSnapshots ) 
             {
-                IFundingRateSnapShot? oShot2 = oData2.FundingSnapshots.FirstOrDefault(p => p.Symbol.Base == oShot1.Symbol.Base && p.Symbol.Quote == oShot1.Symbol.Quote);
+                IFundingRate? oShot2 = oData2.FundingSnapshots.FirstOrDefault(p => p.Symbol.Base == oShot1.Symbol.Base && p.Symbol.Quote == oShot1.Symbol.Quote);
                 if (oShot2 == null) continue;
 
                 decimal nRate = 0;
                 bool bFirstBuy = (oShot1.Rate < oShot2.Rate);
-                if ( oShot1.NextSettle < oShot2.NextSettle )
+                if ( oShot1.SettleDate < oShot2.SettleDate )
                 {
                     nRate = Math.Abs( oShot1.Rate );
                     bFirstBuy = (oShot1.Rate < 0);
                 }
-                else if (oShot1.NextSettle > oShot2.NextSettle)
+                else if (oShot1.SettleDate  > oShot2.SettleDate)
                 {
                     nRate = Math.Abs(oShot2.Rate);
                     bFirstBuy = (oShot2.Rate > 0);
@@ -96,8 +96,8 @@ namespace Crypto.Trading.Bot.FundingRates
                     if (oPrice1 == null) continue;
                     IOrderbookPrice? oPrice2 = oData2.Websocket.OrderbookManager.GetBestBid(oShot2.Symbol.Symbol, nMoney);
                     if (oPrice2 == null) continue;
-                    FundingChanceData oChanceBuyData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.NextSettle);
-                    FundingChanceData oChanceSellData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.NextSettle);
+                    FundingChanceData oChanceBuyData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.SettleDate);
+                    FundingChanceData oChanceSellData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.SettleDate);
                     oChance = new FundingChance(nRate, oChanceBuyData, oChanceSellData);
                 }
                 else
@@ -106,8 +106,8 @@ namespace Crypto.Trading.Bot.FundingRates
                     if (oPrice1 == null) continue;
                     IOrderbookPrice? oPrice2 = oData2.Websocket.OrderbookManager.GetBestAsk(oShot2.Symbol.Symbol, nMoney);
                     if (oPrice2 == null) continue;
-                    FundingChanceData oChanceSellData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.NextSettle);
-                    FundingChanceData oChanceBuyData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.NextSettle);
+                    FundingChanceData oChanceSellData = new FundingChanceData(oData1.Exchange.ExchangeType, oShot1.Symbol, oPrice1.Price, oShot1.Rate, oShot1.SettleDate);
+                    FundingChanceData oChanceBuyData = new FundingChanceData(oData2.Exchange.ExchangeType, oShot2.Symbol, oPrice2.Price, oShot2.Rate, oShot2.SettleDate);
                     oChance = new FundingChance(nRate, oChanceBuyData, oChanceSellData);
 
                 }

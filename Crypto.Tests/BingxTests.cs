@@ -135,7 +135,37 @@ namespace Crypto.Tests
 
         }
 
-        
+        [TestMethod]
+        public async Task BingxFundingWebsocketTest()
+        {
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
+
+            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            Assert.IsNotNull(aSymbols);
+
+            ICryptoWebsocket? oWebsockets = await oExchange.CreateWebsocket();
+            Assert.IsNotNull(oWebsockets);
+
+            bool bStarted = await oWebsockets.Start();
+            Assert.IsTrue(bStarted);
+
+            await Task.Delay(1000);
+
+            bool bSubscribed = await oWebsockets.SubscribeToFundingRates(aSymbols);
+            Assert.IsTrue(bSubscribed);
+
+            await Task.Delay(10000);
+
+            IFundingRate[]? aFundings = oWebsockets.FundingRateManager.GetData();
+            Assert.IsNotNull(aFundings);
+            Assert.IsTrue(aFundings.Length >= aSymbols.Length);
+
+            await Task.Delay(2000);
+
+            await oWebsockets.Stop();
+        }
+
         [TestMethod]
         public async Task BingxMarketWebsocketTest()
         {

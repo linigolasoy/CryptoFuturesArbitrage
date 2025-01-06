@@ -1,4 +1,6 @@
-﻿using Crypto.Interface.Futures;
+﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
 using System;
 using System.Collections.Concurrent;
@@ -9,14 +11,13 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexFundingRateManager : IWebsocketManager<IFundingRateSnapShot>
+    internal class CoinexFundingRateManager : IWebsocketManager<IFundingRate>
     {
 
-        private Task? m_oMainTask = null;
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
 
-        private ConcurrentDictionary<string, IFundingRateSnapShot> m_aFundingRates = new ConcurrentDictionary<string, IFundingRateSnapShot>();
+        private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
 
         private ICryptoFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
@@ -29,12 +30,12 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         /// Get all data
         /// </summary>
         /// <returns></returns>
-        public IFundingRateSnapShot[] GetData()
+        public IFundingRate[] GetData()
         {
-            List<IFundingRateSnapShot> aResult = new List<IFundingRateSnapShot>();
+            List<IFundingRate> aResult = new List<IFundingRate>();
             foreach (string strKey in m_aFundingRates.Keys)
             {
-                IFundingRateSnapShot? oFound = GetData(strKey);
+                IFundingRate? oFound = GetData(strKey);
                 if (oFound == null) continue;
                 aResult.Add(oFound);
             }
@@ -46,43 +47,32 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         /// </summary>
         /// <param name="strSymbol"></param>
         /// <returns></returns>
-        public IFundingRateSnapShot? GetData(string strSymbol)
+        public IFundingRate? GetData(string strSymbol)
         {
-            IFundingRateSnapShot? oFound = null;
+            IFundingRate? oFound = null;
             if (m_aFundingRates.TryGetValue(strSymbol, out oFound)) return oFound;
             return null;
         }
 
-        public async Task Start()
-        {
-            await Stop();
-            m_oCancelSource = new CancellationTokenSource();
-            m_oMainTask = MainRatesLoop();
-        }
 
-        public async Task Stop()
+        /// <summary>
+        /// Put data
+        /// </summary>
+        /// <param name="aData"></param>
+        public void Put( IEnumerable<CoinExFuturesTickerUpdate> aData )
         {
-            if( m_oMainTask != null )
+            foreach( var oData in aData )
             {
-                m_oCancelSource.Cancel();
-                await m_oMainTask;
-                m_oMainTask = null; 
-            }
-        }
-
-        private async Task MainRatesLoop()
-        {
-            while( !m_oCancelSource.IsCancellationRequested )
-            {
-                IFundingRateSnapShot[]? aSnapshots = await m_oExchange.GetFundingRates(m_aSymbols);
-                if( aSnapshots != null )
+                if( oData.NextFundingTime  == null )
                 {
-                    foreach( IFundingRateSnapShot oShot  in aSnapshots )
-                    {
-                        m_aFundingRates.AddOrUpdate( oShot.Symbol.Symbol, p=> oShot, (p, s)=> oShot );
-                    }
+                    continue;
                 }
-                await Task.Delay(3000);
+                IFuturesSymbol? oSymbol = m_aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol);
+                if (oSymbol == null) continue;
+                IFundingRate oRate = new CoinexFundingRate(oSymbol, oData);
+
+                m_aFundingRates.AddOrUpdate(oSymbol.Symbol, p => oRate, (s, p) => oRate);   
+
             }
         }
     }

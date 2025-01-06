@@ -1,6 +1,6 @@
 ﻿using Crypto.Interface;
 using Crypto.Trading.Bot.FundingRates;
-using Crypto.Trading.Bot.FundingRates.Tester;
+using Crypto.Trading.Bot.FundingRates.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;

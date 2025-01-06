@@ -2,6 +2,7 @@
 using Crypto.Interface;
 using Crypto.Trading.Bot;
 using Crypto.Trading.Bot.FundingRates;
+using Crypto.Trading.Bot.FundingRates.Model;
 using System.Text;
 
 namespace CryptoFuturesArbitrage.Console
@@ -40,7 +41,7 @@ namespace CryptoFuturesArbitrage.Console
         {
             try
             {
-                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger, TEST);
+                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
 
                 oLogger.Info("Enter main program");
                 await oBot.Start();
@@ -72,7 +73,7 @@ namespace CryptoFuturesArbitrage.Console
         /// <returns></returns>
         private static async Task DoTester(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
-            DateTime dFrom = DateTime.Today.AddMonths(-2);
+            DateTime dFrom = DateTime.Today.AddMonths(-1);
             DateTime dTo = DateTime.Today;
             IFundingTestData oTestData = TesterFactory.CreateFundingTestData(oSetup, oLogger, dFrom, dTo);
 
@@ -83,8 +84,7 @@ namespace CryptoFuturesArbitrage.Console
             bOk = await oTestData.LoadRates();  
             if (!bOk || NeedsCancel()) return;
 
-            DateTime? dActual = null;
-            List<decimal> aFound = new List<decimal>();
+            Dictionary<DateTime, decimal> aFound = new Dictionary<DateTime, decimal>();
             // Start processing
             IFundingDate? oDate = null;
             while ( ( oDate = oTestData.GetNext( (oDate == null ? null : oDate.DateTime) ) )!= null )
@@ -92,7 +92,7 @@ namespace CryptoFuturesArbitrage.Console
                 IFundingPair? oPair = oDate.GetBest();
                 string strBest = "NONE";
                 decimal nActual = 0;
-                if ( oPair != null && oPair.Percent > 0 )
+                if ( oPair != null && oPair.Percent > 0.1M )
                 {
                     StringBuilder oBuild = new StringBuilder();
                     oBuild.Append(" ");
@@ -106,27 +106,20 @@ namespace CryptoFuturesArbitrage.Console
                     strBest = oBuild.ToString();
                     nActual = oPair.Percent;
                 }
-                if( dActual == null )
-                {
-                    dActual = oDate.DateTime.Date;
-                    aFound.Add(nActual);
-                }
-                else
-                {
-                    if( dActual.Value.Date != oDate.DateTime.Date )
-                    {
-                        dActual = oDate.DateTime.Date;
-                        aFound.Add(nActual);
-                    }
-                    else
-                    {
-                        aFound[aFound.Count - 1] += nActual;
-                    }
-                }
+                DateTime dActual = oDate.DateTime.Date;
+                if( !aFound.ContainsKey( dActual ) ) { aFound[dActual] = 0; }
+                aFound[dActual] += nActual;
                 oLogger.Info($"   Processing {oDate.DateTime.ToShortDateString()} {oDate.DateTime.ToShortTimeString()} {strBest}");
             }
 
-            decimal nAverage = aFound.Average();
+
+            oLogger.Info($"==== RESULTS");
+            foreach ( DateTime dDate in aFound.Keys.OrderBy(p=> p))
+            {
+                oLogger.Info($"    {aFound[dDate].ToString("0.##")} {dDate.ToShortDateString()}");
+            }
+            decimal nAverage = aFound.Values.Average();
+            oLogger.Info($"==== AVERAGE : [{nAverage.ToString("0.##")}]");
             await Task.Delay(2000);
         }
 

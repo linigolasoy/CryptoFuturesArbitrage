@@ -20,12 +20,14 @@ namespace Crypto.Interface.Websockets
 
         public Task<bool> SubscribeToMarket(ISymbol[] aSymbols);
 
+        public Task<bool> SubscribeToFundingRates(IFuturesSymbol[] aSymbols);
+
         // public IWebsocketManager<ITicker> TickerManager { get; }    
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }
         public IWebsocketManager<IFuturesPosition> FuturesPositionManager { get; }
         public IOrderbookManager OrderbookManager { get; }
-        public IWebsocketManager<IFundingRateSnapShot> FundingRateManager { get; }  
+        public IWebsocketManager<IFundingRate> FundingRateManager { get; }  
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get; }   
     }

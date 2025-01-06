@@ -19,6 +19,6 @@ namespace Crypto.Trading.Bot.FundingRates
         public ICryptoWebsocket? Websocket { get; internal set; } = null;
         public IFuturesSymbol[]? Symbols { get; internal set; } = null;
 
-        public IFundingRateSnapShot[]? FundingSnapshots { get; internal set; } = null; 
+        public IFundingRate[]? FundingSnapshots { get; internal set; } = null; 
     }
 }

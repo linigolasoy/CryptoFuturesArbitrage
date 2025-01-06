@@ -1,7 +1,7 @@
 ﻿using Crypto.Interface;
 using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates;
-using Crypto.Trading.Bot.FundingRates.Tester;
+using Crypto.Trading.Bot.FundingRates.Model;
 
 namespace Crypto.Trading.Bot
 {
@@ -11,20 +11,18 @@ namespace Crypto.Trading.Bot
     /// </summary>
     public class BotFactory
     {
-        public static ITradingBot CreateFundingRatesBot( ICryptoSetup oSetup, ICommonLogger oLogger, bool bTester )
+        public static ITradingBot CreateFundingRatesBot( ICryptoSetup oSetup, ICommonLogger oLogger )
         {
-            if( bTester ) 
-            { 
-                BaseTester oTester = new BaseTester( oSetup, oLogger );   
-                oTester.Strategy = new FundingRateTester(oTester);
-                return oTester;
-            }
             BaseBot oBot = new BaseBot( oSetup, oLogger );
             oBot.Strategy = new FundingRateStrategy(oBot);
             return oBot;
         }
 
 
+        public static IFundingSocketData CreateFundingSocket( ICryptoSetup oSetup, ICommonLogger oLogger )
+        {
+            return new FundingSocketData(oLogger, oSetup);
+        }
 
     }
 }

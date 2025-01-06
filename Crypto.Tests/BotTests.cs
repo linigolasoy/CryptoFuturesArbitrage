@@ -3,6 +3,8 @@ using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
+using Crypto.Trading.Bot;
+using Crypto.Trading.Bot.FundingRates.Model;
 
 namespace Crypto.Tests
 {
@@ -10,7 +12,32 @@ namespace Crypto.Tests
     public class BotTests
     {
 
-        
+
+        [TestMethod]
+        public async Task FundingSocketTests()
+        {
+
+            CancellationTokenSource oSource = new CancellationTokenSource();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingSocketTests", oSource.Token);
+
+
+            IFundingSocketData oSocketData = BotFactory.CreateFundingSocket(oSetup, oLogger);
+
+            bool bStarted = await oSocketData.Start();
+            Assert.IsTrue(bStarted);
+
+            await Task.Delay(5000);
+            Assert.IsNotNull(oSocketData.Websockets);
+
+
+
+            await oSocketData.Stop();
+
+            await Task.Delay(2000);
+        }
+
+
         [TestMethod]
         public async Task MatchFundingTests()
         {
@@ -48,8 +75,8 @@ namespace Crypto.Tests
 
             await Task.Delay(10000);
 
-            IFundingRateSnapShot[] aFundingsCoinex = oWsCoinex.FundingRateManager.GetData();
-            IFundingRateSnapShot[] aFundingsBingx  = oWsBingx.FundingRateManager.GetData();
+            IFundingRate[] aFundingsCoinex = oWsCoinex.FundingRateManager.GetData();
+            IFundingRate[] aFundingsBingx  = oWsBingx.FundingRateManager.GetData();
 
 
 
@@ -60,15 +87,15 @@ namespace Crypto.Tests
                 string strBase = oFundingBing.Symbol.Base;
                 string strQuote = oFundingBing.Symbol.Quote;
 
-                IFundingRateSnapShot? oFundingCoinex = aFundingsCoinex.Where( p=> p.Symbol.Base == strBase && p.Symbol.Quote == strQuote ).FirstOrDefault();
+                IFundingRate? oFundingCoinex = aFundingsCoinex.Where( p=> p.Symbol.Base == strBase && p.Symbol.Quote == strQuote ).FirstOrDefault();
                 if (oFundingCoinex == null) continue;
 
                 decimal nRate = 0;
-                if (oFundingBing.NextSettle < oFundingCoinex.NextSettle)
+                if (oFundingBing.SettleDate < oFundingCoinex.SettleDate)
                 {
                     Console.WriteLine("Pinx");
                 }
-                else if (oFundingBing.NextSettle > oFundingCoinex.NextSettle)
+                else if (oFundingBing.SettleDate > oFundingCoinex.SettleDate)
                 {
                     Console.WriteLine("Poinex");
                 }

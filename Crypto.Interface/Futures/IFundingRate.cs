@@ -11,7 +11,7 @@ namespace Crypto.Interface.Futures
         public decimal Maximum { get; }
         public decimal Minimum { get; }
 
-        public DateTime NextSettle { get; }
+        public DateTime SnapshotDate { get; }
 
     }
 
@@ -19,7 +19,7 @@ namespace Crypto.Interface.Futures
     {
         public IFuturesSymbol Symbol { get; }
         public decimal Rate { get; }
-        public DateTime DateTime { get; }
+        public DateTime SettleDate { get; }
         public int Cycle { get; }
     }
 }

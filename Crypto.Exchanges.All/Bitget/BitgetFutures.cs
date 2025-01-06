@@ -3,6 +3,7 @@ using Bitget.Net.Clients;
 using Bitget.Net.Enums;
 using Bitget.Net.Objects;
 using Crypto.Common;
+using Crypto.Exchanges.All.Bitget.Websocket;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Websockets;
@@ -26,6 +27,9 @@ namespace Crypto.Exchanges.All.Bitget
 
         private IFuturesSymbol[]? m_aSymbols = null;
 
+        private BitgetApiCredentials m_oApiCredentials;
+
+
         public BitgetFutures( ICryptoSetup oSetup ) 
         {
             Setup = oSetup;
@@ -33,13 +37,16 @@ namespace Crypto.Exchanges.All.Bitget
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
 
+            m_oApiCredentials = new BitgetApiCredentials(m_oApiKey.ApiKey, m_oApiKey.ApiSecret, "Cotton1234");
             BitgetRestClient.SetDefaultOptions(options =>
             {
-                options.ApiCredentials = new BitgetApiCredentials(m_oApiKey.ApiKey, m_oApiKey.ApiSecret, "Cotton12$$");
+                options.ApiCredentials = m_oApiCredentials;
             });
             m_oGlobalClient = new ExchangeRestClient();
         }
         public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
+
+        public BitgetApiCredentials ApiCredentials { get => m_oApiCredentials; }
 
         public ICryptoSetup Setup { get; }
 
@@ -50,9 +57,15 @@ namespace Crypto.Exchanges.All.Bitget
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Creates a new websocket
+        /// </summary>
+        /// <returns></returns>
         public async Task<ICryptoWebsocket?> CreateWebsocket()
         {
-            throw new NotImplementedException();
+            IFuturesSymbol[]? aSymbols = await GetSymbols();
+            if (aSymbols == null) return null;
+            return new BitgetWebsocket(this, aSymbols); 
         }
 
         public async Task<IFuturesBalance[]?> GetBalances()

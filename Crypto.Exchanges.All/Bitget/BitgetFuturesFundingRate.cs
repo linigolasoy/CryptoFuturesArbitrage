@@ -10,17 +10,26 @@ namespace Crypto.Exchanges.All.Bitget
 {
     internal class BitgetFuturesFundingRate : IFundingRate
     {
+
         public BitgetFuturesFundingRate( IFuturesSymbol oSymbol, BitgetFundingRate oParsed) 
         {
             Symbol = oSymbol;
             Rate = oParsed.FundingRate;
-            DateTime = oParsed.FundingTime!.Value.ToLocalTime();    
+            SettleDate = oParsed.FundingTime!.Value.ToLocalTime();    
+        }
+
+        public BitgetFuturesFundingRate(IFuturesSymbol oSymbol, BitgetFuturesTickerUpdate oTicker)
+        {
+            Symbol = oSymbol;
+            Rate = oTicker.FundingRate!.Value;
+            SettleDate = oTicker.NextFundingTime!.Value.ToLocalTime();
+
         }
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get; }
+        public decimal Rate { get; private set; }
 
-        public DateTime DateTime { get; }
+        public DateTime SettleDate { get; }
 
         public int Cycle { get => 8; }
     }
@@ -31,9 +40,9 @@ namespace Crypto.Exchanges.All.Bitget
         public BitgetFuturesFundingRateSnap( IFuturesSymbol oSymbol, BitgetFundingRate oRate, BitgetFundingTime oTime)
         {
             Symbol = oSymbol;
-            NextSettle = oTime.NextFundingTime!.Value.ToLocalTime();
+            SettleDate = oTime.NextFundingTime!.Value.ToLocalTime();
             Rate = oRate.FundingRate;
-            DateTime = DateTime.Now;
+            SnapshotDate = DateTime.Now;
             Cycle = 8;
             if( oTime.RatePeriod != null ) Cycle = oTime.RatePeriod.Value;  
         }
@@ -41,13 +50,13 @@ namespace Crypto.Exchanges.All.Bitget
 
         public decimal Minimum { get => -100; }
 
-        public DateTime NextSettle { get; }
+        public DateTime SettleDate { get; }
 
         public IFuturesSymbol Symbol { get; }
 
         public decimal Rate { get; }
 
-        public DateTime DateTime { get; }
+        public DateTime SnapshotDate { get; }
 
         public int Cycle { get; internal set; }
     }
