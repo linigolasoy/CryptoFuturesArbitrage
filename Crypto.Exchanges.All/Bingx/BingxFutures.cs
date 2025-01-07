@@ -27,7 +27,7 @@ namespace Crypto.Exchanges.All.Bingx
         private IFuturesSymbol[]? m_aSymbols = null;
 
         private IFuturesBarFeeder m_oBarFeeder;
-
+        
         public BingxFutures( ICryptoSetup oSetup ) 
         {
             Setup = oSetup;
@@ -41,9 +41,13 @@ namespace Crypto.Exchanges.All.Bingx
             });
             m_oGlobalClient = new ExchangeRestClient();
             m_oBarFeeder = new BingxBarFeeder(this);
-
+            Trading = new BingxTrading(this);
+            Account = new BingxAccount(this, m_oGlobalClient);   
         }
         public IFuturesBarFeeder BarFeeder { get => m_oBarFeeder; }
+
+        public IFuturesTrading Trading { get; }
+        public IFuturesAccount Account { get; }
 
         public ICryptoSetup Setup { get; }
 
@@ -52,18 +56,6 @@ namespace Crypto.Exchanges.All.Bingx
         public IExchangeRestClient GlobalClient { get => m_oGlobalClient; }
 
 
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
-        {
-            throw new NotImplementedException();    
-        }
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
 
 
         public async Task<ICryptoWebsocket?> CreateWebsocket()
@@ -73,25 +65,6 @@ namespace Crypto.Exchanges.All.Bingx
             return new BingxWebsocket(this, aSymbols);
         }
 
-
-        /// <summary>
-        /// Get account balances
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IFuturesBalance[]?> GetBalances()
-        {
-            var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Account.GetBalancesAsync();
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
-
-            List<IFuturesBalance> aResult = new List<IFuturesBalance>();
-            foreach( BingXFuturesBalance oData in oResult.Data )
-            {
-                aResult.Add( new BingxBalance(oData) );
-            }
-
-            return aResult.ToArray();   
-        }
 
         /// <summary>
         /// Funding rates single symbol

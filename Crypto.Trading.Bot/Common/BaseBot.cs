@@ -83,7 +83,7 @@ namespace Crypto.Trading.Bot.Common
         private async Task<bool> LoadBalances( IBotExchangeData oData )
         {
             Logger.Info($"   Load balances for {oData.Exchange.ExchangeType.ToString()}...");
-            IFuturesBalance[]? aBalances = await oData.Exchange.GetBalances(); 
+            IFuturesBalance[]? aBalances = await oData.Exchange.Account.GetBalances(); 
             if( aBalances == null) { Logger.Error($"   Could not load balances for {oData.Exchange.ExchangeType.ToString()}..."); return false; }
             ((BaseExchangeData)oData).Balances = aBalances;
             return true;

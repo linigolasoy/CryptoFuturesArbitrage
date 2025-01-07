@@ -81,9 +81,9 @@ namespace Crypto.Tests
             Assert.IsTrue(aBalances.Length > 0);
 
 
-            bool bLeverage = await oExchange.SetLeverage(oSymbol, 10);
+            bool bLeverage = await oExchange.Trading.SetLeverage(oSymbol, 10);
             Assert.IsTrue(bLeverage);
-            IFuturesOrder? oOrder = await oExchange.CreateLimitOrder(oSymbol, true, 5, oPrice.Price);
+            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 5, oPrice.Price);
             Assert.IsNotNull(oOrder);
             Assert.IsNotNull(oOrder);
 
@@ -168,7 +168,7 @@ namespace Crypto.Tests
 
             ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
-            IFuturesBalance[]? aBalances = await oFutures.GetBalances();
+            IFuturesBalance[]? aBalances = await oFutures.Account.GetBalances();
             Assert.IsNotNull(aBalances);
 
         }

@@ -26,7 +26,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             try
             {
-                IFuturesBalance[]? aBalances = await m_oExchange.GetBalances();
+                IFuturesBalance[]? aBalances = await m_oExchange.Account.GetBalances();
                 if (aBalances == null) return;
                 foreach( var oBalance in aBalances )
                 {

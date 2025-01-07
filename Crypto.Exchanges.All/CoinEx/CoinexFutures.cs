@@ -43,26 +43,17 @@ namespace Crypto.Exchanges.All.CoinEx
             });
             m_oGlobalClient = new ExchangeRestClient();
             // m_oBarFeeder = new BingxBarFeeder(this);
+            Trading = new CoinexTrading(this);
+            Account = new CoinexAccount(this, m_oGlobalClient);
         }
         public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
-
+        public IFuturesTrading Trading { get; }
+        public IFuturesAccount Account { get; }
         internal ApiCredentials ApiCredentials { get => m_oApiCredentials; }
         public ICryptoSetup Setup { get; }
 
         public ExchangeType ExchangeType { get => ExchangeType.CoinExFutures; }
 
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
-        {
-            throw new NotImplementedException();
-        }
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Creates websocket
@@ -76,25 +67,6 @@ namespace Crypto.Exchanges.All.CoinEx
             return new CoinexWebsocket(this, aSymbols); 
         }
 
-        /// <summary>
-        /// Get balances
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<IFuturesBalance[]?> GetBalances()
-        {
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Account.GetBalancesAsync();
-
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null ) return null;
-            List<IFuturesBalance> aResult = new List<IFuturesBalance>();
-            foreach( var oData in oResult.Data )
-            {
-                aResult.Add( new CoinexBalance( oData ) );  
-            }
-
-            return aResult.ToArray();
-        }
 
         /// <summary>
         /// Get funding rates of specific symbol

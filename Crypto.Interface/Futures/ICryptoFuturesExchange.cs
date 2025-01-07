@@ -20,10 +20,8 @@ namespace Crypto.Interface.Futures
 
         public IFuturesBarFeeder BarFeeder { get; }
 
-        public Task<IFuturesBalance[]?> GetBalances();
 
-        public Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage);
-        public Task<IFuturesOrder?> CreateLimitOrder( IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice );
-        public Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice);
+        public IFuturesTrading Trading { get; } 
+        public IFuturesAccount Account { get; }
     }
 }

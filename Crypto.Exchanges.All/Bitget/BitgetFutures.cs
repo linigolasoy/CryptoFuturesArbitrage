@@ -30,7 +30,6 @@ namespace Crypto.Exchanges.All.Bitget
 
         private BitgetApiCredentials m_oApiCredentials;
 
-
         public BitgetFutures( ICryptoSetup oSetup ) 
         {
             Setup = oSetup;
@@ -44,44 +43,19 @@ namespace Crypto.Exchanges.All.Bitget
                 options.ApiCredentials = m_oApiCredentials;
             });
             m_oGlobalClient = new ExchangeRestClient();
+            Trading = new BitgetTrading(this, m_oApiCredentials);
+            Account = new BitgetAccount(this, m_oGlobalClient);
         }
         public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
 
+        public IFuturesTrading Trading { get; }
+        public IFuturesAccount Account { get; }
         public BitgetApiCredentials ApiCredentials { get => m_oApiCredentials; }
 
         public ICryptoSetup Setup { get; }
 
         public ExchangeType ExchangeType { get => ExchangeType.BitgetFutures; }
 
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
-        {
-            var oResultLong = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
-                BitgetProductTypeV2.UsdtFutures,
-                oSymbol.Symbol,
-                USDT,
-                nLeverage,
-                PositionSide.Long
-                );
-            var oResultShort = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
-                BitgetProductTypeV2.UsdtFutures,
-                oSymbol.Symbol,
-                USDT,
-                nLeverage,
-                PositionSide.Long
-                );
-
-            if (oResultLong == null || oResultShort == null) return false;
-            if (oResultLong.Success && oResultShort.Success) return true;
-            return false;
-        }
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice)
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Creates a new websocket
@@ -94,10 +68,6 @@ namespace Crypto.Exchanges.All.Bitget
             return new BitgetWebsocket(this, aSymbols); 
         }
 
-        public async Task<IFuturesBalance[]?> GetBalances()
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Funding rate snapshot single
