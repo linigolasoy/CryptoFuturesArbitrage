@@ -83,7 +83,7 @@ namespace Crypto.Tests
 
             bool bLeverage = await oExchange.Trading.SetLeverage(oSymbol, 10);
             Assert.IsTrue(bLeverage);
-            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 5, oPrice.Price);
+            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, true, 5, oPrice.Price);
             Assert.IsNotNull(oOrder);
             Assert.IsNotNull(oOrder);
 

@@ -11,8 +11,13 @@ namespace Crypto.Interface.Futures
         public ICryptoFuturesExchange Exchange { get; }
 
         public Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage);
-        public Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice);
-        public Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, decimal nQuantity, decimal nPrice);
+        public Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity, decimal nPrice);
+        public Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity);
+
+        public Task<IFuturesLeverage[]?> GetLeverages(IFuturesSymbol[]? aSymbols = null);
+        public Task<IFuturesLeverage?> GetLeverage( IFuturesSymbol oSymbol);
+
+        public Task<IFuturesOrder[]?> GetOrders();
 
     }
 }

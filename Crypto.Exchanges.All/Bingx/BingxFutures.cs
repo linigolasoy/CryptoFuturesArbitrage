@@ -41,7 +41,7 @@ namespace Crypto.Exchanges.All.Bingx
             });
             m_oGlobalClient = new ExchangeRestClient();
             m_oBarFeeder = new BingxBarFeeder(this);
-            Trading = new BingxTrading(this);
+            Trading = new BingxTrading(this, m_oGlobalClient);
             Account = new BingxAccount(this, m_oGlobalClient);   
         }
         public IFuturesBarFeeder BarFeeder { get => m_oBarFeeder; }

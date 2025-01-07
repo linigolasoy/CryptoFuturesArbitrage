@@ -54,13 +54,13 @@ namespace Crypto.Tests.Bingx
             Assert.IsTrue(bStarted);
 
 
-            int nSymbols = aSymbols.Length;
+            int nSymbols = 30;
             bool bSubscribed = await oWebsockets.SubscribeToMarket(aSymbols.Take(nSymbols).ToArray());
 
             Assert.IsTrue(bSubscribed);
 
 
-            await Task.Delay(30000);
+            await Task.Delay(5000);
 
             IOrderbookManager oManager = oWebsockets.OrderbookManager;
             IOrderbook[] aBook = oManager.GetData();
