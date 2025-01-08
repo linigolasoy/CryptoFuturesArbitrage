@@ -1,5 +1,7 @@
 ﻿using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Bingx.Websocket;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Websockets;
 using CryptoClients.Net.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -13,12 +15,21 @@ namespace Crypto.Exchanges.All.Bingx
     {
         private IExchangeRestClient m_oGlobalClient;
 
+
+        private IWebsocketPrivate m_oWebsocket;
         public BingxAccount(ICryptoFuturesExchange oExchange, IExchangeRestClient oClient) 
         { 
             Exchange = oExchange;   
             m_oGlobalClient = oClient;
+            m_oWebsocket = new BingxWebsocketPrivate((BingxFutures)oExchange);
         }
         public ICryptoFuturesExchange Exchange { get; }
+
+        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocket.BalanceManager; }
+
+        public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oWebsocket.OrderManager; }
+
+        public IWebsocketManager<IFuturesPosition> PositionManager { get => m_oWebsocket.PositionManager; }
 
         public async Task<IFuturesBalance[]?> GetBalances()
         {
@@ -35,9 +46,32 @@ namespace Crypto.Exchanges.All.Bingx
             return aResult.ToArray();
         }
 
+        /// <summary>
+        /// Get positions
+        /// </summary>
+        /// <returns></returns>
         public async Task<IFuturesPosition[]?> GetPositions()
         {
-            throw new NotImplementedException();
+            var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.GetPositionsAsync();  
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            if (aSymbols == null) return null;
+            List<IFuturesPosition> aResult = new List<IFuturesPosition>();
+            foreach( var oData in oResult.Data)
+            {
+                IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p=> p.Symbol== oData.Symbol); 
+                if (oSymbol == null) continue;
+
+                IFuturesPosition oNew = new BingxPositionLocal(oSymbol, oData);
+                aResult.Add(oNew);
+            }
+            return aResult.ToArray();
+        }
+
+        public async Task<bool> StartSockets()
+        {
+            return await m_oWebsocket.Start();
         }
     }
 }

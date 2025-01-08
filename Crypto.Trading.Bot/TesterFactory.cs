@@ -12,9 +12,11 @@ namespace Crypto.Trading.Bot
     public class TesterFactory
     {
 
+        /*
         public static IFundingTestData CreateFundingTestData( ICryptoSetup oSetup, ICommonLogger oLogger, DateTime dFrom, DateTime dTo )
         {
             return new FundingTestData(oSetup, oLogger, dFrom, dTo);    
         }
+        */
     }
 }

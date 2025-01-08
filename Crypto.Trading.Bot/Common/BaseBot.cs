@@ -19,7 +19,7 @@ namespace Crypto.Trading.Bot.Common
 
         public ICryptoSetup Setup { get; }
 
-        public IBotExchangeData[] ExchangeData { get; }
+        public IBotExchangeData[]? ExchangeData { get; private set; } = null;
 
         public ICommonLogger Logger { get; }
 
@@ -32,21 +32,6 @@ namespace Crypto.Trading.Bot.Common
         {
             Setup = oSetup;
             Logger = oLogger;
-            List<IBotExchangeData> aExchanges = new List<IBotExchangeData>();
-
-            foreach (var eType in oSetup.ExchangeTypes)
-            {
-                switch (eType)
-                {
-                    case ExchangeType.CoinExFutures:
-                        aExchanges.Add( new BaseExchangeData(ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup)));
-                        break;
-                    case ExchangeType.BingxFutures:
-                        aExchanges.Add(new BaseExchangeData(ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup)));
-                        break;
-                }
-            }
-            ExchangeData = aExchanges.ToArray();
         }
 
 
@@ -118,6 +103,29 @@ namespace Crypto.Trading.Bot.Common
             return true;
 
         }
+
+        private async Task CreateExchangeData()
+        {
+            List<IBotExchangeData> aExchanges = new List<IBotExchangeData>();
+
+            foreach (var eType in Setup.ExchangeTypes)
+            {
+                ICryptoFuturesExchange? oExchange = null;
+                switch (eType)
+                {
+                    case ExchangeType.CoinExFutures:
+                        oExchange = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, Setup);
+                        aExchanges.Add(new BaseExchangeData(oExchange));
+                        break;
+                    case ExchangeType.BingxFutures:
+                        oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, Setup);
+                        aExchanges.Add(new BaseExchangeData(oExchange));
+                        break;
+                }
+            }
+            ExchangeData = aExchanges.ToArray();
+
+        }
         /// <summary>
         /// Load data
         /// </summary>
@@ -125,6 +133,8 @@ namespace Crypto.Trading.Bot.Common
         /// <exception cref="NotImplementedException"></exception>
         public async Task Start()
         {
+
+
             if (Strategy == null) throw new Exception("Can no start without strategy");
             Logger.Info("Bot starting...");
             foreach (var oExchangeData in ExchangeData) 

@@ -37,7 +37,8 @@ namespace Crypto.Trading.Bot.Common
         private async Task AddSingleExchange( ExchangeType eType )
         {
             Logger.Info($"   Load symbols for {eType.ToString()}...");
-            BaseExchangeData oData = new BaseExchangeData(ExchangeFactory.CreateExchange(eType, Setup));
+            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
+            BaseExchangeData oData = new BaseExchangeData(oExchange);
             IFuturesSymbol[]? aSymbols = await oData.Exchange.GetSymbols();
             if (aSymbols == null) return;
             List<IBotSymbolData> aSymbolData = new List<IBotSymbolData>();

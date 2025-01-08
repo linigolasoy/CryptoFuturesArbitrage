@@ -26,7 +26,9 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             List<ICryptoFuturesExchange> aExchanges = new List<ICryptoFuturesExchange>();
             foreach (var eType in oSetup.ExchangeTypes)
             {
-                ICryptoFuturesExchange oNew = ExchangeFactory.CreateExchange(eType, oSetup);
+                Task<ICryptoFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup);
+                oTask.Wait();
+                ICryptoFuturesExchange oNew = oTask.Result;
                 aExchanges.Add(oNew);
             }
             Exchanges = aExchanges.ToArray();   

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.FundingRates
 {
+    /*
     internal partial class FundingRatesBot // : ITradingBot
     {
 
@@ -65,4 +66,5 @@ namespace Crypto.Trading.Bot.FundingRates
             await Task.Delay(2000);
         }
     }
+    */
 }

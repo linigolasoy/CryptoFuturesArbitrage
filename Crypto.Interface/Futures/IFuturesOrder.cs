@@ -58,5 +58,7 @@ namespace Crypto.Interface.Futures
         public DateTime TimeUpdated { get; }
         public decimal Quantity { get; }
         public decimal? Price { get; }  
+
+        public void Update(IFuturesOrder oOrder);
     }
 }

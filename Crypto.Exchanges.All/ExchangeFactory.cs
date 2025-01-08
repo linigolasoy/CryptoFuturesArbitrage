@@ -11,21 +11,29 @@ namespace Crypto.Exchanges.All
     public class ExchangeFactory
     {
 
-        public static ICryptoFuturesExchange CreateExchange( ExchangeType eType, ICryptoSetup oSetup )
+        public static async Task<ICryptoFuturesExchange> CreateExchange( ExchangeType eType, ICryptoSetup oSetup )
         {
-            switch( eType )
+            ICryptoFuturesExchange? oResult = null; 
+            switch ( eType )
             {
                 case ExchangeType.BingxFutures:
-                    return new BingxFutures(oSetup);
+                    oResult = new BingxFutures(oSetup);
+                    break;  
                 case ExchangeType.CoinExFutures:
-                    return new CoinexFutures(oSetup);
+                    oResult = new CoinexFutures(oSetup);
+                    break;
                 case ExchangeType.BitgetFutures:
-                    return new BitgetFutures(oSetup);
+                    oResult = new BitgetFutures(oSetup);
+                    break;
                 // case ExchangeType.ByBitFutures:
                 //     return new BybitFutures(oSetup);
                 default:
                     throw new NotImplementedException();
             }
+            // Start private websockets
+            await oResult.Account.StartSockets();
+            await Task.Delay(2000);
+            return oResult;
         }
 
     }

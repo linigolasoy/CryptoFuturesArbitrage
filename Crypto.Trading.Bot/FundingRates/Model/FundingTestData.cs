@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.FundingRates.Model
 {
+    /*
     internal class FundingTestData : IFundingTestData
     {
         private Dictionary<string, IFuturesSymbol[]>? m_aPairs = null;
@@ -190,4 +191,5 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             return (m_aPairs.Keys.Count > 0);
         }
     }
+    */
 }

@@ -12,11 +12,11 @@ namespace Crypto.Tests.Bingx
 {
     internal class BingxCommon
     {
-        public static ICryptoFuturesExchange CreateExchange()
+        public static async Task<ICryptoFuturesExchange> CreateExchange()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
             return oExchange;   
         }
     }

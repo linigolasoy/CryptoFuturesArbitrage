@@ -17,7 +17,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
@@ -48,7 +48,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);  
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange( ExchangeType.BitgetFutures, oSetup);  
+            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange( ExchangeType.BitgetFutures, oSetup);  
 
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -76,7 +76,7 @@ namespace Crypto.Tests
             IOrderbookPrice? oPrice = oWs.OrderbookManager.GetBestAsk(oSymbol.Symbol, nMoney);  
             Assert.IsNotNull(oPrice);   
 
-            IFuturesBalance[]? aBalances = oWs.BalanceManager.GetData();
+            IFuturesBalance[]? aBalances = oExchange.Account.BalanceManager.GetData();
             Assert.IsNotNull(aBalances);
             Assert.IsTrue(aBalances.Length > 0);
 
@@ -97,7 +97,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            ICryptoFuturesExchange oFutures = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -140,7 +140,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            ICryptoFuturesExchange oFutures = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesSymbol[]? aSymbols = await oFutures.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -166,7 +166,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oFutures = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            ICryptoFuturesExchange oFutures = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
 
             IFuturesBalance[]? aBalances = await oFutures.Account.GetBalances();
             Assert.IsNotNull(aBalances);
@@ -179,7 +179,7 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
 

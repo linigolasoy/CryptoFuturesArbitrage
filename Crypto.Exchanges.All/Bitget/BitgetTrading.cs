@@ -76,5 +76,9 @@ namespace Crypto.Exchanges.All.Bitget
             if (oResultLong.Success && oResultShort.Success) return true;
             return false;
         }
+        public async Task<bool> CancelOrder(IFuturesOrder oOrder)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

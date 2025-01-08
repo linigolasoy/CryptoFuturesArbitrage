@@ -14,11 +14,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
     internal class BingxBalanceManager : IWebsocketManager<IFuturesBalance>
     {
 
-        private ICryptoWebsocket m_oWebsocket;
+        private IWebsocketPrivate m_oWebsocket;
 
         private ConcurrentDictionary<string, BingxBalance> m_aBalances = new ConcurrentDictionary<string, BingxBalance>();
 
-        public BingxBalanceManager(ICryptoWebsocket oWebsocket) 
+        public BingxBalanceManager(IWebsocketPrivate oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;
         }

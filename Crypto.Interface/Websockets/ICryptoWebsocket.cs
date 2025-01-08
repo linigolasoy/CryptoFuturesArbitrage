@@ -24,11 +24,8 @@ namespace Crypto.Interface.Websockets
 
         // public IWebsocketManager<ITicker> TickerManager { get; }    
 
-        public IWebsocketManager<IFuturesOrder> FuturesOrderManager { get; }
-        public IWebsocketManager<IFuturesPosition> FuturesPositionManager { get; }
         public IOrderbookManager OrderbookManager { get; }
         public IWebsocketManager<IFundingRate> FundingRateManager { get; }  
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get; }   
     }
 }

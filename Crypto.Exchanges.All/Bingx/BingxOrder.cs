@@ -97,6 +97,17 @@ namespace Crypto.Exchanges.All.Bingx
             if (oParsed.Quantity != null) Quantity = oParsed.Quantity.Value;
             if( oParsed.Price != null ) Price = oParsed.Price.Value;    
         }
+
+        public BingxOrder(IFuturesSymbol oSymbol, BingXFuturesOrderUpdate oParsed)
+        {
+            Symbol = oSymbol;
+            Id = oParsed.OrderId;
+            PutTypes(oParsed.Side, oParsed.PositionSide, oParsed.Type);
+
+            if (oParsed.Quantity != null) Quantity = oParsed.Quantity.Value;
+            if (oParsed.Price != null) Price = oParsed.Price.Value;
+            PutStatus(oParsed.Status);
+        }
         public long Id { get; }
 
         public IFuturesSymbol Symbol { get; }
@@ -113,10 +124,17 @@ namespace Crypto.Exchanges.All.Bingx
 
         public DateTime TimeCreated { get; } = DateTime.Now;
 
-        public DateTime TimeUpdated { get; } = DateTime.Now;
+        public DateTime TimeUpdated { get; private set; } = DateTime.Now;
 
         public decimal Quantity { get; private set; } = 0;
 
         public decimal? Price { get; private set; } = 0;
+
+        public void Update( IFuturesOrder oOrder )
+        {
+            OrderStatus = oOrder.OrderStatus;
+            TimeUpdated = oOrder.TimeUpdated;
+            OrderEvent = oOrder.OrderEvent; 
+        }
     }
 }

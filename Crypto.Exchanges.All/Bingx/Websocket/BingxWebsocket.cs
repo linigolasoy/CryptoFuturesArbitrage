@@ -26,21 +26,18 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             public List<IFuturesSymbol> Symbols { get; } = new List<IFuturesSymbol>();
         }
 
-        private BingXSocketClient? m_oAccountSocketClient = null;
         private List<MarketSockets> m_aMarketSockets = new List<MarketSockets>();
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
         private string? m_strListenKey = null;
         private IFuturesSymbol[] m_aSymbols;
 
-        private BingxBalanceManager m_oBalanceManager;
         private BingxOrderbookManager m_oOrderbookManager;
         private BingxFundingRateManager m_oFundingManager;
         public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols)
         {
             m_oExchange = oExchange;
             m_aSymbols = aSymbols;
-            m_oBalanceManager = new BingxBalanceManager(this);
             m_oOrderbookManager = new BingxOrderbookManager(this);
             m_oFundingManager = new BingxFundingRateManager(oExchange, aSymbols);
         }
@@ -52,9 +49,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
-        public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
         public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
 
@@ -71,62 +66,12 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             await Stop();
 
             await m_oFundingManager.Start();
-            m_oCancelSource = new CancellationTokenSource();
-            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
-            if (oResult == null || !oResult.Success) return false;
-            m_strListenKey = oResult.Data;
-
-            m_oAccountSocketClient = new BingXSocketClient();
-            var oResultSubscribe = await m_oAccountSocketClient.PerpetualFuturesApi.SubscribeToUserDataUpdatesAsync(
-                m_strListenKey,
-                OnAccountUpdate,
-                OnOrderUpdate,
-                OnConfigUpdate,
-                null
-                );
-
-            if (oResultSubscribe == null || !oResultSubscribe.Success) return false;
 
 
             return true;
         }
 
 
-        /// <summary>
-        /// Account data update
-        /// </summary>
-        /// <param name="oUpdate"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        private void OnAccountUpdate(DataEvent<BingXFuturesAccountUpdate> oUpdate)
-        {
-            DateTime dDate = oUpdate.Timestamp.ToLocalTime();
-            if (oUpdate.Data == null) return;
-            if (oUpdate.Data.Update == null) return;
-            if (oUpdate.Data.Update.Balances != null)
-            {
-                foreach (var oBalance in oUpdate.Data.Update.Balances)
-                {
-                    m_oBalanceManager.Put(oBalance);
-                }
-            }
-
-
-            return;
-        }
-
-        /// <summary>
-        /// Order data update
-        /// </summary>
-        /// <param name="oUpdate"></param>
-        /// <exception cref="NotImplementedException"></exception>
-        private void OnOrderUpdate(DataEvent<BingXFuturesOrderUpdate> oUpdate)
-        {
-            throw new NotImplementedException();
-        }
-        private void OnConfigUpdate(DataEvent<BingXConfigUpdate> oUpdate)
-        {
-            // throw new NotImplementedException();
-        }
 
         /// <summary>
         /// Starts socket client
@@ -138,14 +83,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             m_oCancelSource.Cancel();
             await m_oFundingManager.Stop();
             await Task.Delay(500);
-            if (m_oAccountSocketClient != null)
-            {
-                await m_oAccountSocketClient.UnsubscribeAllAsync();
-                await Task.Delay(1000);
-                m_oAccountSocketClient.Dispose();
-                await Task.Delay(1000);
-                m_oAccountSocketClient = null;
-            }
 
             foreach (var oMarket in m_aMarketSockets)
             {

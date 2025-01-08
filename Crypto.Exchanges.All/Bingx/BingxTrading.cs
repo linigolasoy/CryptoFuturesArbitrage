@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XT.Net.Objects.Models;
 
 namespace Crypto.Exchanges.All.Bingx
 {
@@ -51,7 +52,17 @@ namespace Crypto.Exchanges.All.Bingx
 
         public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity)
         {
-            throw new NotImplementedException();
+            var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
+                    oSymbol.Symbol,
+                    (bBuy ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
+                    BingX.Net.Enums.FuturesOrderType.Market,
+                    (bLong ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
+                    nQuantity
+                );
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+
+            return new BingxOrder(oSymbol, oResult.Data);
         }
 
 
@@ -129,12 +140,32 @@ namespace Crypto.Exchanges.All.Bingx
             return aResult.ToArray();
         }
 
+        /// <summary>
+        /// Set leverage
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="nLeverage"></param>
+        /// <returns></returns>
         public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
         {
             var oResultLong = await m_oGlobalClient.BingX.PerpetualFuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, BingX.Net.Enums.PositionSide.Long, nLeverage);
             if (oResultLong == null || !oResultLong.Success) return false;
             var oResultShort = await m_oGlobalClient.BingX.PerpetualFuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, BingX.Net.Enums.PositionSide.Short, nLeverage);
             if (oResultShort == null || !oResultShort.Success) return false;
+            return true;
+        }
+
+
+        /// <summary>
+        /// Cancel order
+        /// </summary>
+        /// <param name="oOrder"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<bool> CancelOrder( IFuturesOrder oOrder)
+        {
+            var oResultLong = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, oOrder.Id);
+            if (oResultLong == null || !oResultLong.Success) return false;
             return true;
         }
     }

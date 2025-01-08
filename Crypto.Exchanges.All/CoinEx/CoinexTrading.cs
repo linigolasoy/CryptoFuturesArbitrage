@@ -45,5 +45,9 @@ namespace Crypto.Exchanges.All.CoinEx
         {
             throw new NotImplementedException();
         }
+        public async Task<bool> CancelOrder(IFuturesOrder oOrder)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

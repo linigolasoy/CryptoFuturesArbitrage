@@ -73,8 +73,12 @@ namespace CryptoFuturesArbitrage.Console
         /// <returns></returns>
         private static async Task DoTester(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
+            
             DateTime dFrom = DateTime.Today.AddMonths(-1);
             DateTime dTo = DateTime.Today;
+
+            throw new NotImplementedException();    
+            /*
             IFundingTestData oTestData = TesterFactory.CreateFundingTestData(oSetup, oLogger, dFrom, dTo);
 
             // Load symbols
@@ -121,6 +125,7 @@ namespace CryptoFuturesArbitrage.Console
             decimal nAverage = aFound.Values.Average();
             oLogger.Info($"==== AVERAGE : [{nAverage.ToString("0.##")}]");
             await Task.Delay(2000);
+            */
         }
 
 

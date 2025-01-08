@@ -57,8 +57,8 @@ namespace Crypto.Tests
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchangeCoinex = ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
-            ICryptoFuturesExchange oExchangeBingx = ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            ICryptoFuturesExchange oExchangeCoinex = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
+            ICryptoFuturesExchange oExchangeBingx = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
 
 
             IFuturesSymbol[]? aSymbolsCoinex = await oExchangeCoinex.GetSymbols();  

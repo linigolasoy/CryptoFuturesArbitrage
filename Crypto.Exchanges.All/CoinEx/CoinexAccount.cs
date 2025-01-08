@@ -1,4 +1,5 @@
 ﻿using Crypto.Interface.Futures;
+using Crypto.Interface.Websockets;
 using CryptoClients.Net.Interfaces;
 using CryptoExchange.Net.Interfaces;
 using System;
@@ -19,6 +20,12 @@ namespace Crypto.Exchanges.All.CoinEx
         private IExchangeRestClient m_oGlobalClient;
         public ICryptoFuturesExchange Exchange { get; }
 
+        public IWebsocketManager<IFuturesBalance> BalanceManager => throw new NotImplementedException();
+
+        public IWebsocketManager<IFuturesOrder> OrderManager => throw new NotImplementedException();
+
+        public IWebsocketManager<IFuturesPosition> PositionManager => throw new NotImplementedException();
+
         public async Task<IFuturesBalance[]?> GetBalances()
         {
             var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Account.GetBalancesAsync();
@@ -35,6 +42,10 @@ namespace Crypto.Exchanges.All.CoinEx
         }
 
         public async Task<IFuturesPosition[]?> GetPositions()
+        {
+            throw new NotImplementedException();
+        }
+        public async Task<bool> StartSockets()
         {
             throw new NotImplementedException();
         }

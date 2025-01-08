@@ -14,7 +14,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxFundingRatesTests()
         {
-            ICryptoFuturesExchange oExchange = BingxCommon.CreateExchange();
+            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
@@ -54,7 +54,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxBarsTests()
         {
-            ICryptoFuturesExchange oExchange = BingxCommon.CreateExchange();
+            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);

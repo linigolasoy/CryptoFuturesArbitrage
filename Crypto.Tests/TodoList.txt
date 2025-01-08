@@ -14,20 +14,20 @@
 	1.11 Rest Cancel Order
 
 
-02 Exchange BINGX:
+OK 02 Exchange BINGX:
 
 	OK 2.00 Separate Test Classes
 	OK 2.01 Rest get balances
 	OK 2.02 Rest get leverages
 	OK 2.03 Rest get orders
-	2.04 Rest get positions
-	2.05 Websocket balances
-	2.06 Websocket orders
-	2.07 Websocket positions
+	OK 2.04 Rest get positions
+	OK 2.05 Websocket balances
+	OK 2.06 Websocket orders
+	OK 2.07 Websocket positions
 	OK 2.08 Rest Set leverage
 	OK 2.09 Rest Order Limit
-	2.10 Rest Order Market
-	2.11 Rest Cancel Order
+	OK 2.10 Rest Order Market
+	OK 2.11 Rest Cancel Order
 
 03 Exchange BITGET:
 
