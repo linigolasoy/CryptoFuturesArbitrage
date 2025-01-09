@@ -25,6 +25,8 @@ namespace Crypto.Interface.Futures
 
         public decimal ProfitUnRealized { get; }
 
+        public DateTime LastUpdate { get; }
+
         public void Update(IFuturesPosition oPosition);
     }
 }

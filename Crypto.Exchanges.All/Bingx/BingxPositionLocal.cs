@@ -56,12 +56,13 @@ namespace Crypto.Exchanges.All.Bingx
         public decimal ProfitRealized { get; private set; }
 
         public decimal ProfitUnRealized { get; private set; }
-
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
         public void Update( IFuturesPosition oPos )
         {
             Quantity = oPos.Quantity;   
             ProfitRealized = oPos.ProfitRealized;
             ProfitUnRealized = oPos.ProfitUnRealized;
+            LastUpdate = oPos.LastUpdate;
         }
     }
 }

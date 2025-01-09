@@ -17,21 +17,18 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     internal class BitgetWebsocket : ICryptoWebsocket
     {
 
-        private BitgetSocketClient? m_oPrivateClient = null;
         private BitgetSocketClient? m_oFundingClient = null;
         private BitgetSocketClient? m_oMarketClient = null;
 
         private BitgetFutures m_oExchange;
 
         private BitgetFundingRateManager m_oFundingManager;
-        private BitgetBalanceManager m_oBalanceManager;
         private BitgetOrderbookManager m_oOrderbookManager;
         public BitgetWebsocket( BitgetFutures oExchange, IFuturesSymbol[] aSymbols ) 
         { 
             m_oExchange = oExchange;
             FuturesSymbols = aSymbols;
             m_oFundingManager = new BitgetFundingRateManager(aSymbols);
-            m_oBalanceManager = new BitgetBalanceManager();
             m_oOrderbookManager = new BitgetOrderbookManager(aSymbols);
         }
         public IExchange Exchange { get => m_oExchange; }
@@ -46,11 +43,11 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
         public async Task<bool> Start()
         {
             await Stop();
+            /*
             m_oPrivateClient = new BitgetSocketClient();
             m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
             await m_oPrivateClient.FuturesApiV2.PrepareConnectionsAsync();  
@@ -69,11 +66,13 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             {
                 return false;
             }
+            */
             return true;
         }
 
         public async Task Stop()
         {
+            /*
             if( m_oPrivateClient != null)
             {
                 await m_oPrivateClient.UnsubscribeAllAsync();
@@ -81,6 +80,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
                 m_oPrivateClient.Dispose();
                 m_oPrivateClient = null;    
             }
+            */
             if (m_oFundingClient != null)
             {
                 await m_oFundingClient.UnsubscribeAllAsync();
@@ -130,24 +130,6 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             if (oEvent == null || oEvent.Data == null) return;
             m_oFundingManager.Put(oEvent.Data);
         }
-        private void OnBalance( DataEvent<IEnumerable<BitgetFuturesBalanceUpdate>> oEvent )
-        {
-            if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
-            foreach( var oData in oEvent.Data )
-            {
-                m_oBalanceManager.Put(oData);
-            }
-            return;
-        }
-        private void OnOrder(DataEvent<IEnumerable<BitgetFuturesOrderUpdate>> oEvent)
-        {
-            if( oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0 ) return; 
-            return;
-        }
-        private void OnPosition(DataEvent<IEnumerable<BitgetPositionUpdate>> oEvent)
-        {
-            if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
-            return;
-        }
+
     }
 }

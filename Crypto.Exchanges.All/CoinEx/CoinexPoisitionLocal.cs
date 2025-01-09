@@ -53,12 +53,14 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public decimal ProfitUnRealized { get; private set; }
 
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
         public void Update(IFuturesPosition oPosition)
         {
             Quantity = oPosition.Quantity;
             AveragePrice = oPosition.AveragePrice;
             ProfitRealized = oPosition.ProfitRealized;
             ProfitUnRealized = oPosition.ProfitUnRealized;
+            LastUpdate = oPosition.LastUpdate;
         }
     }
 }

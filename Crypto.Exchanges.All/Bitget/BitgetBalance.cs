@@ -22,6 +22,18 @@ namespace Crypto.Exchanges.All.Bitget
             MarginAvaliable = oUpdate.MaxOpenPosAvailable;
 
         }
+
+        public BitgetBalance(BitgetFuturesBalance oParsed)
+        {
+            Currency = oParsed.MarginAsset;
+            Equity = oParsed.Equity;
+
+            MarginFreezed = oParsed.Locked;
+            MarginUsed = oParsed.Equity - oParsed.Available;
+            MarginAvaliable = oParsed.Available;
+
+        }
+
         public string Currency { get; }
 
         public decimal Equity { get; }

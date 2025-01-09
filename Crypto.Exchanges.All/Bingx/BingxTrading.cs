@@ -32,12 +32,12 @@ namespace Crypto.Exchanges.All.Bingx
         /// <param name="nQuantity"></param>
         /// <param name="nPrice"></param>
         /// <returns></returns>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity, decimal nPrice)
+        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
         {
             
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
                     oSymbol.Symbol,
-                    (bBuy ? BingX.Net.Enums.OrderSide.Buy: BingX.Net.Enums.OrderSide.Sell),
+                    (bLong ? BingX.Net.Enums.OrderSide.Buy: BingX.Net.Enums.OrderSide.Sell),
                     BingX.Net.Enums.FuturesOrderType.Limit,
                     (bLong? BingX.Net.Enums.PositionSide.Long: BingX.Net.Enums.PositionSide.Short),
                     nQuantity,
@@ -50,11 +50,11 @@ namespace Crypto.Exchanges.All.Bingx
             return new BingxOrder(oSymbol, oResult.Data);
         }
 
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity)
+        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
                     oSymbol.Symbol,
-                    (bBuy ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
+                    (bLong ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
                     BingX.Net.Enums.FuturesOrderType.Market,
                     (bLong ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
                     nQuantity
@@ -66,6 +66,39 @@ namespace Crypto.Exchanges.All.Bingx
         }
 
 
+        public async Task<bool> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
+        {
+            if( nPrice == null )
+            {
+                var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
+                        oPositon.Symbol.Symbol,
+                        (oPositon.Direction == FuturesPositionDirection.Short ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
+                        BingX.Net.Enums.FuturesOrderType.Market,
+                        (oPositon.Direction == FuturesPositionDirection.Long ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
+                        oPositon.Quantity
+                    );
+                if (oResult == null || !oResult.Success) return false;
+                if (oResult.Data == null) return false;
+                return true;
+
+            }
+            else
+            {
+                var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
+                        oPositon.Symbol.Symbol,
+                        (oPositon.Direction == FuturesPositionDirection.Short ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
+                        BingX.Net.Enums.FuturesOrderType.Limit,
+                        (oPositon.Direction == FuturesPositionDirection.Long ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
+                        oPositon.Quantity,
+                        nPrice.Value
+                    );
+                if (oResult == null || !oResult.Success) return false;
+                if (oResult.Data == null) return false;
+                return true;
+
+            }
+            throw new NotImplementedException();
+        }
         /// <summary>
         /// Get leverage single symbol
         /// </summary>

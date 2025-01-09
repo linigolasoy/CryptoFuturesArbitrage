@@ -29,20 +29,20 @@ OK 02 Exchange BINGX:
 	OK 2.10 Rest Order Market
 	OK 2.11 Rest Cancel Order
 
-03 Exchange BITGET:
+OK 03 Exchange BITGET:
 
-	3.00 Separate Test Classes
-	3.01 Rest get balances
-	3.02 Rest get leverages
-	3.03 Rest get orders
-	3.04 Rest get positions
-	3.05 Websocket balances
-	3.06 Websocket orders
-	3.07 Websocket positions
-	3.08 Rest Set leverage
-	3.09 Rest Order Limit
-	3.10 Rest Order Market
-	3.11 Rest Cancel Order
+	OK 3.00 Separate Test Classes
+	OK 3.01 Rest get balances
+	OK 3.02 Rest get leverages
+	OK 3.03 Rest get orders
+	OK 3.04 Rest get positions
+	OK 3.05 Websocket balances
+	OK 3.06 Websocket orders
+	OK 3.07 Websocket positions
+	OK 3.08 Rest Set leverage
+	OK 3.09 Rest Order Limit
+	OK 3.10 Rest Order Market
+	OK 3.11 Rest Cancel Order
 
 04 Bot.
 

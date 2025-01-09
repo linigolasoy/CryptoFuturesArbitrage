@@ -58,7 +58,7 @@ namespace Crypto.Tests.Coinex
             Assert.IsTrue(oNewLeverage.LongLeverage == 5);
             Assert.IsTrue(oNewLeverage.ShortLeverage == 5);
             decimal nPrice = 0.5M;
-            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, true, 10, nPrice);
+            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);
             Assert.IsNotNull(oOrder);
             await Task.Delay(2000);
             IFuturesOrder[] aOrdersWs = oExchange.Account.OrderManager.GetData();
@@ -82,7 +82,7 @@ namespace Crypto.Tests.Coinex
             Assert.IsTrue(oOrderWs.OrderStatus == FuturesOrderStatus.Canceled);
 
             decimal nQuantity = 5;
-            IFuturesOrder? oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, true, nQuantity);
+            IFuturesOrder? oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
             Assert.IsNotNull(oMarketOpen);
             await Task.Delay(1000);
             IFuturesPosition[] aRest = oExchange.Account.PositionManager.GetData();
@@ -91,7 +91,7 @@ namespace Crypto.Tests.Coinex
             Assert.IsNotNull(oPosition);
             Assert.IsTrue(oPosition.Quantity == nQuantity);
 
-            IFuturesOrder? oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, true, nQuantity);
+            IFuturesOrder? oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
             Assert.IsNotNull(oMarketOpen2);
             await Task.Delay(1000);
             Assert.IsTrue(oPosition.Quantity == nQuantity * 2M);
@@ -101,8 +101,8 @@ namespace Crypto.Tests.Coinex
             Assert.IsNotNull(aPositions);
             Assert.IsTrue(aPositions.Any());
 
-            IFuturesOrder? oMarketClose = await oExchange.Trading.CreateMarketOrder(oSymbol, false, true, nQuantity * 2M);
-            Assert.IsNotNull(oMarketClose);
+            bool bClosed = await oExchange.Trading.ClosePosition(oPosition);
+            Assert.IsTrue(bClosed);
             await Task.Delay(2000);
             aRest = oExchange.Account.PositionManager.GetData();
             Assert.IsNotNull(aRest);

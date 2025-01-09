@@ -49,9 +49,9 @@ namespace Crypto.Exchanges.All.CoinEx
         /// <param name="nQuantity"></param>
         /// <param name="nPrice"></param>
         /// <returns></returns>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity, decimal nPrice)
+        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
         {
-            OrderSide eSide = GetOrderSide( bBuy, bLong );
+            OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
             int nRetries = 0;
             while (nRetries++ <= RETRIES)
             {
@@ -67,7 +67,7 @@ namespace Crypto.Exchanges.All.CoinEx
                 if (oResult.Success)
                 {
                     if (oResult.Data == null) return null;
-                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bBuy, bLong, oResult.Data, OrderUpdateType.Put);
+                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
 
                     return oOrder;
                 }
@@ -78,9 +78,9 @@ namespace Crypto.Exchanges.All.CoinEx
             return null;
         }
 
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bBuy, bool bLong, decimal nQuantity)
+        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
-            OrderSide eSide = GetOrderSide(bBuy, bLong);
+            OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
             int nRetries = 0;
             while (nRetries++ <= RETRIES)
             {
@@ -95,7 +95,7 @@ namespace Crypto.Exchanges.All.CoinEx
                 if (oResult.Success)
                 {
                     if (oResult.Data == null) return null;
-                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bBuy, bLong, oResult.Data, OrderUpdateType.Put);
+                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
 
                     return oOrder;
                 }
@@ -103,6 +103,36 @@ namespace Crypto.Exchanges.All.CoinEx
                 if (!HasToRetry(oResult.Error)) return null;
             }
             return null;
+        }
+
+        public async Task<bool> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
+        {
+            OrderSide eSide = (oPositon.Direction == FuturesPositionDirection.Long ? OrderSide.Sell : OrderSide.Buy);
+            if ( nPrice == null )
+            {
+                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                    oPositon.Symbol.Symbol,
+                    eSide,
+                    OrderTypeV2.Market,
+                    oPositon.Quantity
+                );
+                if (oResult == null || !oResult.Success) return false;
+                return true;
+
+            }
+            else
+            {
+                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                    oPositon.Symbol.Symbol,
+                    eSide,
+                    OrderTypeV2.Limit,
+                    oPositon.Quantity,
+                    nPrice.Value
+                );
+                if (oResult == null || !oResult.Success ) return false;
+                return true;
+
+            }
         }
 
         /// <summary>
