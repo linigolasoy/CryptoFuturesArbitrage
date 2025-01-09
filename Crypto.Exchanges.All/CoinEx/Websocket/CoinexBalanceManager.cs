@@ -26,6 +26,13 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             try
             {
+                int nRetries = 10;
+                while(m_oExchange.Account == null && nRetries > 0 )
+                {
+                    await Task.Delay(500);
+                    nRetries--;
+                }
+                if (m_oExchange.Account == null) return;
                 IFuturesBalance[]? aBalances = await m_oExchange.Account.GetBalances();
                 if (aBalances == null) return;
                 foreach( var oBalance in aBalances )
@@ -65,6 +72,8 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public void Put(CoinExFuturesBalance oUpdate )
         {
+            IFuturesBalance oNewBalance = new CoinexBalance(oUpdate);
+            m_aBalances.AddOrUpdate(oNewBalance.Currency, p => oNewBalance, (s, p) => oNewBalance);
             return;
         }
 

@@ -43,7 +43,7 @@ namespace Crypto.Exchanges.All.CoinEx
             });
             m_oGlobalClient = new ExchangeRestClient();
             // m_oBarFeeder = new BingxBarFeeder(this);
-            Trading = new CoinexTrading(this);
+            Trading = new CoinexTrading(this, m_oGlobalClient);
             Account = new CoinexAccount(this, m_oGlobalClient);
         }
         public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
@@ -161,7 +161,7 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public async Task<ISymbol[]?> GetRawSymbols()
         {
-            throw new NotImplementedException();
+            return await GetSymbols();
         }
 
 

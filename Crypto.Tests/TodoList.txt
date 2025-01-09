@@ -1,17 +1,17 @@
 ﻿
-01 Exchange COINEX:
-	1.00 Separate Test Classes
-	1.01 Rest get balances
-	1.02 Rest get leverages
-	1.03 Rest get orders
-	1.04 Rest get positions
-	1.05 Websocket balances
-	1.06 Websocket orders
-	1.07 Websocket positions
-	1.08 Rest Set leverage
-	1.09 Rest Order Limit
-	1.10 Rest Order Market
-	1.11 Rest Cancel Order
+OK 01 Exchange COINEX:
+	OK 1.00 Separate Test Classes
+	OK 1.01 Rest get balances
+	OK 1.02 Rest get leverages
+	OK 1.03 Rest get orders
+	OK 1.04 Rest get positions
+	OK 1.05 Websocket balances
+	OK 1.06 Websocket orders
+	OK 1.07 Websocket positions
+	OK 1.08 Rest Set leverage
+	OK 1.09 Rest Order Limit
+	OK 1.10 Rest Order Market
+	OK 1.11 Rest Cancel Order
 
 
 OK 02 Exchange BINGX:

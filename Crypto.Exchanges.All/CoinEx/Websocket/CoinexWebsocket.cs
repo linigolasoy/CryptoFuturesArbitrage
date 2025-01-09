@@ -27,12 +27,10 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         }
         private CoinexFutures m_oExchange;
 
-        private CoinExSocketClient? m_oPrivateClient = null;
         private List<MarketWebsocket> m_aMarketWebsockets = new List<MarketWebsocket>();
 
         private CoinexOrderbookManager m_oOrderbookManager;
         private CoinexFundingRateManager m_oFundingManager;
-        private CoinexBalanceManager m_oBalanceManager;
 
 
         public CoinexWebsocket( CoinexFutures oExchange, IFuturesSymbol[] aSymbols )
@@ -41,7 +39,6 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             FuturesSymbols = aSymbols;
             m_oOrderbookManager = new CoinexOrderbookManager(this, aSymbols);
             m_oFundingManager = new CoinexFundingRateManager(oExchange, aSymbols);
-            m_oBalanceManager = new CoinexBalanceManager(oExchange);
         }
     
         public IExchange Exchange { get => m_oExchange; }
@@ -55,42 +52,13 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
         public async Task<bool> Start()
         {
             await Stop();
-            m_oPrivateClient = new CoinExSocketClient();
-            m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
-
-            var oResult = await m_oPrivateClient.FuturesApi.SubscribeToBalanceUpdatesAsync(OnBalanceUpdates);
-            if (oResult == null || !oResult.Success) return false;
-
-            oResult = await m_oPrivateClient.FuturesApi.SubscribeToOrderUpdatesAsync(OnOrderUpdates);
-            if (oResult == null || !oResult.Success) return false;
-
-            oResult = await m_oPrivateClient.FuturesApi.SubscribeToPositionUpdatesAsync(OnPositionUpdates);
-            if (oResult == null || !oResult.Success) return false;
             return true;
         }
 
-        private void OnBalanceUpdates(DataEvent<IEnumerable<CoinExFuturesBalance>> oEvent )
-        {
-            if( oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0 ) return; 
-            foreach( var oData in oEvent.Data )
-            {
-                m_oBalanceManager.Put( oData ); 
-            }
-        }
-
-        private void OnOrderUpdates(DataEvent<CoinExFuturesOrderUpdate> oEvent)
-        {
-            return;
-        }
-        private void OnPositionUpdates(DataEvent<CoinExPositionUpdate> oEvent)
-        {
-            return;
-        }
 
         public async Task Stop()
         {
