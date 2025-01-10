@@ -63,7 +63,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             foreach( var oData in aData )
             {
-                if( oData.NextFundingTime  == null )
+                if( oData.LastFundingTime  == null )
                 {
                     continue;
                 }

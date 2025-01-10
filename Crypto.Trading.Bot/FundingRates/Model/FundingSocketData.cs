@@ -154,7 +154,11 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         private void PutDate(List<IFundingDate> aResult, IFuturesSymbol[] aPair, IFundingRate[] aRates)
         {
             DateTime[] aDates = aRates.Select(p=> p.SettleDate).Distinct().OrderBy(p=> p).ToArray();  
-            foreach( DateTime dDate in aDates) 
+
+            // Only first date
+            if( aDates.Length <= 0 ) return;    
+            DateTime dDate = aDates[0];
+            // foreach( DateTime dDate in aDates) 
             {
                 IFundingRate[] aRatesDate = aRates.Where(p=> p.SettleDate == dDate).ToArray();  
 
@@ -166,6 +170,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                 }
                 ((FundingDate)oFound).Put(aPair, aRatesDate);
             }
+            // 
         }
 
         /// <summary>
@@ -189,7 +194,6 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                 IFuturesSymbol[] aSymbols = m_aSymbols[strKey];
                 List<IFundingRate> aRates = new List<IFundingRate>();
                 bool bOk = true;
-
                 foreach( var oSymbol in aSymbols )
                 {
                     ICryptoWebsocket? oSocket = Websockets.FirstOrDefault(p => p.Exchange.ExchangeType == oSymbol.Exchange.ExchangeType);
@@ -225,6 +229,12 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         {
             IFundingDate[]? aData = await GetFundingDates();
             if( aData == null || aData.Length <= 0 ) return null;    
+            if( dActual != null )
+            {
+                aData = aData.Where(p=> p.DateTime > dActual.Value ).ToArray();
+                if (aData.Length <= 0) return null;
+            }
+
             return aData.OrderBy(p=> p.DateTime).First(); 
 
         }

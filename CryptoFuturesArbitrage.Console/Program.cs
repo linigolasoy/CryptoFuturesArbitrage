@@ -161,19 +161,38 @@ namespace CryptoFuturesArbitrage.Console
                 bResult = !NeedsCancel();
                 IFundingDate[]? aDates = await oSocketData.GetFundingDates();
                 if (aDates == null) continue;
+
+                IFundingPair? oBest = null;
                 IFundingDate? oNext = await oSocketData.GetNext(null);
-                if (oNext == null) continue;
-                IFundingPair? oPair = oNext.GetBest();
-                if (oPair == null) continue;
+                while( oNext != null )
+                {
+                    IFundingPair? oPair = oNext.GetBest();
+                    if (oPair != null)
+                    {
+                        if (oBest == null)
+                        {
+                            oBest = oPair;  
+                        }
+                        else if( oBest.Percent < oPair.Percent )
+                        {
+                            oBest = oPair;
+                        }
+
+                    }
+                    oNext = await oSocketData.GetNext(oNext.DateTime);
+
+                }
+
+                if (oBest == null) continue;
                 bool bLog = true;
 
                 if( oLast != null )
                 {
-                    if( oLast.Percent == oPair.Percent )
+                    if( oLast.Percent == oBest.Percent )
                     {
-                        if( oLast.BuySymbol.Symbol == oPair.BuySymbol.Symbol && oLast.SellSymbol.Symbol == oPair.SellSymbol.Symbol )
+                        if( oLast.BuySymbol.Symbol == oBest.BuySymbol.Symbol && oLast.SellSymbol.Symbol == oBest.SellSymbol.Symbol )
                         {
-                            if (oLast.BuySymbol.Exchange.ExchangeType == oPair.BuySymbol.Exchange.ExchangeType && oLast.SellSymbol.Exchange.ExchangeType == oPair.SellSymbol.Exchange.ExchangeType)
+                            if (oLast.BuySymbol.Exchange.ExchangeType == oBest.BuySymbol.Exchange.ExchangeType && oLast.SellSymbol.Exchange.ExchangeType == oBest.SellSymbol.Exchange.ExchangeType)
                             {
                                 bLog = false;   
                             }
@@ -184,7 +203,7 @@ namespace CryptoFuturesArbitrage.Console
 
                 if( bLog )
                 {
-                    LogFundingPair(oLogger, oPair);
+                    LogFundingPair(oLogger, oBest);
                 }
 
                 if( (DateTime.Now - dLast).TotalMinutes >= 5 )
@@ -193,7 +212,7 @@ namespace CryptoFuturesArbitrage.Console
                     oLogger.Info("...");
                 }
 
-                oLast = oPair;
+                oLast = oBest;
 
                 await Task.Delay(30000);
             }

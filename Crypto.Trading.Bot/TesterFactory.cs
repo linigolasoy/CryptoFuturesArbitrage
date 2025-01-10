@@ -18,5 +18,6 @@ namespace Crypto.Trading.Bot
             return new FundingTestData(oSetup, oLogger, dFrom, dTo);    
         }
         */
+        
     }
 }

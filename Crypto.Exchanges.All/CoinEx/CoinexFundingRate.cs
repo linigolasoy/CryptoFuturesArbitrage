@@ -14,7 +14,7 @@ namespace Crypto.Exchanges.All.CoinEx
         public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFuturesTickerUpdate oData) 
         { 
             Symbol = oSymbol;
-            SettleDate = oData.NextFundingTime!.Value.ToLocalTime();
+            SettleDate = oData.LastFundingTime!.Value.ToLocalTime();
             Rate = oData.NextFundingRate;
         }
         public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFundingRateHistory oData)
