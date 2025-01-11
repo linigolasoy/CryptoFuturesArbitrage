@@ -17,6 +17,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private IWebsocketPrivate m_oWebsocket;
 
         private ConcurrentDictionary<string, BingxBalance> m_aBalances = new ConcurrentDictionary<string, BingxBalance>();
+        public int ReceiveCount { get; private set; } = 0;
 
         public BingxBalanceManager(IWebsocketPrivate oWebsocket) 
         { 
@@ -43,6 +44,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public void Put(BingXFuturesBalanceChange oChange)
         {
 
+            ReceiveCount++;
             BingxBalance oBalance = new BingxBalance(oChange);
             m_aBalances.AddOrUpdate(oChange.Asset, (strKey) => { return oBalance; }, (strKey, oSource) =>
             {

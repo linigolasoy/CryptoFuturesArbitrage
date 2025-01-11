@@ -17,6 +17,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();
 
         private IFuturesSymbol[] m_aSymbols;
+        public int ReceiveCount { get; private set; } = 0;
         public BitgetOrderbookManager(IFuturesSymbol[] aSymbols) 
         { 
             m_aSymbols = aSymbols;
@@ -80,6 +81,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public void Put(string strSymbol, BitgetOrderBookUpdate oUpdate)
         {
+            ReceiveCount++;
             IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p => p.Symbol == strSymbol);
             if (oFound == null) return;
             IOrderbook oOrderbook = new BitgetOrderbook(oFound,oUpdate);

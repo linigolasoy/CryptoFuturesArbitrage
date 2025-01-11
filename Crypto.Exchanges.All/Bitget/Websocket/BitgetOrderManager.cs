@@ -14,6 +14,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     {
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder> (); 
         private BitgetWebsocketPrivate m_oWebsocket;
+        public int ReceiveCount { get; private set; } = 0;
         public BitgetOrderManager(BitgetWebsocketPrivate oWebsocket)
         {
             m_oWebsocket = oWebsocket;
@@ -43,6 +44,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         /// <param name="aOrders"></param>
         public void Put(IEnumerable<BitgetFuturesOrderUpdate> aOrders)
         {
+            ReceiveCount++;
             foreach( var oParsed in aOrders )
             {
                 IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);

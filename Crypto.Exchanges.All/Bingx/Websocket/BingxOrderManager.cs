@@ -16,6 +16,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder> (); 
         private IWebsocketPrivate m_oWebsocket;
+
+        public int ReceiveCount { get; private set; } = 0;
         public BingxOrderManager(IWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs;
@@ -50,6 +52,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             IFuturesSymbol? oFound = FuturesSymbols.FirstOrDefault(p=> p.Symbol == oUpdate.Symbol);
             if (oFound == null) return;
+            ReceiveCount++;
             IFuturesOrder oNewOrder = new BingxOrder(oFound, oUpdate);
 
             m_aOrders.AddOrUpdate( oUpdate.OrderId, p=> oNewOrder, (s,p)=> { p.Update(oNewOrder); return p; } ); 

@@ -12,5 +12,7 @@ namespace Crypto.Interface.Websockets
         public T[] GetData();
 
         public T? GetData(string strSymbol);
+
+        public int ReceiveCount { get; }
     }
 }

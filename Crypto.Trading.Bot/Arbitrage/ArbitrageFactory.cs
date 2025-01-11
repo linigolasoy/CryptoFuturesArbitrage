@@ -14,5 +14,9 @@ namespace Crypto.Trading.Bot.Arbitrage
         {
             return new OppositeOrder( oSymbolLong, oSymbolShort );  
         }
+        public static async Task<IOppositeOrder[]?> CreateOppositeOrderFromExchanges(ICryptoFuturesExchange[] aExchanges)
+        {
+            return await OppositeOrder.CreateFromExchanges(aExchanges);
+        }
     }
 }

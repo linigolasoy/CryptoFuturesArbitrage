@@ -15,10 +15,12 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>(); 
         private CoinexWebsocketPrivate m_oWebsocket;
-
+        private Task m_oMainTask;
+        public int ReceiveCount { get; private set; } = 0;
         public CoinexPoisitionManager(CoinexWebsocketPrivate oWebsocket)
         {
             m_oWebsocket = oWebsocket;
+            m_oMainTask = UpdateExisting();
         }
     
         public IFuturesPosition[] GetData()
@@ -38,11 +40,36 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             return aAll.FirstOrDefault(p=> p.Symbol.Symbol ==  strSymbol);  
         }
 
-        public void Put(CoinExPositionUpdate oUpdate)
+        /// <summary>
+        /// Update existing positions loop
+        /// </summary>
+        /// <returns></returns>
+        private async Task UpdateExisting()
         {
-            IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == oUpdate.Position.Symbol);
-            if (oSymbol == null) return;
-            IFuturesPosition oPosition = new CoinexPoisitionLocal(oSymbol, oUpdate);
+            while( true )
+            {
+                try
+                {
+                    if (m_oWebsocket.Exchange.Account != null)
+                    {
+                        IFuturesPosition[]? aPositions = await m_oWebsocket.Exchange.Account.GetPositions();
+                        if (aPositions != null && aPositions.Length > 0)
+                        {
+                            foreach (var oPos in aPositions) { UpdateLocal(oPos); }
+                        }
+                    }
+                }
+                catch( Exception e )
+                {
+
+                }
+                await Task.Delay(100);
+            }
+        }
+
+        private void UpdateLocal(IFuturesPosition oPosition)
+        {
+            ReceiveCount++;
             if (oPosition.Quantity <= 0)
             {
                 IFuturesPosition? oFound = null;
@@ -52,6 +79,15 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             {
                 m_aPositions.AddOrUpdate(oPosition.Id, p => oPosition, (s, p) => { p.Update(oPosition); return p; });
             }
+
+        }
+
+        public void Put(CoinExPositionUpdate oUpdate)
+        {
+            IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == oUpdate.Position.Symbol);
+            if (oSymbol == null) return;
+            IFuturesPosition oPosition = new CoinexPoisitionLocal(oSymbol, oUpdate);
+            UpdateLocal(oPosition);
             return;
         }
     }

@@ -16,7 +16,8 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private ICryptoWebsocket m_oWebsocket;
         private IFuturesSymbol[] m_aSymbols;
 
-        private ConcurrentDictionary<string, IOrderbook> m_aData = new ConcurrentDictionary<string, IOrderbook> (); 
+        private ConcurrentDictionary<string, IOrderbook> m_aData = new ConcurrentDictionary<string, IOrderbook> ();
+        public int ReceiveCount { get; private set; } = 0;
         public CoinexOrderbookManager( ICryptoWebsocket oWs, IFuturesSymbol[] aSymbols ) 
         { 
             m_oWebsocket = oWs;
@@ -91,6 +92,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public void Put(CoinExOrderBook oParsed)
         {
+            ReceiveCount++;
             IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);
             if (oFound == null) return;
             CoinexOrderbook oBook = new CoinexOrderbook(oFound, oParsed);

@@ -15,6 +15,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         private IFuturesSymbol[] m_aSymbols;
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
+        public int ReceiveCount { get; private set; } = 0;
 
         public BitgetFundingRateManager(IFuturesSymbol[] aSymbols ) 
         { 
@@ -45,6 +46,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public void Put(BitgetFuturesTickerUpdate oTicker )
         {
+            ReceiveCount++;
             IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p=> p.Symbol == oTicker.Symbol);
             if (oFound == null) return;
             if (oTicker.FundingRate == null) return;

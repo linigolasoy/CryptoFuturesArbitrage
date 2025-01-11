@@ -15,7 +15,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private IWebsocketPrivate m_oWebsocket;
 
-        private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>(); 
+        private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>();
+        public int ReceiveCount { get; private set; } = 0;
         public BingxPositionManager( IWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs; 
@@ -43,7 +44,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public void Put( IEnumerable<BingXFuturesPositionChange> aUpdated )
         {
-            List<IFuturesPosition> aPositions = new List<IFuturesPosition>();    
+            List<IFuturesPosition> aPositions = new List<IFuturesPosition>();
+            ReceiveCount++;
             foreach( var oPos in aUpdated)
             {
                 IFuturesSymbol? oSymbol = FuturesSymbols.FirstOrDefault(p=> p.Symbol == oPos.Symbol );

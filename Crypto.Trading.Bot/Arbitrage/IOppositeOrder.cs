@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.Arbitrage
 {
+
+    public interface ICloseResult
+    {
+        public bool Success { get; }    
+        public decimal ProfitOrLoss { get; }    
+    }
     public interface IOppositeOrder
     {
         public IFuturesSymbol SymbolLong { get; }
@@ -16,6 +22,8 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public decimal Quantity { get; set; }
 
+        public decimal Profit { get; set; } 
+        public decimal ProfitBalance { get; set; }  
         public IFuturesOrder? OpenOrderLong { get; }
         public IFuturesOrder? OpenOrderShort { get; }
 
@@ -27,7 +35,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public Task<bool> TryOpenLimit();
         public Task<bool> TryOpenMarket();
-        public Task<bool> TryCloseLimit();
-        public Task<bool> TryCloseMarket();
+        public Task<ICloseResult> TryCloseLimit();
+        public Task<ICloseResult> TryCloseMarket();
     }
 }

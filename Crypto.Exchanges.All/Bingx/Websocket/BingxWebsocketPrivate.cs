@@ -33,7 +33,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             m_oPositionManager = new BingxPositionManager(this);    
         }
 
-        public IExchange Exchange { get => m_oExchange; }
+        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols!; }
 

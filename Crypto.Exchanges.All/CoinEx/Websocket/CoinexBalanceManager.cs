@@ -16,6 +16,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private Task m_oBalanceTask;
 
         private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
+        public int ReceiveCount { get; private set; } = 0;
         public CoinexBalanceManager(ICryptoFuturesExchange oExchange) 
         { 
             m_oExchange = oExchange;
@@ -72,6 +73,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public void Put(CoinExFuturesBalance oUpdate )
         {
+            ReceiveCount++;
             IFuturesBalance oNewBalance = new CoinexBalance(oUpdate);
             m_aBalances.AddOrUpdate(oNewBalance.Currency, p => oNewBalance, (s, p) => oNewBalance);
             return;

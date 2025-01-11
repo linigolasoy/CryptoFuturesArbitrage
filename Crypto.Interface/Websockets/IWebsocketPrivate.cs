@@ -9,7 +9,7 @@ namespace Crypto.Interface.Websockets
 {
     public interface IWebsocketPrivate
     {
-        public IExchange Exchange { get; }
+        public ICryptoFuturesExchange Exchange { get; }
 
         public IFuturesSymbol[] FuturesSymbols { get; }
 

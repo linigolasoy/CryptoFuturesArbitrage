@@ -28,7 +28,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             m_oPositionManager = new CoinexPoisitionManager(this);
             m_oBalanceManager = new CoinexBalanceManager(this.m_oExchange);
         } 
-        public IExchange Exchange { get => m_oExchange; }
+        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
@@ -57,12 +57,15 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
             var oResult = await m_oPrivateClient.FuturesApi.SubscribeToBalanceUpdatesAsync(OnBalanceUpdates);
             if (oResult == null || !oResult.Success) return false;
+            await Task.Delay(500);
 
             oResult = await m_oPrivateClient.FuturesApi.SubscribeToOrderUpdatesAsync(OnOrderUpdates);
             if (oResult == null || !oResult.Success) return false;
+            await Task.Delay(500);
 
             oResult = await m_oPrivateClient.FuturesApi.SubscribeToPositionUpdatesAsync(OnPositionUpdates);
             if (oResult == null || !oResult.Success) return false;
+            await Task.Delay(500);
 
 
             return true;

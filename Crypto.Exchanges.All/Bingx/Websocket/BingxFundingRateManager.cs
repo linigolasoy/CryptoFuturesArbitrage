@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private ICryptoFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
+        public int ReceiveCount { get; private set; } = 0;
         public BingxFundingRateManager(ICryptoFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
         {
             m_oExchange = oExchamge;
@@ -79,6 +80,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 IFundingRateSnapShot[]? aSnapshots = await m_oExchange.GetFundingRates(m_aSymbols);
                 if (aSnapshots != null)
                 {
+                    ReceiveCount++;
                     foreach (IFundingRateSnapShot oShot in aSnapshots)
                     {
                         m_aFundingRates.AddOrUpdate(oShot.Symbol.Symbol, p => oShot, (p, s) => oShot);

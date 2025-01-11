@@ -15,7 +15,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private ICryptoWebsocket m_oWebsocket;
 
-        private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();    
+        private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();
+        public int ReceiveCount { get; private set; } = 0;
         public BingxOrderbookManager(ICryptoWebsocket oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;
@@ -79,8 +80,10 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public void Put( string strSymbol, DateTime dDate, BingXOrderBook oParsedBook )
         {
+
             IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault( p => p.Symbol == strSymbol );
             if (oSymbol == null) return;
+            ReceiveCount++;
             IOrderbook oBook = new BingxOrderbook(oSymbol, dDate, oParsedBook);
 
             m_aOrderbooks.AddOrUpdate(strSymbol, p => oBook, (s, o) => oBook); 

@@ -18,7 +18,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
-
+        public int ReceiveCount { get; private set; } = 0;
         private ICryptoFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
         public CoinexFundingRateManager(ICryptoFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
@@ -61,6 +61,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         /// <param name="aData"></param>
         public void Put( IEnumerable<CoinExFuturesTickerUpdate> aData )
         {
+            ReceiveCount++;
             foreach( var oData in aData )
             {
                 if( oData.LastFundingTime  == null )

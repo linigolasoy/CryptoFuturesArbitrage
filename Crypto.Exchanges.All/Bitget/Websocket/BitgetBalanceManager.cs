@@ -14,6 +14,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     {
 
         private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
+        public int ReceiveCount { get; private set; } = 0;
         public BitgetBalanceManager()
         {
 
@@ -38,6 +39,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public void Put( BitgetFuturesBalanceUpdate oUpdate )
         {
+            ReceiveCount++;
             IFuturesBalance oBalance = new BitgetBalance(oUpdate);
             m_aBalances.AddOrUpdate( oBalance.Currency, s=> oBalance, (s,p) => oBalance);   
         }

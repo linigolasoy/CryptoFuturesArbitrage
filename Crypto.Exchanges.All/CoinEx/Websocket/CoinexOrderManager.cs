@@ -17,6 +17,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private CoinexWebsocketPrivate m_oWebsocket;
 
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder>();
+        public int ReceiveCount { get; private set; } = 0;
         public CoinexOrderManager(CoinexWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs; 
@@ -41,6 +42,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public void Put(CoinExFuturesOrderUpdate oOrder)
         {
+            ReceiveCount++; 
             IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault(p=> p.Symbol == oOrder.Order.Symbol);
             if (oSymbol == null) return;
             bool bBuy = false;

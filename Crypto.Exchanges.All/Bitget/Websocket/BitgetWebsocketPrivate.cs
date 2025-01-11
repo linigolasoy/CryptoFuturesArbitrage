@@ -29,7 +29,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             m_oPositionManager = new BitgetPositionManager(this);   
         }
 
-        public IExchange Exchange { get => m_oExchange; }
+        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 

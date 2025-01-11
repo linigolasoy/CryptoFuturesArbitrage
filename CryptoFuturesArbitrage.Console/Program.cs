@@ -1,6 +1,8 @@
 ﻿using Crypto.Common;
 using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Trading.Bot;
+using Crypto.Trading.Bot.Arbitrage;
 using Crypto.Trading.Bot.FundingRates;
 using Crypto.Trading.Bot.FundingRates.Model;
 using System.Text;
@@ -140,6 +142,26 @@ namespace CryptoFuturesArbitrage.Console
 
         }
 
+        private static async Task TryClosePositions(IOppositeOrder[]? aOpposite, ICommonLogger oLogger)
+        {
+            if( aOpposite == null || aOpposite.Length <= 0 ) return;
+
+            foreach( IOppositeOrder o in aOpposite )
+            {
+                decimal nProfit = o.Profit;
+                ICloseResult oResult = await o.TryCloseMarket();
+
+                if (oResult.ProfitOrLoss != nProfit)
+                {
+                    oLogger.Info($"{o.SymbolLong.Base}-{o.SymbolLong.Quote} Profit or Loss {oResult.ProfitOrLoss}");
+                    if( oResult.ProfitOrLoss > 0 )
+                    {
+                        oLogger.Info("SUCCESSS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    }
+                }
+            }
+        }
+
         private static async Task DoWebsocketFundingData(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             IFundingSocketData oSocketData = BotFactory.CreateFundingSocket(oSetup, oLogger);
@@ -153,7 +175,9 @@ namespace CryptoFuturesArbitrage.Console
 
             await Task.Delay(5000);
 
-            DateTime dLast = DateTime.Now;  
+            DateTime dLast = DateTime.Now;
+            if (oSocketData.Websockets == null) return;
+            IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (ICryptoFuturesExchange)p.Exchange).ToArray());
 
             bool bResult = true;
             while (bResult)
@@ -211,10 +235,10 @@ namespace CryptoFuturesArbitrage.Console
                     dLast = DateTime.Now;
                     oLogger.Info("...");
                 }
-
+                await TryClosePositions(aOpposite, oLogger);
                 oLast = oBest;
 
-                await Task.Delay(30000);
+                await Task.Delay(1000);
             }
 
 
@@ -223,6 +247,7 @@ namespace CryptoFuturesArbitrage.Console
             await Task.Delay(2000);
 
         }
+
 
 
         public static async Task<int> Main(string[] args)

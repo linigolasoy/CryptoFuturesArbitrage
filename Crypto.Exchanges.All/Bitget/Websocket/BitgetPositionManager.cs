@@ -15,8 +15,8 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         private BitgetWebsocketPrivate m_oWebsocket;
 
-        private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>(); 
-
+        private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>();
+        public int ReceiveCount { get; private set; } = 0;
         public BitgetPositionManager(BitgetWebsocketPrivate oWebsocket)
         {
             m_oWebsocket = oWebsocket;
@@ -41,6 +41,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public void Put(IEnumerable<BitgetPositionUpdate> aParsed)
         {
+            ReceiveCount++;
             List<IFuturesPosition> aNews = new List<IFuturesPosition>();    
             foreach( var oParsed in aParsed )
             {
@@ -57,6 +58,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public void PutHistory(IEnumerable<BitgetPositionHistoryUpdate> aParsed)
         {
+            ReceiveCount++;
             foreach( var oParsed in aParsed )
             {
                 IFuturesPosition? oPos = null;
