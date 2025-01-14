@@ -39,6 +39,9 @@ namespace Crypto.Tests.Coinex
             IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
             await Task.Delay(1000);
+            bool bResultSockets = await oExchange.Account.StartSockets();
+            Assert.IsTrue(bResultSockets);
+            await Task.Delay(2000);
             IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 

@@ -31,8 +31,8 @@ namespace Crypto.Exchanges.All
                     throw new NotImplementedException();
             }
             // Start private websockets
-            await oResult.Account.StartSockets();
-            await Task.Delay(2000);
+            // await oResult.Account.StartSockets();
+            // await Task.Delay(2000);
             return oResult;
         }
 

@@ -43,8 +43,11 @@ namespace Crypto.Tests.Bitget
         public async Task BitgetBasicOrderTests()
         {
             IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
-
             await Task.Delay(1000);
+            bool bStarted = await oExchange.Account.StartSockets();
+            Assert.IsTrue(bStarted);
+            await Task.Delay(1000); 
+
             IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
