@@ -1,6 +1,7 @@
 ﻿using Bitget.Net.Objects.Models.V2;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
 using System;
 using System.Collections.Generic;
 using System.Linq;

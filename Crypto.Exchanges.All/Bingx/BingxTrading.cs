@@ -1,5 +1,8 @@
 ﻿using Crypto.Common;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 using CryptoClients.Net.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -15,13 +18,13 @@ namespace Crypto.Exchanges.All.Bingx
     {
 
         private IExchangeRestClient m_oGlobalClient;
-        public BingxTrading(ICryptoFuturesExchange oExchange, IExchangeRestClient oClient) 
+        public BingxTrading(IFuturesExchange oExchange, IExchangeRestClient oClient) 
         { 
             Exchange = oExchange;   
             m_oGlobalClient = oClient;
         }
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
 
         /// <summary>
@@ -122,7 +125,7 @@ namespace Crypto.Exchanges.All.Bingx
             IFuturesSymbol[]? aRequestSymbols;
             if( aSymbols == null )
             {
-               aRequestSymbols = await Exchange.GetSymbols();
+               aRequestSymbols = await Exchange.Market.GetSymbols();
             }
             else
             {
@@ -156,7 +159,7 @@ namespace Crypto.Exchanges.All.Bingx
         /// <exception cref="NotImplementedException"></exception>
         public async Task<IFuturesOrder[]?> GetOrders()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();   
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();   
             if ( aSymbols == null ) return null;
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.GetOpenOrdersAsync();
             if (oResult == null || !oResult.Success) return null;

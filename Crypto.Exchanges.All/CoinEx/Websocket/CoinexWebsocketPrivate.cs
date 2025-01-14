@@ -2,7 +2,10 @@
 using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
 using System;
 using System.Collections.Generic;
@@ -12,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexWebsocketPrivate : IWebsocketPrivate
+    internal class CoinexWebsocketPrivate : IFuturesWebsocketPrivate
     {
         private CoinExSocketClient? m_oPrivateClient = null;
         private CoinexFutures m_oExchange;
@@ -28,11 +31,11 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             m_oPositionManager = new CoinexPoisitionManager(this);
             m_oBalanceManager = new CoinexBalanceManager(this.m_oExchange);
         } 
-        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager => throw new NotImplementedException();
+        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
         public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
 

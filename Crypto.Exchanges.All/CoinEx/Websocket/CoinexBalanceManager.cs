@@ -1,6 +1,7 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,12 +13,12 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
     internal class CoinexBalanceManager : IWebsocketManager<IFuturesBalance>
     {
-        private ICryptoFuturesExchange m_oExchange;
+        private IFuturesExchange m_oExchange;
         private Task m_oBalanceTask;
 
         private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
         public int ReceiveCount { get; private set; } = 0;
-        public CoinexBalanceManager(ICryptoFuturesExchange oExchange) 
+        public CoinexBalanceManager(IFuturesExchange oExchange) 
         { 
             m_oExchange = oExchange;
             m_oBalanceTask = DoInitialBalance();

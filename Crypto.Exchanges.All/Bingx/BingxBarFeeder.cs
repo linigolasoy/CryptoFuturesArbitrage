@@ -3,6 +3,8 @@ using BingX.Net.Objects.Models;
 using Crypto.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.History;
+using Crypto.Interface.Futures.Market;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -20,7 +22,7 @@ namespace Crypto.Exchanges.All.Bingx
         { 
             m_oExchange = oExchange;
         }
-        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
 
 
         private KlineInterval? TimeframeToBingX( Timeframe eFrame )

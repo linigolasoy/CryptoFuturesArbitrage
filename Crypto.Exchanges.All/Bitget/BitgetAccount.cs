@@ -1,15 +1,18 @@
 ﻿using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
 using CryptoClients.Net.Interfaces;
 using Bitget.Net.Enums;
 using Crypto.Exchanges.All.Bitget.Websocket;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
+using Crypto.Interface.Futures.Market;
 
 namespace Crypto.Exchanges.All.Bitget
 {
     internal class BitgetAccount : IFuturesAccount
     {
         private BitgetWebsocketPrivate m_oWebsocketPrivate;
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocketPrivate.BalanceManager; }
 
@@ -49,7 +52,7 @@ namespace Crypto.Exchanges.All.Bitget
             var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.GetPositionsAsync(BitgetProductTypeV2.UsdtFutures, BitgetTrading.USDT);
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if( aSymbols == null ) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oData in oResult.Data )
@@ -64,7 +67,7 @@ namespace Crypto.Exchanges.All.Bitget
 
         public async Task<bool> StartSockets()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if (aSymbols == null) return false;
             m_oWebsocketPrivate.FuturesSymbols = aSymbols;
             bool bResult = await m_oWebsocketPrivate.Start();

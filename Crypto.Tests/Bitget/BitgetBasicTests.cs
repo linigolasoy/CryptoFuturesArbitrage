@@ -1,5 +1,7 @@
 ﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.History;
+using Crypto.Interface.Futures.Market;
 using Crypto.Tests.Bitget;
 using System;
 using System.Collections.Generic;
@@ -15,9 +17,9 @@ namespace Crypto.Tests.Bitget
         [TestMethod]
         public async Task BitgetFundingRatesTests()
         {
-            ICryptoFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
@@ -28,20 +30,20 @@ namespace Crypto.Tests.Bitget
 
 
             DateTime dFrom = DateTime.Today.AddMonths(-2);
-            IFundingRate[]? aHistorySingle = await oExchange.GetFundingRatesHistory(oToFind, dFrom);
+            IFundingRate[]? aHistorySingle = await oExchange.History.GetFundingRatesHistory(oToFind, dFrom);
             Assert.IsNotNull(aHistorySingle);
             Assert.IsTrue(aHistorySingle.Length > 10);
 
-            IFundingRate[]? aHistoryMulti = await oExchange.GetFundingRatesHistory(aSymbols.Take(30).ToArray(), dFrom);
+            IFundingRate[]? aHistoryMulti = await oExchange.History.GetFundingRatesHistory(aSymbols.Take(30).ToArray(), dFrom);
             Assert.IsNotNull(aHistoryMulti);
             Assert.IsTrue(aHistoryMulti.Length > 100);
 
 
-            IFundingRateSnapShot? oRateFound = await oExchange.GetFundingRates(oToFind);
+            IFundingRateSnapShot? oRateFound = await oExchange.Market.GetFundingRates(oToFind);
             Assert.IsNotNull(oRateFound);
 
 
-            IFundingRateSnapShot[]? aRates = await oExchange.GetFundingRates(aSymbols);
+            IFundingRateSnapShot[]? aRates = await oExchange.Market.GetFundingRates(aSymbols);
             Assert.IsNotNull(aRates);
             Assert.IsTrue(aRates.Length >= 10);
 
@@ -55,21 +57,21 @@ namespace Crypto.Tests.Bitget
         [TestMethod]
         public async Task BitgetBarsTests()
         {
-            ICryptoFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BTC");
             Assert.IsNotNull(oSymbol);
 
-            IFuturesBar[]? aBars = await oExchange.BarFeeder.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
+            IFuturesBar[]? aBars = await oExchange.History.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
             Assert.IsNotNull(aBars);
             Assert.IsTrue(aBars.Length > 24);
             Assert.IsTrue(aBars[aBars.Length - 1].DateTime.Date == DateTime.Today);
 
-            IFuturesBar[]? aBarsMulti = await oExchange.BarFeeder.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
+            IFuturesBar[]? aBarsMulti = await oExchange.History.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
             Assert.IsNotNull(aBarsMulti);
             Assert.IsTrue(aBarsMulti.Length > 100);
 

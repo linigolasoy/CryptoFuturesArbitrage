@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Crypto.Interface.Futures.Market;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface.Futures
+namespace Crypto.Interface.Futures.Trading
 {
 
     public enum FuturesOrderDirection
@@ -47,17 +48,17 @@ namespace Crypto.Interface.Futures
     public interface IFuturesOrder
     {
         public long Id { get; }
-        public IFuturesSymbol Symbol { get; }   
+        public IFuturesSymbol Symbol { get; }
         public FuturesOrderDirection OrderDirection { get; }
         public FuturesPositionDirection PositionDirection { get; }
         public FuturesOrderType OrderType { get; }
 
         public FuturesOrderEvent OrderEvent { get; }
-        public FuturesOrderStatus OrderStatus { get; }  
+        public FuturesOrderStatus OrderStatus { get; }
         public DateTime TimeCreated { get; }
         public DateTime TimeUpdated { get; }
         public decimal Quantity { get; }
-        public decimal? Price { get; }  
+        public decimal? Price { get; }
 
         public void Update(IFuturesOrder oOrder);
     }

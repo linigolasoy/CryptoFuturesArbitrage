@@ -11,13 +11,15 @@ namespace Crypto.Trading.Bot
     /// </summary>
     public class BotFactory
     {
+        /*
         public static ITradingBot CreateFundingRatesBot( ICryptoSetup oSetup, ICommonLogger oLogger )
         {
-            BaseBot oBot = new BaseBot( oSetup, oLogger );
-            oBot.Strategy = new FundingRateStrategy(oBot);
+            // BaseBot oBot = new BaseBot( oSetup, oLogger );
+            // oBot.Strategy = new FundingRateStrategy(oBot);
+            ITradingBot oBot = new FundingRatesBot( oSetup, oLogger );  
             return oBot;
         }
-
+        */
 
         public static IFundingSocketData CreateFundingSocket( ICryptoSetup oSetup, ICommonLogger oLogger )
         {

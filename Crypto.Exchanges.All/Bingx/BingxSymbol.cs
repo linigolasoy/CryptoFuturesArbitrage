@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace Crypto.Exchanges.All.Bingx
 {
     internal class BingxSymbol : IFuturesSymbol
     {
-        public BingxSymbol(ICryptoFuturesExchange oExchange, BingXContract oContract) 
+        public BingxSymbol(IFuturesExchange oExchange, BingXContract oContract) 
         {
             Exchange = oExchange;   
             Symbol = oContract.Symbol;
@@ -22,7 +23,7 @@ namespace Crypto.Exchanges.All.Bingx
             FeeTaker = oContract.TakerFeeRate;
         }
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
 
         public int LeverageMin { get => 1; }

@@ -1,7 +1,9 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,14 +13,14 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexOrderbookManager : IOrderbookManager
+    internal class CoinexOrderbookManager : OrderbookHandler, IOrderbookManager
     {
-        private ICryptoWebsocket m_oWebsocket;
+        private IFuturesWebsocketPublic m_oWebsocket;
         private IFuturesSymbol[] m_aSymbols;
 
         private ConcurrentDictionary<string, IOrderbook> m_aData = new ConcurrentDictionary<string, IOrderbook> ();
         public int ReceiveCount { get; private set; } = 0;
-        public CoinexOrderbookManager( ICryptoWebsocket oWs, IFuturesSymbol[] aSymbols ) 
+        public CoinexOrderbookManager(IFuturesWebsocketPublic oWs, IFuturesSymbol[] aSymbols ) 
         { 
             m_oWebsocket = oWs;
             m_aSymbols = aSymbols;

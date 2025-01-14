@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface.Websockets
+namespace Crypto.Interface.Futures.Websockets
 {
     public interface IWebsocketManager<T>
     {

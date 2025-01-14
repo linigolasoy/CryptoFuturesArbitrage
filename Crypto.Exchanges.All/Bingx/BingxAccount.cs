@@ -1,7 +1,10 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Exchanges.All.Bingx.Websocket;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoClients.Net.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -16,14 +19,14 @@ namespace Crypto.Exchanges.All.Bingx
         private IExchangeRestClient m_oGlobalClient;
 
 
-        private IWebsocketPrivate m_oWebsocket;
-        public BingxAccount(ICryptoFuturesExchange oExchange, IExchangeRestClient oClient) 
+        private IFuturesWebsocketPrivate m_oWebsocket;
+        public BingxAccount(IFuturesExchange oExchange, IExchangeRestClient oClient) 
         { 
             Exchange = oExchange;   
             m_oGlobalClient = oClient;
             m_oWebsocket = new BingxWebsocketPrivate((BingxFutures)oExchange);
         }
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocket.BalanceManager; }
 
@@ -55,7 +58,7 @@ namespace Crypto.Exchanges.All.Bingx
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.GetPositionsAsync();  
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if (aSymbols == null) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oData in oResult.Data)

@@ -1,16 +1,17 @@
-﻿using Crypto.Interface.Websockets;
+﻿using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface.Futures
+namespace Crypto.Interface.Futures.Account
 {
     public interface IFuturesAccount
     {
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
 
         public Task<bool> StartSockets();

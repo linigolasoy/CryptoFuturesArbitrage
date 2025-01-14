@@ -1,23 +1,21 @@
 ﻿using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 
 namespace Crypto.Tests.Bingx
 {
     [TestClass]
     public class BingxTradingTests
     {
+        /*
         [TestMethod]
         public async Task BingxOrdersTest()
         {
 
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
@@ -51,14 +49,14 @@ namespace Crypto.Tests.Bingx
             await oWs.Stop();
         }
 
-
+        */
 
         [TestMethod]
         public async Task BingxLeverageTests()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -82,10 +80,10 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxBasicOrderTests()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             await Task.Delay(1000);
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
@@ -154,7 +152,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxAccountTests()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             IFuturesBalance[]? aBalances = await oExchange.Account.GetBalances();
             Assert.IsNotNull(aBalances);

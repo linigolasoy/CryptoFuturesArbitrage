@@ -1,6 +1,9 @@
 ﻿using Crypto.Exchanges.All.CoinEx.Websocket;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoClients.Net.Interfaces;
 using CryptoExchange.Net.Interfaces;
 using System;
@@ -22,7 +25,7 @@ namespace Crypto.Exchanges.All.CoinEx
 
         private CoinexWebsocketPrivate m_oWebsocketPrivate;
         private IExchangeRestClient m_oGlobalClient;
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocketPrivate.BalanceManager; }
 
@@ -55,7 +58,7 @@ namespace Crypto.Exchanges.All.CoinEx
 
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null || oResult.Data.Items == null ) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if( aSymbols == null ) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oItem in oResult.Data.Items )
@@ -69,7 +72,7 @@ namespace Crypto.Exchanges.All.CoinEx
         }
         public async Task<bool> StartSockets()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if (aSymbols == null) return false;
             m_oWebsocketPrivate.FuturesSymbols = aSymbols;
             bool bResult = await m_oWebsocketPrivate.Start();

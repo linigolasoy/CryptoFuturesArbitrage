@@ -32,6 +32,7 @@ namespace CryptoFuturesArbitrage.Console
             return false;
 
         }
+        /*
 
         /// <summary>
         /// Bot loop
@@ -65,6 +66,7 @@ namespace CryptoFuturesArbitrage.Console
             await Task.Delay(2000);
 
         }
+        */
 
 
         /// <summary>
@@ -172,12 +174,15 @@ namespace CryptoFuturesArbitrage.Console
 
             IFundingPair? oLast = null;
 
+            IFundingPair? oTraded;
+            decimal nQuantity = 30;
+            decimal nStartBalance = 0;
 
             await Task.Delay(5000);
 
             DateTime dLast = DateTime.Now;
             if (oSocketData.Websockets == null) return;
-            IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (ICryptoFuturesExchange)p.Exchange).ToArray());
+            IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (IFuturesExchange)p.Exchange).ToArray());
 
             bool bResult = true;
             while (bResult)
@@ -235,7 +240,15 @@ namespace CryptoFuturesArbitrage.Console
                     dLast = DateTime.Now;
                     oLogger.Info("...");
                 }
-                await TryClosePositions(aOpposite, oLogger);
+
+                if( aOpposite != null && aOpposite.Length >0 )
+                {
+                    await TryClosePositions(aOpposite, oLogger);
+                }
+                else 
+                {
+
+                }
                 oLast = oBest;
 
                 await Task.Delay(1000);
@@ -258,13 +271,14 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
+            /*
             if (TEST) await DoTester(oSetup, oLogger);
             else
             {
-                await DoWebsocketFundingData(oSetup, oLogger);  
-                // await DoBot(oSetup, oLogger);
+                // await DoWebsocketFundingData(oSetup, oLogger);
+                await DoBot(oSetup, oLogger);
             }
-
+            */
             return 0;
         }
 

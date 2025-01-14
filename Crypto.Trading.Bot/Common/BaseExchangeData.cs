@@ -1,6 +1,6 @@
 ﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,14 +9,15 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.Common
 {
+    /*
     internal class BaseExchangeData : IBotExchangeData
     {
 
-        public BaseExchangeData( ICryptoFuturesExchange oExchange ) 
+        public BaseExchangeData( IFuturesExchange oExchange ) 
         { 
             Exchange = oExchange;   
         }
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public ICryptoWebsocket? Websocket { get; internal set; } = null;
 
@@ -58,4 +59,5 @@ namespace Crypto.Trading.Bot.Common
             Symbols = null; 
         }
     }
+    */
 }

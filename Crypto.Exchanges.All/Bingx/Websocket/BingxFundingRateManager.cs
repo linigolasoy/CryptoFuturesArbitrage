@@ -1,5 +1,6 @@
 ﻿using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,10 +19,10 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
 
-        private ICryptoFuturesExchange m_oExchange;
+        private IFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
         public int ReceiveCount { get; private set; } = 0;
-        public BingxFundingRateManager(ICryptoFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
+        public BingxFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
         {
             m_oExchange = oExchamge;
             m_aSymbols = aSymbols;
@@ -77,7 +78,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             while (!m_oCancelSource.IsCancellationRequested)
             {
-                IFundingRateSnapShot[]? aSnapshots = await m_oExchange.GetFundingRates(m_aSymbols);
+                IFundingRateSnapShot[]? aSnapshots = await m_oExchange.Market.GetFundingRates(m_aSymbols);
                 if (aSnapshots != null)
                 {
                     ReceiveCount++;

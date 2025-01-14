@@ -1,6 +1,8 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,10 +17,10 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
 
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder> (); 
-        private IWebsocketPrivate m_oWebsocket;
+        private IFuturesWebsocketPrivate m_oWebsocket;
 
         public int ReceiveCount { get; private set; } = 0;
-        public BingxOrderManager(IWebsocketPrivate oWs) 
+        public BingxOrderManager(IFuturesWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs;
         }

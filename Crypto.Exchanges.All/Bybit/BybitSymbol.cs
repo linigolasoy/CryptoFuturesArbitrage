@@ -1,5 +1,6 @@
 ﻿using Bybit.Net.Objects.Models.V5;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Crypto.Exchanges.All.Bybit
     {
 
         private static List<string> aBases = new List<string>();
-        public BybitSymbol(ICryptoFuturesExchange oExchange, BybitLinearInverseSymbol oParsed) 
+        public BybitSymbol(IFuturesExchange oExchange, BybitLinearInverseSymbol oParsed) 
         { 
             Exchange = oExchange;
             Symbol = oParsed.Name;
@@ -32,7 +33,7 @@ namespace Crypto.Exchanges.All.Bybit
 
         }
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
 
         public int LeverageMin { get; }

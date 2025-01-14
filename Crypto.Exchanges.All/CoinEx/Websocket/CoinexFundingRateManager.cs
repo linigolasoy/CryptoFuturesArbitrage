@@ -1,7 +1,8 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -19,9 +20,9 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
         public int ReceiveCount { get; private set; } = 0;
-        private ICryptoFuturesExchange m_oExchange;
+        private IFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
-        public CoinexFundingRateManager(ICryptoFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
+        public CoinexFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
         {
             m_oExchange = oExchamge;    
             m_aSymbols = aSymbols;

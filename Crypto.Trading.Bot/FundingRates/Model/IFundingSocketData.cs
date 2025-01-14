@@ -1,5 +1,5 @@
 ﻿using Crypto.Interface;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +17,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
 
         public ICommonLogger Logger { get; }
 
-        public ICryptoWebsocket[]? Websockets { get; }
+        public IFuturesWebsocketPublic[]? Websockets { get; }
 
         public Task<bool> Start();
         public Task Stop();

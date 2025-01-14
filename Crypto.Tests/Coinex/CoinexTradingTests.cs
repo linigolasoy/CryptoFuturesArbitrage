@@ -1,11 +1,7 @@
 ﻿using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
-using Crypto.Tests.Coinex;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 
 namespace Crypto.Tests.Coinex
 {
@@ -17,9 +13,9 @@ namespace Crypto.Tests.Coinex
         [TestMethod]
         public async Task CoinexLeverageTests()
         {
-            ICryptoFuturesExchange oExchange = await CoinexCommon.CreateExchange();
+            IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -40,10 +36,10 @@ namespace Crypto.Tests.Coinex
         [TestMethod]
         public async Task CoinexBasicOrderTests()
         {
-            ICryptoFuturesExchange oExchange = await CoinexCommon.CreateExchange();
+            IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
             await Task.Delay(1000);
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
@@ -112,7 +108,7 @@ namespace Crypto.Tests.Coinex
         [TestMethod]
         public async Task CoinexAccountTests()
         {
-            ICryptoFuturesExchange oExchange = await CoinexCommon.CreateExchange();
+            IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
             IFuturesBalance[]? aBalances = await oExchange.Account.GetBalances();
             Assert.IsNotNull(aBalances);

@@ -1,6 +1,8 @@
 ﻿using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -10,14 +12,14 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx.Websocket
 {
-    internal class BingxOrderbookManager : IOrderbookManager
+    internal class BingxOrderbookManager : OrderbookHandler, IOrderbookManager
     {
 
-        private ICryptoWebsocket m_oWebsocket;
+        private IFuturesWebsocketPublic m_oWebsocket;
 
         private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();
         public int ReceiveCount { get; private set; } = 0;
-        public BingxOrderbookManager(ICryptoWebsocket oWebsocket) 
+        public BingxOrderbookManager(IFuturesWebsocketPublic oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;
         }

@@ -1,7 +1,8 @@
 ﻿using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,12 +24,12 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         public FundingSocketData( ICommonLogger oLogger, ICryptoSetup oSetup ) 
         { 
             Logger = oLogger;
-            List<ICryptoFuturesExchange> aExchanges = new List<ICryptoFuturesExchange>();
+            List<IFuturesExchange> aExchanges = new List<IFuturesExchange>();
             foreach (var eType in oSetup.ExchangeTypes)
             {
-                Task<ICryptoFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup);
+                Task<IFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup);
                 oTask.Wait();
-                ICryptoFuturesExchange oNew = oTask.Result;
+                IFuturesExchange oNew = oTask.Result;
                 aExchanges.Add(oNew);
             }
             Exchanges = aExchanges.ToArray();   
@@ -37,9 +38,9 @@ namespace Crypto.Trading.Bot.FundingRates.Model
 
         public ICommonLogger Logger { get; }
 
-        public ICryptoWebsocket[]? Websockets { get; private set; } = null;
+        public IFuturesWebsocketPublic[]? Websockets { get; private set; } = null;
 
-        public ICryptoFuturesExchange[] Exchanges { get; }
+        public IFuturesExchange[] Exchanges { get; }
 
         /// <summary>
         /// Creates symbols
@@ -53,7 +54,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             foreach( var oExchange in Exchanges )
             {
                 Logger.Info($"FundingSocketData:    {oExchange.ExchangeType.ToString()}");
-                IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+                IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
                 if( aSymbols == null ) return false;
                 foreach( var oSymbol in aSymbols ) 
                 { 
@@ -84,12 +85,12 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         private async Task<bool> CreateWebsockets()
         {
             Logger.Info("FundingSocketData: Create websockets");
-            List<ICryptoWebsocket> aWebsockets = new List<ICryptoWebsocket>();
+            List<IFuturesWebsocketPublic> aWebsockets = new List<IFuturesWebsocketPublic>();
             foreach (var oExchange in Exchanges)
             {
-                ICryptoWebsocket? oNew = await oExchange.CreateWebsocket();
-                if (oNew == null) return false;
-                aWebsockets.Add(oNew);  
+                bool bResult = await oExchange.Market.StartSockets();
+                if (!bResult || oExchange.Market.Websocket == null) return false;
+                aWebsockets.Add(oExchange.Market.Websocket);  
             }
             Websockets = aWebsockets.ToArray();
             return true;
@@ -196,7 +197,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                 bool bOk = true;
                 foreach( var oSymbol in aSymbols )
                 {
-                    ICryptoWebsocket? oSocket = Websockets.FirstOrDefault(p => p.Exchange.ExchangeType == oSymbol.Exchange.ExchangeType);
+                    IFuturesWebsocketPublic? oSocket = Websockets.FirstOrDefault(p => p.Exchange.ExchangeType == oSymbol.Exchange.ExchangeType);
                     if( oSocket == null )
                     {
                         bOk = false;

@@ -1,6 +1,8 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -13,11 +15,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
     internal class BingxPositionManager : IWebsocketManager<IFuturesPosition>
     {
 
-        private IWebsocketPrivate m_oWebsocket;
+        private IFuturesWebsocketPrivate m_oWebsocket;
 
         private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>();
         public int ReceiveCount { get; private set; } = 0;
-        public BingxPositionManager( IWebsocketPrivate oWs) 
+        public BingxPositionManager( IFuturesWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs; 
         }

@@ -4,7 +4,6 @@ using Bybit.Net.Enums;
 using Bybit.Net.Objects.Models.V5;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
 using CryptoExchange.Net.Authentication;

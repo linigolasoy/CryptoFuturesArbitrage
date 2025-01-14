@@ -12,11 +12,11 @@ namespace Crypto.Tests.Bitget
 {
     internal class BitgetCommon
     {
-        public static async Task<ICryptoFuturesExchange> CreateExchange()
+        public static async Task<IFuturesExchange> CreateExchange()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
             return oExchange;
         }
     }

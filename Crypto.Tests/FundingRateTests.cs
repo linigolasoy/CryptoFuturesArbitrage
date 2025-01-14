@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Crypto.Trading.Bot.Arbitrage;
+using Crypto.Interface.Futures.Market;
 
 namespace Crypto.Tests
 {
@@ -21,12 +22,12 @@ namespace Crypto.Tests
 
             const string USDT = "USDT";
             const string CURRENCY = "VANA";
-            ICryptoFuturesExchange oExchangeLong = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
-            ICryptoFuturesExchange oExchangeShort = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
+            IFuturesExchange oExchangeLong = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
+            IFuturesExchange oExchangeShort = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
 
-            IFuturesSymbol[]? aSymbolsLong = await oExchangeLong.GetSymbols();
+            IFuturesSymbol[]? aSymbolsLong = await oExchangeLong.Market.GetSymbols();
             Assert.IsNotNull(aSymbolsLong);
-            IFuturesSymbol[]? aSymbolsShort = await oExchangeShort.GetSymbols();
+            IFuturesSymbol[]? aSymbolsShort = await oExchangeShort.Market.GetSymbols();
             Assert.IsNotNull(aSymbolsShort);
 
 

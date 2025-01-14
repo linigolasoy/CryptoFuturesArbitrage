@@ -3,17 +3,20 @@ using Bitget.Net.Objects.Models.V2;
 using Bitget.Net.Enums;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 
 namespace Crypto.Exchanges.All.Bitget.Websocket
 {
-    internal class BitgetWebsocketPrivate : IWebsocketPrivate
+    internal class BitgetWebsocketPrivate : IFuturesWebsocketPrivate
     {
         private BitgetFutures m_oExchange;
 
@@ -29,7 +32,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             m_oPositionManager = new BitgetPositionManager(this);   
         }
 
-        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 

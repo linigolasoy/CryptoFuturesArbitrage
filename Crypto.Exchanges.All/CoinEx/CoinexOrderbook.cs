@@ -1,5 +1,6 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;

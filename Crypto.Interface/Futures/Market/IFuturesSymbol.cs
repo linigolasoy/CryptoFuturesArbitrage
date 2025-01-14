@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface.Futures
+namespace Crypto.Interface.Futures.Market
 {
     public interface IFuturesSymbol: ISymbol
     {
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
         public int LeverageMin { get; }
 

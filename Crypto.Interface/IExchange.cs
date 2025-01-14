@@ -1,10 +1,4 @@
-﻿using Crypto.Interface.Websockets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Crypto.Interface
 {
 
@@ -26,11 +20,11 @@ namespace Crypto.Interface
     {
         public ICryptoSetup Setup { get; }
 
-        public ExchangeType ExchangeType { get; }   
+        public ExchangeType ExchangeType { get; }
 
-        public Task<ICryptoWebsocket?> CreateWebsocket();
+        // public Task<ICryptoWebsocket?> CreateWebsocket();
 
-        public Task<ISymbol[]?> GetRawSymbols();
+        // public Task<ISymbol[]?> GetRawSymbols();
 
     }
 }

@@ -1,4 +1,8 @@
 ﻿using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +35,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesSymbol SymbolShort { get; }
 
         public decimal Profit { get; set; } = 0;
+        public decimal Fees { get; set; } = 0;
         public decimal ProfitBalance { get; set; } = 0;
         public int Leverage { get; set; } = 1;
 
@@ -65,12 +70,17 @@ namespace Crypto.Trading.Bot.Arbitrage
             {
                 this.ProfitBalance = oBalanceLong.ProfitUnrealized + oBalanceShort.ProfitUnrealized;
             }
-            if ( nPnl > 0M )
-            {
-
-            }
             oResult.ProfitOrLoss = nPnl;
             this.Profit = nPnl;
+            if ( nPnl > 0M )
+            {
+                List<Task<bool>> aTasks = new List<Task<bool>>();
+                aTasks.Add(SymbolLong.Exchange.Trading.ClosePosition(PositionLong));
+                aTasks.Add(SymbolShort.Exchange.Trading.ClosePosition(PositionShort));
+
+                await Task.WhenAll(aTasks); 
+                oResult.Success = true;
+            }
             return oResult;
         }
 
@@ -135,7 +145,11 @@ namespace Crypto.Trading.Bot.Arbitrage
 
                 }
 
-                if (PositionLong != null && PositionShort != null) return true;
+                if (PositionLong != null && PositionShort != null)
+                {
+                    FeesOnPosition();
+                    return true;
+                }
 
                 nRetries++; 
             }
@@ -144,22 +158,34 @@ namespace Crypto.Trading.Bot.Arbitrage
         }
 
         /// <summary>
+        /// Calculate fees based on position
+        /// </summary>
+        private void FeesOnPosition()
+        {
+            if (PositionLong == null || PositionShort == null) return;
+            decimal nFeesLong = (PositionLong.Symbol.FeeTaker + PositionLong.Symbol.FeeMaker) * PositionLong.Quantity * PositionLong.AveragePrice;
+            decimal nFeesShort = (PositionShort.Symbol.FeeTaker + PositionShort.Symbol.FeeMaker) * PositionShort.Quantity * PositionShort.AveragePrice;
+
+            Fees = nFeesLong + nFeesShort;
+        }
+
+        /// <summary>
         /// Create from positions
         /// </summary>
         /// <param name="aExchanges"></param>
         /// <returns></returns>
-        public static async Task<IOppositeOrder[]?> CreateFromExchanges(ICryptoFuturesExchange[] aExchanges)
+        public static async Task<IOppositeOrder[]?> CreateFromExchanges(IFuturesExchange[] aExchanges)
         {
             await Task.Delay(2000);
             List<IOppositeOrder> aResult = new List<IOppositeOrder>();  
             for( int i = 0; i < aExchanges.Length; i++ )
             {
-                ICryptoFuturesExchange oExchange1 = aExchanges[i];
+                IFuturesExchange oExchange1 = aExchanges[i];
                 IFuturesPosition[] aPositions1 = oExchange1.Account.PositionManager.GetData();
                 if (aPositions1.Length <= 0) continue;
                 for( int j = i +1; j < aExchanges.Length; j++ )
                 {
-                    ICryptoFuturesExchange oExchange2 = aExchanges[j];
+                    IFuturesExchange oExchange2 = aExchanges[j];
                     IFuturesPosition[] aPositions2 = oExchange2.Account.PositionManager.GetData();
                     if (aPositions2.Length <= 0) continue;
 
@@ -176,6 +202,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                             OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol);
                             oOrder.PositionLong = oPosition1;
                             oOrder.PositionShort = oPosition2;
+                            oOrder.FeesOnPosition();
                             aResult.Add(oOrder);    
                         }
                         else
@@ -183,6 +210,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                             OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition2.Symbol);
                             oOrder.PositionLong = oPosition2;
                             oOrder.PositionShort = oPosition1;
+                            oOrder.FeesOnPosition();
                             aResult.Add(oOrder);
 
                         }

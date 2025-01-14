@@ -2,7 +2,10 @@
 using BingX.Net.Objects.Models;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
 using System;
 using System.Collections.Generic;
@@ -12,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx.Websocket
 {
-    internal class BingxWebsocketPrivate : IWebsocketPrivate
+    internal class BingxWebsocketPrivate : IFuturesWebsocketPrivate
     {
 
         private BingXSocketClient? m_oAccountSocketClient = null;
@@ -33,7 +36,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             m_oPositionManager = new BingxPositionManager(this);    
         }
 
-        public ICryptoFuturesExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols!; }
 
@@ -56,7 +59,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 m_oAccountSocketClient.Dispose();
                 m_oAccountSocketClient = null;
             }
-            m_aSymbols = await m_oExchange.GetSymbols();
+            m_aSymbols = await m_oExchange.Market.GetSymbols();
             if (m_aSymbols == null) throw new Exception("No symbols");
             m_oOrderManager.FuturesSymbols = m_aSymbols;
             m_oPositionManager.FuturesSymbols = m_aSymbols;

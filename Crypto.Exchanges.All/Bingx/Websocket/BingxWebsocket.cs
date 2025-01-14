@@ -2,7 +2,9 @@
 using BingX.Net.Objects.Models;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
 using System;
 using System.Collections.Generic;
@@ -12,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx.Websocket
 {
-    internal class BingxWebsocket : ICryptoWebsocket
+    internal class BingxWebsocket : IFuturesWebsocketPublic
     {
 
         private class MarketSockets
@@ -42,7 +44,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             m_oFundingManager = new BingxFundingRateManager(oExchange, aSymbols);
         }
         private BingxFutures m_oExchange;
-        public IExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
         public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }
 
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
@@ -100,7 +102,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// </summary>
         /// <param name="aSymbols"></param>
         /// <returns></returns>
-        public async Task<bool> SubscribeToMarket(ISymbol[] aSymbols)
+        public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
         {
             int nTotal = 0;
             int nMax = 200;

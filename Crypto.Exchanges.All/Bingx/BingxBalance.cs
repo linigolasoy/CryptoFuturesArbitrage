@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,7 +1,9 @@
 ﻿using Bitget.Net.Objects.Models.V2;
 using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bitget.Websocket
 {
-    internal class BitgetOrderbookManager : IOrderbookManager
+    internal class BitgetOrderbookManager : OrderbookHandler, IOrderbookManager
     {
 
         private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();

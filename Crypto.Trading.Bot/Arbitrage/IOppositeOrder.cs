@@ -1,4 +1,7 @@
 ﻿using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +27,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public decimal Profit { get; set; } 
         public decimal ProfitBalance { get; set; }  
+        public decimal Fees { get; set; }   
         public IFuturesOrder? OpenOrderLong { get; }
         public IFuturesOrder? OpenOrderShort { get; }
 

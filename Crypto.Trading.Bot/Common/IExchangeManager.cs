@@ -13,6 +13,6 @@ namespace Crypto.Trading.Bot.Common
 
         public ICryptoSetup Setup { get; }
 
-        public ICryptoFuturesExchange[] Exchanges { get; }  
+        public IFuturesExchange[] Exchanges { get; }  
     }
 }

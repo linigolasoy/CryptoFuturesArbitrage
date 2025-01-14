@@ -3,6 +3,9 @@ using Bitget.Net.Enums;
 using Bitget.Net.Enums.V2;
 using Bitget.Net.Objects;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
 using System;
@@ -23,7 +26,7 @@ namespace Crypto.Exchanges.All.Bitget
 
         public const string USDT = "USDT";
         private IExchangeRestClient m_oGlobalClient;
-        public BitgetTrading(ICryptoFuturesExchange oExchange, BitgetApiCredentials oCredentials)
+        public BitgetTrading(IFuturesExchange oExchange, BitgetApiCredentials oCredentials)
         {
             Exchange = oExchange;
             BitgetRestClient.SetDefaultOptions(options =>
@@ -33,7 +36,7 @@ namespace Crypto.Exchanges.All.Bitget
             m_oGlobalClient = new ExchangeRestClient();
         }
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
 
         private OrderSide GetOrderSide(bool bBuy, bool bLong)
@@ -189,7 +192,7 @@ namespace Crypto.Exchanges.All.Bitget
             IFuturesSymbol[]? aMatch = aSymbols;
             if (aMatch == null)
             {
-                aMatch = await Exchange.GetSymbols();
+                aMatch = await Exchange.Market.GetSymbols();
             }
             if (aMatch == null) return null;
             foreach (var oSymbol in aMatch)
@@ -209,7 +212,7 @@ namespace Crypto.Exchanges.All.Bitget
             var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.GetOpenOrdersAsync(BitgetProductTypeV2.UsdtFutures);
             if( oResult == null || !oResult.Success ) return null;  
             if( oResult.Data == null || oResult.Data.Orders == null ) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
             if (aSymbols == null) return null;
             List<IFuturesOrder> aResult = new List<IFuturesOrder>();    
             foreach( var oData in oResult.Data.Orders )

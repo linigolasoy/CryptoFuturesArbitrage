@@ -1,6 +1,9 @@
 ﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,9 +31,9 @@ namespace Crypto.Trading.Bot
     public interface IBotExchangeData
     {
 
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
-        public ICryptoWebsocket? Websocket { get; }
+        public IFuturesWebsocketPublic? Websocket { get; }
 
         public IBotSymbolData[]? Symbols { get; }
 

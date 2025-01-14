@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 
-namespace Crypto.Interface.Futures
+namespace Crypto.Interface.Futures.Account
 {
 
     /// <summary>

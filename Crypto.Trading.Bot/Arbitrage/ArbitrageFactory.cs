@@ -1,4 +1,5 @@
 ﻿using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         {
             return new OppositeOrder( oSymbolLong, oSymbolShort );  
         }
-        public static async Task<IOppositeOrder[]?> CreateOppositeOrderFromExchanges(ICryptoFuturesExchange[] aExchanges)
+        public static async Task<IOppositeOrder[]?> CreateOppositeOrderFromExchanges(IFuturesExchange[] aExchanges)
         {
             return await OppositeOrder.CreateFromExchanges(aExchanges);
         }

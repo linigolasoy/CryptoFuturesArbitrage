@@ -6,7 +6,11 @@ using Crypto.Exchanges.All.Bingx;
 using Crypto.Exchanges.All.CoinEx.Websocket;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.History;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
 using CryptoExchange.Net.Authentication;
@@ -18,10 +22,10 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
-    internal class CoinexFutures : ICryptoFuturesExchange
+    internal class CoinexFutures : IFuturesExchange
     {
 
-        private const int TASK_COUNT = 20;
+        public const int TASK_COUNT = 20;
         private IApiKey m_oApiKey;
         private IExchangeRestClient m_oGlobalClient;
 
@@ -45,8 +49,12 @@ namespace Crypto.Exchanges.All.CoinEx
             // m_oBarFeeder = new BingxBarFeeder(this);
             Trading = new CoinexTrading(this, m_oGlobalClient);
             Account = new CoinexAccount(this, m_oGlobalClient);
+            Market = new CoinexMarket(this);
+            History = new CoinexHistory(this);  
         }
-        public IFuturesBarFeeder BarFeeder => throw new NotImplementedException();
+
+        public IFuturesHistory History { get; }
+        public IFuturesMarket Market { get; }
         public IFuturesTrading Trading { get; }
         public IFuturesAccount Account { get; }
         internal ApiCredentials ApiCredentials { get => m_oApiCredentials; }
@@ -60,130 +68,14 @@ namespace Crypto.Exchanges.All.CoinEx
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<ICryptoWebsocket?> CreateWebsocket()
+        public async Task<IFuturesWebsocketPublic?> CreateWebsocket()
         {
-            IFuturesSymbol[]? aSymbols = await GetSymbols();    
+            IFuturesSymbol[]? aSymbols = await Market.GetSymbols();    
             if( aSymbols == null ) return null; 
             return new CoinexWebsocket(this, aSymbols); 
         }
 
 
-        /// <summary>
-        /// Get funding rates of specific symbol
-        /// </summary>
-        /// <param name="oSymbol"></param>
-        /// <returns></returns>
-        public async Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol)
-        {
-            IFundingRateSnapShot[]? aResult = await GetFundingRates(new IFuturesSymbol[] { oSymbol });
-            if (aResult == null) return null;
-            if( aResult.Length <= 0 ) return null;
-            return aResult[0];
-        }
 
-        /// <summary>
-        /// Get all funding rates
-        /// </summary>
-        /// <param name="aSymbols"></param>
-        /// <returns></returns>
-        public async Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols)
-        {
-
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetFundingRatesAsync();
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null || oResult.Data.Count() <= 0 ) return null;
-            List<IFundingRateSnapShot> aResult = new List<IFundingRateSnapShot>();
-            foreach( CoinExFundingRate oData in oResult.Data )
-            {
-                if( oData.LastFundingTime == null ) continue;
-                IFuturesSymbol? oFound = aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol);
-                if (oFound == null) continue;
-                aResult.Add( new CoinexFundingRateSnapshot(oFound, oData) );    
-            }
-            return aResult.ToArray();
-        }
-
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
-        {
-
-            DateTime dFromActual = dFrom.Date;
-            DateTime dToActual = DateTime.Now;
-
-            int nLimit = 1000;
-            int nPage = 1;
-            List<IFundingRate> aResult = new List<IFundingRate>();  
-            while(true)
-            {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, dFromActual, dToActual, nPage, nLimit);
-                if (oResult == null || !oResult.Success) break;
-                if (oResult.Data == null) break;
-
-                if( oResult.Data.Items != null && oResult.Data.Items.Count() > 0 )
-                {
-                    foreach( CoinExFundingRateHistory oData in oResult.Data.Items ) 
-                    {
-                        if (oData.FundingTime == null) continue;
-                        aResult.Add(new CoinexFundingRate(oSymbol, oData));
-                    }
-                }
-
-                if (!oResult.Data.HasNext) break;
-                nPage++;
-
-            }
-            return aResult.ToArray();   
-        }
-
-        /// <summary>
-        /// Multi symbol history
-        /// </summary>
-        /// <param name="aSymbols"></param>
-        /// <returns></returns>
-        public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
-        {
-            ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(TASK_COUNT);
-            List<IFundingRate> aResult = new List<IFundingRate>();
-
-            foreach (IFuturesSymbol oSymbol in aSymbols)
-            {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
-            }
-
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
-            return aResult.ToArray();
-        }
-
-        public async Task<ISymbol[]?> GetRawSymbols()
-        {
-            return await GetSymbols();
-        }
-
-
-        /// <summary>
-        /// Get symbol list
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IFuturesSymbol[]?> GetSymbols()
-        {
-            if( m_aSymbols != null ) return m_aSymbols;
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetSymbolsAsync();
-            if (oResult == null || !oResult.Success) return null;
-
-            if( oResult.Data == null ) return null;
-            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
-            foreach( CoinExFuturesSymbol oParsed in oResult.Data ) 
-            { 
-                aResult.Add(new CoinexSymbol(this, oParsed)); 
-            }
-            m_aSymbols = aResult.ToArray();
-            return m_aSymbols;
-
-        }
     }
 }

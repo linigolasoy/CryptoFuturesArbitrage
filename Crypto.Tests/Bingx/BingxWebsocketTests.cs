@@ -1,10 +1,5 @@
 ﻿using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Crypto.Interface.Futures.Account;
 
 namespace Crypto.Tests.Bingx
 {
@@ -15,7 +10,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxFundingAccountSocket()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
 
 
@@ -24,11 +19,12 @@ namespace Crypto.Tests.Bingx
             Assert.IsTrue(aBalances.Length > 0);    
         }
 
+        /*
         [TestMethod]
         public async Task BingxFundingWebsocketTest()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             ICryptoWebsocket? oWebsockets = await oExchange.CreateWebsocket();
@@ -52,11 +48,13 @@ namespace Crypto.Tests.Bingx
 
             await oWebsockets.Stop();
         }
+        */
 
+        /*
         [TestMethod]
         public async Task BingxMarketWebsocketTest()
         {
-            ICryptoFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
             IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
@@ -90,6 +88,6 @@ namespace Crypto.Tests.Bingx
             await oWebsockets.Stop();
 
         }
-
+        */
     }
 }

@@ -1,6 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
 using CoinEx.Net.Enums;
 using System;
 using System.Collections.Concurrent;
@@ -8,6 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
+using Crypto.Interface.Futures.Market;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {

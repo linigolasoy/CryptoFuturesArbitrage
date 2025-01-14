@@ -1,4 +1,7 @@
 ﻿using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 using Crypto.Tests.Bitget;
 using System;
 using System.Collections.Generic;
@@ -16,9 +19,9 @@ namespace Crypto.Tests.Bitget
         [TestMethod]
         public async Task BitgetLeverageTests()
         {
-            ICryptoFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -39,10 +42,10 @@ namespace Crypto.Tests.Bitget
         [TestMethod]
         public async Task BitgetBasicOrderTests()
         {
-            ICryptoFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
             await Task.Delay(1000);
-            IFuturesSymbol[]? aSymbols = await oExchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
@@ -111,7 +114,7 @@ namespace Crypto.Tests.Bitget
         [TestMethod]
         public async Task BitgetAccountTests()
         {
-            ICryptoFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
             IFuturesBalance[]? aBalances = await oExchange.Account.GetBalances();
             Assert.IsNotNull(aBalances);

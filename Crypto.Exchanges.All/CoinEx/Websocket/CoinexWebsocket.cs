@@ -2,7 +2,10 @@
 using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.RateLimiting.Guards;
 using System;
@@ -13,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexWebsocket : ICryptoWebsocket
+    internal class CoinexWebsocket : IFuturesWebsocketPublic
     {
 
         private class MarketWebsocket
@@ -41,7 +44,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             m_oFundingManager = new CoinexFundingRateManager(oExchange, aSymbols);
         }
     
-        public IExchange Exchange { get => m_oExchange; }
+        public IFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; }
 
@@ -65,7 +68,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             return;
         }
 
-        public async Task<bool> SubscribeToMarket(ISymbol[] aSymbols)
+        public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
         {
             MarketWebsocket oNewWs = new MarketWebsocket(new CoinExSocketClient());
 

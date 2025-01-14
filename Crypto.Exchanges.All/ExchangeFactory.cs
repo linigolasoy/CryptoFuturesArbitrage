@@ -11,9 +11,9 @@ namespace Crypto.Exchanges.All
     public class ExchangeFactory
     {
 
-        public static async Task<ICryptoFuturesExchange> CreateExchange( ExchangeType eType, ICryptoSetup oSetup )
+        public static async Task<IFuturesExchange> CreateExchange( ExchangeType eType, ICryptoSetup oSetup )
         {
-            ICryptoFuturesExchange? oResult = null; 
+            IFuturesExchange? oResult = null; 
             switch ( eType )
             {
                 case ExchangeType.BingxFutures:

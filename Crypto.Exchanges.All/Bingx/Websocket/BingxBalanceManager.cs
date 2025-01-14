@@ -1,6 +1,7 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.RateLimiting.Guards;
 using System;
 using System.Collections.Concurrent;
@@ -14,12 +15,12 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
     internal class BingxBalanceManager : IWebsocketManager<IFuturesBalance>
     {
 
-        private IWebsocketPrivate m_oWebsocket;
+        private IFuturesWebsocketPrivate m_oWebsocket;
 
         private ConcurrentDictionary<string, BingxBalance> m_aBalances = new ConcurrentDictionary<string, BingxBalance>();
         public int ReceiveCount { get; private set; } = 0;
 
-        public BingxBalanceManager(IWebsocketPrivate oWebsocket) 
+        public BingxBalanceManager(IFuturesWebsocketPrivate oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;
         }

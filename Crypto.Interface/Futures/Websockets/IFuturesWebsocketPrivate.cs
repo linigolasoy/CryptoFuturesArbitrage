@@ -1,15 +1,17 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Interface.Websockets
+namespace Crypto.Interface.Futures.Websockets
 {
-    public interface IWebsocketPrivate
+    public interface IFuturesWebsocketPrivate
     {
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public IFuturesSymbol[] FuturesSymbols { get; }
 

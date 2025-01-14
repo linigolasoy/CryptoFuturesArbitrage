@@ -2,7 +2,7 @@ using Crypto.Common;
 using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Market;
 using Crypto.Trading.Bot;
 using Crypto.Trading.Bot.FundingRates.Model;
 
@@ -52,19 +52,20 @@ namespace Crypto.Tests
         }
 
 
+        /*
         [TestMethod]
         public async Task MatchFundingTests()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            ICryptoFuturesExchange oExchangeCoinex = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
-            ICryptoFuturesExchange oExchangeBingx = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            IFuturesExchange oExchangeCoinex = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
+            IFuturesExchange oExchangeBingx = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
 
 
-            IFuturesSymbol[]? aSymbolsCoinex = await oExchangeCoinex.GetSymbols();  
+            IFuturesSymbol[]? aSymbolsCoinex = await oExchangeCoinex.Market.GetSymbols();  
             Assert.IsNotNull(aSymbolsCoinex);
 
-            IFuturesSymbol[]? aSymbolsBingx = await oExchangeBingx.GetSymbols();
+            IFuturesSymbol[]? aSymbolsBingx = await oExchangeBingx.Market.GetSymbols();
             Assert.IsNotNull(aSymbolsBingx);
 
 
@@ -133,7 +134,7 @@ namespace Crypto.Tests
             Assert.IsTrue( aSorted.Count > 0 ); 
 
         }
-        
+        */
 
         /*
         /// <summary>

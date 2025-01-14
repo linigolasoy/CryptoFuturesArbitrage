@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Market;
 
 namespace Crypto.Exchanges.All.CoinEx
 {

@@ -1,7 +1,9 @@
 ﻿using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
-using Crypto.Interface.Websockets;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.Common
 {
+    /*
 
     /// <summary>
     /// Base bot
@@ -43,7 +46,7 @@ namespace Crypto.Trading.Bot.Common
         private async Task<bool> LoadSymbols( IBotExchangeData oData )
         {
             Logger.Info($"   Load symbols for {oData.Exchange.ExchangeType.ToString()}...");
-            IFuturesSymbol[]? aSymbols = await oData.Exchange.GetSymbols();
+            IFuturesSymbol[]? aSymbols = await oData.Exchange.Market.GetSymbols();
             if (aSymbols == null) throw new Exception(string.Format("Could not load symbols for exchange {0}", oData.Exchange.ExchangeType.ToString()));
             List<IBotSymbolData> aSymbolData = new List<IBotSymbolData>();  
             foreach( var oSymbol in aSymbols)
@@ -82,7 +85,7 @@ namespace Crypto.Trading.Bot.Common
         private async Task<bool> CreateWebsockets( IBotExchangeData oData )
         {
             Logger.Info($"   Create websockets for {oData.Exchange.ExchangeType.ToString()}...");
-            ICryptoWebsocket? oWebsocket = await oData.Exchange.CreateWebsocket();
+            IFuturesWebsocketPublic? oWebsocket = await oData.Exchange.CreateWebsocket();
             if (oWebsocket == null) { Logger.Error($"   Could not create websocket for {oData.Exchange.ExchangeType.ToString()}..."); return false; }
             ((BaseExchangeData)oData).Websocket = oWebsocket;
             await oWebsocket.Start();
@@ -110,7 +113,7 @@ namespace Crypto.Trading.Bot.Common
 
             foreach (var eType in Setup.ExchangeTypes)
             {
-                ICryptoFuturesExchange? oExchange = null;
+                IFuturesExchange? oExchange = null;
                 switch (eType)
                 {
                     case ExchangeType.CoinExFutures:
@@ -217,4 +220,5 @@ namespace Crypto.Trading.Bot.Common
             Logger.Info("Main loop ended");
         }
     }
+    */
 }

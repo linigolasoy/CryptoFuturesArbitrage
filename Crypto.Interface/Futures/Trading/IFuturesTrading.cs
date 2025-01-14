@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
 
-namespace Crypto.Interface.Futures
+namespace Crypto.Interface.Futures.Trading
 {
     public interface IFuturesTrading
     {
-        public ICryptoFuturesExchange Exchange { get; }
+        public IFuturesExchange Exchange { get; }
 
         public Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage);
         public Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice);

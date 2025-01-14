@@ -9,7 +9,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
 {
     public interface IFundingData
     {
-        public ICryptoFuturesExchange[] Exchanges { get; }
+        public IFuturesExchange[] Exchanges { get; }
 
         public Task<IFundingDate?> GetNext(DateTime? dActual);
     }

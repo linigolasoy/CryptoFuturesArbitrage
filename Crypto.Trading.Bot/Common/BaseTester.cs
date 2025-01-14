@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.Common
 {
+    /*
     internal class BaseTester : ITradingBot
     {
 
@@ -37,7 +38,7 @@ namespace Crypto.Trading.Bot.Common
         private async Task AddSingleExchange( ExchangeType eType )
         {
             Logger.Info($"   Load symbols for {eType.ToString()}...");
-            ICryptoFuturesExchange oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
             BaseExchangeData oData = new BaseExchangeData(oExchange);
             IFuturesSymbol[]? aSymbols = await oData.Exchange.GetSymbols();
             if (aSymbols == null) return;
@@ -108,4 +109,5 @@ namespace Crypto.Trading.Bot.Common
         }
 
     }
+    */
 }
