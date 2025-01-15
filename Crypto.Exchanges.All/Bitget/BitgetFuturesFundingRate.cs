@@ -30,9 +30,16 @@ namespace Crypto.Exchanges.All.Bitget
 
         public decimal Rate { get; private set; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public int Cycle { get => 8; }
+
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
+
     }
 
 
@@ -51,14 +58,20 @@ namespace Crypto.Exchanges.All.Bitget
 
         public decimal Minimum { get => -100; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get; }
+        public decimal Rate { get; private set; }
 
         public DateTime SnapshotDate { get; }
 
         public int Cycle { get; internal set; }
+
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
     }
 }

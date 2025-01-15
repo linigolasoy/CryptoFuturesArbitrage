@@ -19,6 +19,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private CoinexWebsocketPrivate m_oWebsocket;
         private Task m_oMainTask;
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get => m_aPositions.Count; }
         public CoinexPoisitionManager(CoinexWebsocketPrivate oWebsocket)
         {
             m_oWebsocket = oWebsocket;

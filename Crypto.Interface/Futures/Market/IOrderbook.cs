@@ -20,12 +20,13 @@ namespace Crypto.Interface.Futures.Market
     /// <summary>
     /// Represents orderbook data
     /// </summary>
-    public interface IOrderbook
+    public interface IOrderbook: IUpdateableObject<IOrderbook>
     {
         public DateTime UpdateDate { get; }
         public IFuturesSymbol Symbol { get; }
 
         public IOrderbookPrice[] Asks { get; }
         public IOrderbookPrice[] Bids { get; }
+
     }
 }

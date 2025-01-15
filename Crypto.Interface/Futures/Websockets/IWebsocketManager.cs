@@ -13,6 +13,7 @@ namespace Crypto.Interface.Futures.Websockets
 
         public T? GetData(string strSymbol);
 
+        public int Count { get; }
         public int ReceiveCount { get; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
 
 namespace Crypto.Tests.Bingx
 {
@@ -19,36 +20,28 @@ namespace Crypto.Tests.Bingx
             Assert.IsTrue(aBalances.Length > 0);    
         }
 
-        /*
+        
         [TestMethod]
-        public async Task BingxFundingWebsocketTest()
+        public async Task BingxAllSymbolsSocket()
         {
             IFuturesExchange oExchange = await BingxCommon.CreateExchange();
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
-            Assert.IsNotNull(aSymbols);
-
-            ICryptoWebsocket? oWebsockets = await oExchange.CreateWebsocket();
-            Assert.IsNotNull(oWebsockets);
-
-            bool bStarted = await oWebsockets.Start();
-            Assert.IsTrue(bStarted);
 
             await Task.Delay(1000);
+            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            Assert.IsNotNull(aSymbols); 
+            bool bResultStart = await oExchange.Market.StartSockets();
+            Assert.IsTrue(bResultStart);
 
-            bool bSubscribed = await oWebsockets.SubscribeToFundingRates(aSymbols);
-            Assert.IsTrue(bSubscribed);
+            await Task.Delay(4000);
 
-            await Task.Delay(10000);
+            Assert.IsNotNull(oExchange.Market.Websocket);
+            Assert.IsTrue(oExchange.Market.Websocket.OrderbookManager.Count == aSymbols.Length);
+            Assert.IsTrue(oExchange.Market.Websocket.FundingRateManager.Count == aSymbols.Length);
 
-            IFundingRate[]? aFundings = oWebsockets.FundingRateManager.GetData();
-            Assert.IsNotNull(aFundings);
-            Assert.IsTrue(aFundings.Length >= aSymbols.Length);
-
-            await Task.Delay(2000);
-
-            await oWebsockets.Stop();
+            bool bResultStop = await oExchange.Market.EndSockets(); 
+            Assert.IsTrue(bResultStop);
         }
-        */
+        
 
         /*
         [TestMethod]

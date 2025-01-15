@@ -33,9 +33,14 @@ namespace Crypto.Exchanges.All.Common
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Add or update orderbook
+        /// </summary>
+        /// <param name="oOrderbook"></param>
+        /// <exception cref="NotImplementedException"></exception>
         public void Update(IOrderbook oOrderbook)
         {
-            throw new NotImplementedException();
+            m_aOrderbooks.AddOrUpdate(oOrderbook.Symbol.Symbol, p => oOrderbook, (s, p) => { p.Update(oOrderbook); return p; });
         }
 
         public IOrderbookPrice? GetBestAsk(string strSymbol, decimal nMoney)

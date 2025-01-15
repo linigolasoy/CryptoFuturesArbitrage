@@ -22,6 +22,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private IFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get => m_aFundingRates.Count; }
         public BingxFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
         {
             m_oExchange = oExchamge;

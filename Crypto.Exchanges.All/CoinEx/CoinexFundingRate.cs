@@ -26,11 +26,16 @@ namespace Crypto.Exchanges.All.CoinEx
         }
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get; }
+        public decimal Rate { get; private set; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public int Cycle { get => 8; }
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
     }
 
     internal class CoinexFundingRateSnapshot : IFundingRateSnapShot
@@ -46,14 +51,20 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public decimal Minimum { get => -9999; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get; }
+        public decimal Rate { get; private set; }
 
         public DateTime SnapshotDate { get; }
 
         public int Cycle { get => 8; }
+
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
     }
 }

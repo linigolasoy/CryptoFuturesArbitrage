@@ -17,6 +17,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder> (); 
         private BitgetWebsocketPrivate m_oWebsocket;
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get=> m_aOrders.Count; } 
         public BitgetOrderManager(BitgetWebsocketPrivate oWebsocket)
         {
             m_oWebsocket = oWebsocket;

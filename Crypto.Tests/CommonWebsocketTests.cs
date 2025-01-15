@@ -2,12 +2,32 @@ using Crypto.Common;
 using Crypto.Interface;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
+using CryptoClients.Net.Models;
+using CryptoExchange.Net.SharedApis;
 
 namespace Crypto.Tests
 {
     [TestClass]
     public class CommonWebsocketTests   
     {
+
+        [TestMethod]
+        public async Task CommonSocketsTest()
+        {
+            IExchangeSocketClient oSocketClient = new ExchangeSocketClient();
+            var oSymbol = new SharedSymbol(TradingMode.Spot, "ETH", "USDT");
+            SubscribeOrderBookRequest oRequest = new SubscribeOrderBookRequest(oSymbol);
+            var oResult = await oSocketClient.SubscribeToOrderBookUpdatesAsync(oRequest, OnOrderBook);
+            await Task.Delay(60000);
+        }
+
+        private void OnOrderBook( ExchangeEvent<SharedOrderBook> oEvent )
+        {
+            Console.WriteLine(oEvent.ToString());
+        }
+
+
+
         [TestMethod]
         public async Task BasicPingMexc()
         {

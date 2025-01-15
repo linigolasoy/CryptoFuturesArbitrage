@@ -15,7 +15,7 @@ namespace Crypto.Interface.Futures.Market
 
     }
 
-    public interface IFundingRate
+    public interface IFundingRate: IUpdateableObject<IFundingRate>
     {
         public IFuturesSymbol Symbol { get; }
         public decimal Rate { get; }

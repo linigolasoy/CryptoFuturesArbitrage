@@ -18,6 +18,8 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
         public int ReceiveCount { get; private set; } = 0;
 
+        public int Count { get=>  m_aFundingRates.Count; }  
+
         public BitgetFundingRateManager(IFuturesSymbol[] aSymbols ) 
         { 
             m_aSymbols = aSymbols;  

@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private ConcurrentDictionary<string, BingxBalance> m_aBalances = new ConcurrentDictionary<string, BingxBalance>();
         public int ReceiveCount { get; private set; } = 0;
 
+        public int Count { get=> m_aBalances.Count; }
         public BingxBalanceManager(IFuturesWebsocketPrivate oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;

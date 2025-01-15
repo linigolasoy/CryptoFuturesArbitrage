@@ -15,11 +15,6 @@ namespace Crypto.Interface.Futures.Websockets
         public IOrderbookPrice? GetBestAsk(string strSymbol, decimal nMoney);
         public IOrderbookPrice? GetBestBid(string strSymbol, decimal nMoney);
 
-        public IOrderbook[] GetData();
-
-        public IOrderbook? GetData(string strSymbol);
-        public int Count { get; }
-        public int ReceiveCount { get; } 
 
         public void Update(IOrderbook oOrderbook);
     }

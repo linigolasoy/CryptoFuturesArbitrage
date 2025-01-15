@@ -18,6 +18,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get => m_aBalances.Count; }
         public CoinexBalanceManager(IFuturesExchange oExchange) 
         { 
             m_oExchange = oExchange;

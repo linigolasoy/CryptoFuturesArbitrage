@@ -16,6 +16,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get=> m_aBalances.Count; }   
         public BitgetBalanceManager()
         {
 

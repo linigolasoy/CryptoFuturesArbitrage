@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get=> m_aFundingRates.Count; }
         private IFuturesExchange m_oExchange;
         private IFuturesSymbol[] m_aSymbols;
         public CoinexFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)

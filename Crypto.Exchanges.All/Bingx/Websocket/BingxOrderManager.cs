@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private IFuturesWebsocketPrivate m_oWebsocket;
 
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get => m_aOrders.Count; }
         public BingxOrderManager(IFuturesWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs;

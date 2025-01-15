@@ -1,4 +1,5 @@
 ﻿using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Bingx.Websocket;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -20,15 +21,36 @@ namespace Crypto.Exchanges.All.Bingx
         }
         public IFuturesExchange Exchange { get => m_oExchange; }
 
+        private BingxWebsocket? m_oWebsocket = null;
 
-        public IFuturesWebsocketPublic? Websocket { get => throw new NotImplementedException(); }
+        public IFuturesWebsocketPublic? Websocket { get => m_oWebsocket; }
+
+
+
         public async Task<bool> StartSockets()
         {
-            throw new NotImplementedException();    
+            await EndSockets();
+            if( m_aSymbols == null )
+            {
+                m_aSymbols = await Exchange.Market.GetSymbols();
+                if (m_aSymbols == null) return false;
+
+            }
+            m_oWebsocket = new BingxWebsocket(m_oExchange, m_aSymbols);
+            
+            bool bResult = await m_oWebsocket.Start();
+            if( !bResult ) return false;
+            bResult = await m_oWebsocket.SubscribeToMarket(m_aSymbols);
+            return bResult;
         }
         public async Task<bool> EndSockets()
         {
-            throw new NotImplementedException();
+            if (m_oWebsocket == null) return true;
+
+            await m_oWebsocket.Stop();
+            await Task.Delay(2000);
+            m_oWebsocket = null;
+            return true;
         }
 
         /// <summary>

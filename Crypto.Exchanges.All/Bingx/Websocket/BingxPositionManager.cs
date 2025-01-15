@@ -19,6 +19,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>();
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get=> m_aPositions.Count; }  
         public BingxPositionManager( IFuturesWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs; 

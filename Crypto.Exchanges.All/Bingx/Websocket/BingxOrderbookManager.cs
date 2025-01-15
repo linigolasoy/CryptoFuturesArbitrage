@@ -17,13 +17,12 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private IFuturesWebsocketPublic m_oWebsocket;
 
-        private ConcurrentDictionary<string, IOrderbook> m_aOrderbooks = new ConcurrentDictionary<string, IOrderbook>();
-        public int ReceiveCount { get; private set; } = 0;
         public BingxOrderbookManager(IFuturesWebsocketPublic oWebsocket) 
         { 
             m_oWebsocket = oWebsocket;
         }
 
+        /*
         private IOrderbookPrice? GetBestPrice(IOrderbookPrice[] aPrices, decimal nMoney)
         {
             decimal nVolume = 0;
@@ -79,18 +78,16 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             if( m_aOrderbooks.TryGetValue(strSymbol, out oResult) ) return oResult;
             return null;    
         }
-
+        */
         public void Put( string strSymbol, DateTime dDate, BingXOrderBook oParsedBook )
         {
 
             IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault( p => p.Symbol == strSymbol );
             if (oSymbol == null) return;
-            ReceiveCount++;
+            
             IOrderbook oBook = new BingxOrderbook(oSymbol, dDate, oParsedBook);
+            this.Update(oBook);
 
-            m_aOrderbooks.AddOrUpdate(strSymbol, p => oBook, (s, o) => oBook); 
-
-            return;
         }
     }
 }

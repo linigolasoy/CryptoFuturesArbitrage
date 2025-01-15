@@ -38,7 +38,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
                 decimal nMoneyTotal = nPrice * nVolume;
                 if (nMoneyTotal >= nMoney)
                 {
-                    oResult = new CoinexOrderbookPrice() { Price = nPrice, Volume = nVolume };
+                    oResult = new BaseOrderbookPrice() { Price = nPrice, Volume = nVolume };
                     break;
                 }
             }

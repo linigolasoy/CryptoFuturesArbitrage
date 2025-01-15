@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder>();
         public int ReceiveCount { get; private set; } = 0;
+        public int Count { get => m_aOrders.Count; }
         public CoinexOrderManager(CoinexWebsocketPrivate oWs) 
         { 
             m_oWebsocket = oWs; 

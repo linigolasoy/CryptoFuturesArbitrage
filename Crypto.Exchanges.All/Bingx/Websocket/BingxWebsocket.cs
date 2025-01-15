@@ -47,7 +47,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public IFuturesExchange Exchange { get => m_oExchange; }
         public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }
 
-        public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
@@ -97,6 +96,21 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         }
 
+
+        /// <summary>
+        /// Subscribe task
+        /// </summary>
+        /// <param name="oClient"></param>
+        /// <param name="oSymbol"></param>
+        /// <returns></returns>
+        private async Task<bool> DoSubscribe( BingXSocketClient oClient, IFuturesSymbol oSymbol )
+        {
+            var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
+            if (oResult == null || !oResult.Success) return false;
+            return true;
+        }
+
+
         /// <summary>
         /// Subscribe to market
         /// </summary>
@@ -109,16 +123,30 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
             while (nTotal < aSymbols.Length)
             {
-                ISymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
+                IFuturesSymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
                 nTotal += aPartial.Length;
                 BingXSocketClient oClient = new BingXSocketClient();
                 MarketSockets oMarketSocket = new MarketSockets(oClient);
+
+                List<Task<bool>> aTasks = new List<Task<bool>>();
                 foreach (var oSymbol in aPartial)
                 {
-                    var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
-                    if (oResult == null || !oResult.Success) return false;
+                    if( aTasks.Count >= BingxFutures.TASK_COUNT )
+                    {
+                        await Task.WhenAll( aTasks.ToArray() );
+                        if( aTasks.Any(p=> !p.Result))
+                        {
+                            return false;
+                        }
+                        await Task.Delay(500);
+                        aTasks.Clear();
+                    }
+                    aTasks.Add(DoSubscribe(oClient, oSymbol));
                     oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
                 }
+
+                if (aTasks.Count > 0) await Task.WhenAll(aTasks.ToArray());
+                aTasks.Clear();
 
                 m_aMarketSockets.Add(oMarketSocket);
             }

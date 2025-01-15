@@ -23,15 +23,21 @@ namespace Crypto.Exchanges.All.Bingx
 
         public decimal Minimum { get => -100.0M; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get;}
+        public decimal Rate { get; private set; }
 
-        public DateTime SnapshotDate { get; }
+        public DateTime SnapshotDate { get; private set; }
 
         public int Cycle { get => 8; }
+
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
     }
 
     internal class BingxFundingRate : IFundingRate
@@ -45,10 +51,16 @@ namespace Crypto.Exchanges.All.Bingx
         }
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Rate { get; }
+        public decimal Rate { get; private set; }
 
-        public DateTime SettleDate { get; }
+        public DateTime SettleDate { get; private set; }
 
         public int Cycle { get => 8; }
+
+        public void Update(IFundingRate obj)
+        {
+            Rate = obj.Rate;
+            SettleDate = obj.SettleDate;
+        }
     }
 }
