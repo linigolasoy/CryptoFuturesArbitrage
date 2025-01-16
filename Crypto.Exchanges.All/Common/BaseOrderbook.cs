@@ -10,20 +10,28 @@ namespace Crypto.Exchanges.All.Common
 
     internal class BaseOrderbookPrice : IOrderbookPrice
     {
+        public BaseOrderbookPrice( IOrderbook oOrderbook, decimal nPrice, decimal nVolume ) 
+        { 
+            Orderbook = oOrderbook;
+            Price = nPrice;
+            Volume = nVolume;
+        }
+        public IOrderbook Orderbook { get; }  
+        public decimal Price { get; } = 0;
 
-        public decimal Price { get; internal set; } = 0;
-
-        public decimal Volume { get; internal set; } = 0;
+        public decimal Volume { get; } = 0;
     }
 
     internal class BaseOrderbook
     {
-        public BaseOrderbook( IFuturesSymbol oSymbol, DateTime dUpdateDate)
+        public BaseOrderbook( IFuturesSymbol oSymbol, DateTime dUpdateDate, DateTime dReceiveDate )
         {
             Symbol = oSymbol;
             UpdateDate = dUpdateDate;   
+            ReceiveDate = dReceiveDate;
         }
         public DateTime UpdateDate { get; internal set; }
+        public DateTime ReceiveDate { get; internal set; }
 
         public IFuturesSymbol Symbol { get; }
 

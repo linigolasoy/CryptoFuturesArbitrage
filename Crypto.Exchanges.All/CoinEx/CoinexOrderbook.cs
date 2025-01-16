@@ -15,19 +15,19 @@ namespace Crypto.Exchanges.All.CoinEx
     {
 
         public CoinexOrderbook( IFuturesSymbol oSymbol, CoinExOrderBook oParsed) :
-            base(oSymbol, oParsed.Data.UpdateTime.ToLocalTime())
+            base(oSymbol, oParsed.Data.UpdateTime.ToLocalTime(), DateTime.Now)
         { 
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oParsed.Data.Asks.OrderBy(p => p.Price))
             {
-                aAsks.Add( new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });  
+                aAsks.Add( new BaseOrderbookPrice(this, item.Price, item.Quantity));  
             }
             Asks = aAsks.ToArray();
 
             List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
             foreach (var item in oParsed.Data.Bids.OrderByDescending(p => p.Price))
             {
-                aBids.Add(new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });
+                aBids.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
             Bids = aBids.ToArray();
 

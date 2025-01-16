@@ -13,6 +13,7 @@ namespace Crypto.Interface.Futures.Market
     /// </summary>
     public interface IOrderbookPrice
     {
+        public IOrderbook Orderbook { get; }    
         public decimal Price { get; }
         public decimal Volume { get; }
     }
@@ -22,6 +23,7 @@ namespace Crypto.Interface.Futures.Market
     /// </summary>
     public interface IOrderbook: IUpdateableObject<IOrderbook>
     {
+        public DateTime ReceiveDate { get; }
         public DateTime UpdateDate { get; }
         public IFuturesSymbol Symbol { get; }
 

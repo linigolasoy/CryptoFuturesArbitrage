@@ -1,4 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.CoinEx.Websocket;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -17,20 +18,51 @@ namespace Crypto.Exchanges.All.CoinEx
         private CoinexFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
         private IFuturesSymbol[]? m_aSymbols = null;
+
+        private CoinexWebsocket? m_oWebsocket = null;
+        
         public CoinexMarket( CoinexFutures oExchange) 
         { 
             m_oExchange = oExchange;
             m_oGlobalClient = new ExchangeRestClient();
         }
         public IFuturesExchange Exchange { get => m_oExchange; }
-        public IFuturesWebsocketPublic? Websocket { get => throw new NotImplementedException(); }
+        public IFuturesWebsocketPublic? Websocket { get => m_oWebsocket; }
+
+
+        /// <summary>
+        /// Start sockets
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> StartSockets()
         {
-            throw new NotImplementedException();
+            await EndSockets();
+            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
+            if( aSymbols == null ) return false;    
+            m_oWebsocket = new CoinexWebsocket(m_oExchange, aSymbols);
+
+            bool bResult = await m_oWebsocket.Start();
+            if (!bResult) return false;
+            await Task.Delay(1000);
+            bResult = await m_oWebsocket.SubscribeToFundingRates(aSymbols); 
+            if( !bResult ) return false;    
+            bResult = await m_oWebsocket.SubscribeToMarket(aSymbols);
+            await Task.Delay(1000); 
+
+            return bResult;
         }
+
+        /// <summary>
+        /// End sockets
+        /// </summary>
+        /// <returns></returns>
         public async Task<bool> EndSockets()
         {
-            throw new NotImplementedException();
+            if (m_oWebsocket == null) return true;
+            await m_oWebsocket.Stop();
+            await Task.Delay(1000);
+            m_oWebsocket = null;
+            return true;
         }
 
         /// <summary>

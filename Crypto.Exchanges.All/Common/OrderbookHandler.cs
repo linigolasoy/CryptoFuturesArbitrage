@@ -25,12 +25,23 @@ namespace Crypto.Exchanges.All.Common
 
         public IOrderbook[] GetData()
         {
-            throw new NotImplementedException();
+            List<IOrderbook> aResult = new List<IOrderbook>();
+            foreach( string strSymbol in m_aOrderbooks.Keys )
+            {
+                IOrderbook? oFound = GetData( strSymbol );  
+                if ( oFound != null ) aResult.Add( oFound );  
+            }
+            return aResult.ToArray();
         }
 
         public IOrderbook? GetData(string strSymbol)
         {
-            throw new NotImplementedException();
+            IOrderbook? oResult = null;
+            if( m_aOrderbooks.TryGetValue(strSymbol, out oResult) )
+            {
+                return oResult;
+            }
+            return null;
         }
 
         /// <summary>
@@ -43,11 +54,7 @@ namespace Crypto.Exchanges.All.Common
             m_aOrderbooks.AddOrUpdate(oOrderbook.Symbol.Symbol, p => oOrderbook, (s, p) => { p.Update(oOrderbook); return p; });
         }
 
-        public IOrderbookPrice? GetBestAsk(string strSymbol, decimal nMoney)
-        {
-            throw new NotImplementedException ();   
-        }
-        public IOrderbookPrice? GetBestBid(string strSymbol, decimal nMoney)
+        public IOrderbookPrice? GetBestPrice(string strSymbol, bool bAsk, decimal? nQuantity = null, decimal? nMoney = null)
         {
             throw new NotImplementedException();
         }

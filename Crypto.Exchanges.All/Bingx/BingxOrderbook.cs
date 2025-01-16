@@ -14,20 +14,20 @@ namespace Crypto.Exchanges.All.Bingx
     internal class BingxOrderbook : BaseOrderbook, IOrderbook
     {
         public BingxOrderbook( IFuturesSymbol oSymbol, DateTime dDate, BingXOrderBook oBook ):
-            base(oSymbol, dDate)
+            base(oSymbol, dDate, DateTime.Now)
         {
 
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oBook.Asks.OrderBy(p => p.Price))
             {
-                aAsks.Add(new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });
+                aAsks.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
             Asks = aAsks.ToArray();
 
             List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
             foreach (var item in oBook.Bids.OrderByDescending(p => p.Price))
             {
-                aBids.Add(new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });
+                aBids.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
             Bids = aBids.ToArray();
         }

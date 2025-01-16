@@ -1,5 +1,6 @@
 ﻿using Bitget.Net.Enums;
 using Crypto.Common;
+using Crypto.Exchanges.All.Bitget.Websocket;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -19,6 +20,8 @@ namespace Crypto.Exchanges.All.Bitget
         private IFuturesSymbol[]? m_aSymbols = null;
         private IExchangeRestClient m_oGlobalClient;
 
+        private BitgetWebsocket? m_oWebsocket = null;
+
         private BitgetFutures m_oExchange;
 
         public BitgetMarket(BitgetFutures oExchange)
@@ -29,14 +32,35 @@ namespace Crypto.Exchanges.All.Bitget
 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesWebsocketPublic? Websocket { get => throw new NotImplementedException(); }
+        public IFuturesWebsocketPublic? Websocket { get => m_oWebsocket; }
+
+
         public async Task<bool> StartSockets()
         {
-            throw new NotImplementedException();
+            await EndSockets();
+            if( m_aSymbols == null )
+            {
+                m_aSymbols = await this.Exchange.Market.GetSymbols();
+                if (m_aSymbols == null) return false;
+            }
+            m_oWebsocket = new BitgetWebsocket(m_oExchange, m_aSymbols);
+            bool bResult = await m_oWebsocket.Start();  
+            if( !bResult ) return false;
+            bResult = await m_oWebsocket.SubscribeToMarket(m_aSymbols);
+            if( !bResult ) return false;    
+            bResult = await m_oWebsocket.SubscribeToFundingRates(m_aSymbols);   
+
+            await Task.Delay(1000);
+            return bResult;
+
         }
         public async Task<bool> EndSockets()
         {
-            throw new NotImplementedException();
+            if (m_oWebsocket == null) return true;
+            await m_oWebsocket.Stop();
+            await Task.Delay(1000);
+            m_oWebsocket = null;
+            return true;
         }
 
         /// <summary>

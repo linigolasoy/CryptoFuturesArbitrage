@@ -17,20 +17,20 @@ namespace Crypto.Exchanges.All.Bitget
     {
 
         public BitgetOrderbook(IFuturesSymbol oSymbol, BitgetOrderBookUpdate oUpdate):
-            base(oSymbol, oUpdate.Timestamp.ToLocalTime())
+            base(oSymbol, oUpdate.Timestamp.ToLocalTime(), DateTime.Now)
         { 
 
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oUpdate.Asks.OrderBy(p => p.Price))
             {
-                aAsks.Add(new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });
+                aAsks.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
             Asks = aAsks.ToArray();
 
             List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
             foreach (var item in oUpdate.Bids.OrderByDescending(p => p.Price))
             {
-                aBids.Add(new BaseOrderbookPrice() { Price = item.Price, Volume = item.Quantity });
+                aBids.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
             Bids = aBids.ToArray();
 

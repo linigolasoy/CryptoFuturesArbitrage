@@ -6,6 +6,7 @@ using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects.Sockets;
 using CryptoExchange.Net.RateLimiting.Guards;
 using System;
@@ -40,7 +41,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             m_oExchange = oExchange;
             FuturesSymbols = aSymbols;
-            m_oOrderbookManager = new CoinexOrderbookManager(this, aSymbols);
+            m_oOrderbookManager = new CoinexOrderbookManager(aSymbols);
             m_oFundingManager = new CoinexFundingRateManager(oExchange, aSymbols);
         }
     
@@ -72,12 +73,19 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             MarketWebsocket oNewWs = new MarketWebsocket(new CoinExSocketClient());
 
+            List<string> aSymbolString = aSymbols.Select(p=> p.Symbol).ToList();
+            var oResult = await oNewWs.Client.FuturesApi.SubscribeToOrderBookUpdatesAsync(aSymbolString, 10, null, true, OnOrderbook);
+            if (oResult == null || !oResult.Success) return false;
+
+            oNewWs.Symbols.AddRange(aSymbols);  
+            /*
             foreach ( ISymbol symbol in aSymbols) 
             {
                 var oResult = await oNewWs.Client.FuturesApi.SubscribeToOrderBookUpdatesAsync(symbol.Symbol, 10, null, true, OnOrderbook);
                 if (!oResult.Success) continue;
                 oNewWs.Symbols.Add((IFuturesSymbol)symbol); 
             }
+            */
             m_aMarketWebsockets.Add(oNewWs);    
             return true;
         }

@@ -8,6 +8,7 @@ using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
+using CryptoExchange.Net.CommonObjects;
 using CryptoExchange.Net.Objects.Sockets;
 using System;
 using System.Collections.Generic;
@@ -91,8 +92,17 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
                 m_oFundingClient.Dispose();
                 m_oFundingClient = null;
             }
+
+            if( m_oMarketClient != null)
+            {
+                await m_oMarketClient.UnsubscribeAllAsync();    
+                await Task.Delay(1000);
+                m_oMarketClient.Dispose();
+                m_oMarketClient = null;
+            }
             return;
         }
+
 
         public async Task<bool> SubscribeToFundingRates(IFuturesSymbol[] aSymbols)
         {
@@ -105,6 +115,15 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             return true;
         }
 
+
+        private async Task<bool> SubscribeToOrderBook( IFuturesSymbol oSymbol )
+        {
+            if (m_oMarketClient == null) return false;
+            var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync(BitgetProductTypeV2.UsdtFutures, oSymbol.Symbol, 15, OnOrderBook);
+            if (oResult == null || !oResult.Success) return false;
+            return true;
+
+        }
         public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
         {
             if (m_oMarketClient == null)
@@ -112,12 +131,24 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
                 m_oMarketClient = new BitgetSocketClient();
             }
             await m_oMarketClient.UnsubscribeAllAsync();
+            List<Task<bool>> aTasks = new List<Task<bool>>();
+
             foreach( var symbol in aSymbols) 
             {
-                var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync(BitgetProductTypeV2.UsdtFutures, symbol.Symbol, 5, OnOrderBook);
-                if (oResult == null || !oResult.Success) return false;
+                if( aTasks.Count >= BitgetFutures.TASK_COUNT )
+                {
+                    await Task.WhenAll( aTasks );
+                    if (aTasks.Any(p => !p.Result)) return false;
+                    aTasks.Clear();
+                }
+                aTasks.Add(SubscribeToOrderBook( symbol )); 
             }
             
+            if( aTasks.Count > 0 )
+            {
+                await Task.WhenAll( aTasks );
+                if (aTasks.Any(p => !p.Result)) return false;
+            }
             return true;
         }
 
