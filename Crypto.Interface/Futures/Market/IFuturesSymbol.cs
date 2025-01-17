@@ -15,5 +15,9 @@ namespace Crypto.Interface.Futures.Market
 
         public decimal FeeMaker { get; }    
         public decimal FeeTaker { get; }
+
+        public int Decimals { get; }  
+
+        public decimal Minimum { get; }
     }
 }

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Crypto.Interface.Futures.Account.IFuturesAccount;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
@@ -20,18 +21,24 @@ namespace Crypto.Exchanges.All.CoinEx
         { 
             Exchange = oExchange;
             m_oGlobalClient = oClient;
-            m_oWebsocketPrivate = new CoinexWebsocketPrivate(oExchange);
+            m_oWebsocketPrivate = new CoinexWebsocketPrivate(this);
         }
 
         private CoinexWebsocketPrivate m_oWebsocketPrivate;
         private IExchangeRestClient m_oGlobalClient;
         public IFuturesExchange Exchange { get; }
+        public event PrivateDelegate? OnPrivateEvent;
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocketPrivate.BalanceManager; }
 
         public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oWebsocketPrivate.OrderManager; }
 
         public IWebsocketManager<IFuturesPosition> PositionManager { get => m_oWebsocketPrivate.PositionManager; }
+
+        public async Task PostEvent(IWebsocketQueueItem oItem)
+        {
+            if (OnPrivateEvent != null) await OnPrivateEvent(oItem);
+        }
 
         public async Task<IFuturesBalance[]?> GetBalances()
         {

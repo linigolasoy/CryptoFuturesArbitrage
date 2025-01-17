@@ -11,9 +11,9 @@ namespace Crypto.Trading.Bot.Arbitrage
     public class ArbitrageFactory
     {
 
-        public static IOppositeOrder CreateOppositeOrder( IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort )
+        public static IOppositeOrder CreateOppositeOrder( IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage )
         {
-            return new OppositeOrder( oSymbolLong, oSymbolShort );  
+            return new OppositeOrder( oSymbolLong, oSymbolShort , nLeverage);  
         }
         public static async Task<IOppositeOrder[]?> CreateOppositeOrderFromExchanges(IFuturesExchange[] aExchanges)
         {

@@ -1,48 +1,25 @@
 ﻿
-OK 01 Exchange COINEX:
-	OK 1.00 Separate Test Classes
-	OK 1.01 Rest get balances
-	OK 1.02 Rest get leverages
-	OK 1.03 Rest get orders
-	OK 1.04 Rest get positions
-	OK 1.05 Websocket balances
-	OK 1.06 Websocket orders
-	OK 1.07 Websocket positions
-	OK 1.08 Rest Set leverage
-	OK 1.09 Rest Order Limit
-	OK 1.10 Rest Order Market
-	OK 1.11 Rest Cancel Order
 
+OK 01 Exchange BINGX:
 
-OK 02 Exchange BINGX:
+	OK 1.00 Websocket Order Create Event Test
+	OK 1.01 Websocket Order Cancel Event Test
+	OK 1.02 Websocket Position Open Event Test
+	OK 1.03 Websocket Position Close Event Test
 
-	OK 2.00 Separate Test Classes
-	OK 2.01 Rest get balances
-	OK 2.02 Rest get leverages
-	OK 2.03 Rest get orders
-	OK 2.04 Rest get positions
-	OK 2.05 Websocket balances
-	OK 2.06 Websocket orders
-	OK 2.07 Websocket positions
-	OK 2.08 Rest Set leverage
-	OK 2.09 Rest Order Limit
-	OK 2.10 Rest Order Market
-	OK 2.11 Rest Cancel Order
+OK 02 Exchange BITGET:
 
-OK 03 Exchange BITGET:
+	OK 2.00 Websocket Order Create Event Test
+	OK 2.01 Websocket Order Cancel Event Test
+	OK 2.02 Websocket Position Open Event Test
+	OK 2.03 Websocket Position Close Event Test
 
-	OK 3.00 Separate Test Classes
-	OK 3.01 Rest get balances
-	OK 3.02 Rest get leverages
-	OK 3.03 Rest get orders
-	OK 3.04 Rest get positions
-	OK 3.05 Websocket balances
-	OK 3.06 Websocket orders
-	OK 3.07 Websocket positions
-	OK 3.08 Rest Set leverage
-	OK 3.09 Rest Order Limit
-	OK 3.10 Rest Order Market
-	OK 3.11 Rest Cancel Order
+OK 03 Exchange COINEX:
+	OK 3.00 Websocket Order Create Event Test
+	OK 3.01 Websocket Order Cancel Event Test
+	OK 3.02 Websocket Position Open Event Test
+	OK 3.03 Websocket Position Close Event Test
+
 
 04 Bot.
 

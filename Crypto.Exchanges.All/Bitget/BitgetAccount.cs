@@ -6,6 +6,7 @@ using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
 using Crypto.Interface.Futures.Market;
+using static Crypto.Interface.Futures.Account.IFuturesAccount;
 
 namespace Crypto.Exchanges.All.Bitget
 {
@@ -13,6 +14,7 @@ namespace Crypto.Exchanges.All.Bitget
     {
         private BitgetWebsocketPrivate m_oWebsocketPrivate;
         public IFuturesExchange Exchange { get; }
+        public event PrivateDelegate? OnPrivateEvent;
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocketPrivate.BalanceManager; }
 
@@ -26,7 +28,12 @@ namespace Crypto.Exchanges.All.Bitget
         {
             Exchange = oExchange;
             m_oGlobalClient = oGlobalClient;
-            m_oWebsocketPrivate = new BitgetWebsocketPrivate(oExchange);
+            m_oWebsocketPrivate = new BitgetWebsocketPrivate(this);
+        }
+
+        public async Task PostEvent(IWebsocketQueueItem oItem)
+        {
+            if (OnPrivateEvent != null) await OnPrivateEvent(oItem);
         }
 
         /// <summary>

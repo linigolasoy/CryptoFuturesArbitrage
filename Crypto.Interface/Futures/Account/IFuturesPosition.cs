@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 
 namespace Crypto.Interface.Futures.Account
 {
@@ -12,7 +13,7 @@ namespace Crypto.Interface.Futures.Account
     /// <summary>
     /// Position data
     /// </summary>
-    public interface IFuturesPosition
+    public interface IFuturesPosition: IWebsocketQueueItem
     {
         public IFuturesSymbol Symbol { get; }   
         public string Id { get; }   
@@ -28,7 +29,7 @@ namespace Crypto.Interface.Futures.Account
         public decimal ProfitUnRealized { get; }
 
         public DateTime LastUpdate { get; }
-
+        public bool Closed { get; set; }
         public void Update(IFuturesPosition oPosition);
     }
 }

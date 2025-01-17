@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
@@ -85,6 +86,7 @@ namespace Crypto.Exchanges.All.CoinEx
 
         }
 
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Order; }
         public long Id { get; }
 
         public IFuturesSymbol Symbol { get; }

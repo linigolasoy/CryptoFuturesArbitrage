@@ -2,6 +2,7 @@
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -110,6 +111,8 @@ namespace Crypto.Exchanges.All.Bingx
             if (oParsed.Price != null) Price = oParsed.Price.Value;
             PutStatus(oParsed.Status);
         }
+
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Order; }
         public long Id { get; }
 
         public IFuturesSymbol Symbol { get; }

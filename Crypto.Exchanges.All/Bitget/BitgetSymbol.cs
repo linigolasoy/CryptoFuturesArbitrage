@@ -21,6 +21,9 @@ namespace Crypto.Exchanges.All.Bitget
             LeverageMin = 1;
             FeeMaker = oParsed.MakerFeeRate;
             FeeTaker = oParsed.TakerFeeRate;    
+            Decimals = oParsed.QuantityDecimals;
+            Minimum = oParsed.MinOrderQuantity;
+
         }
 
         public IFuturesExchange Exchange { get; }
@@ -37,6 +40,8 @@ namespace Crypto.Exchanges.All.Bitget
         public string Base { get; }
 
         public string Quote { get; }
+        public int Decimals { get; }    
+        public decimal Minimum { get; } 
 
         public override string ToString()
         {

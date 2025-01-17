@@ -13,21 +13,22 @@ using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Websockets;
+using Crypto.Exchanges.All.Common;
 
 namespace Crypto.Exchanges.All.Bitget.Websocket
 {
-    internal class BitgetWebsocketPrivate : IFuturesWebsocketPrivate
+    internal class BitgetWebsocketPrivate : BasePrivateQueueManager, IFuturesWebsocketPrivate
     {
-        private BitgetFutures m_oExchange;
+        private IFuturesExchange m_oExchange;
 
         private BitgetSocketClient? m_oPrivateClient = null;
         private BitgetBalanceManager m_oBalanceManager;
         private BitgetOrderManager m_oOrderManager;
         private BitgetPositionManager m_oPositionManager;
-        public BitgetWebsocketPrivate( BitgetFutures oExchange)
+        public BitgetWebsocketPrivate( IFuturesAccount oAccount ): base(oAccount)
         {
-            m_oExchange = oExchange;
-            m_oBalanceManager = new BitgetBalanceManager();
+            m_oExchange = oAccount.Exchange;
+            m_oBalanceManager = new BitgetBalanceManager(this);
             m_oOrderManager = new BitgetOrderManager(this);
             m_oPositionManager = new BitgetPositionManager(this);   
         }
@@ -36,24 +37,19 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
+        public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
-        public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
+        public IWebsocketPrivateManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
 
-        public IWebsocketManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
+        public IWebsocketPrivateManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
 
         public async Task<bool> Start()
         {
-            if (m_oPrivateClient != null)
-            {
-                await m_oPrivateClient.UnsubscribeAllAsync();
-                await Task.Delay(1000);
-                m_oPrivateClient.Dispose();
-                m_oPrivateClient = null;
-            }
+            await Stop();
+            await StartLoop();
 
             m_oPrivateClient = new BitgetSocketClient();
-            m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
+            m_oPrivateClient.SetApiCredentials( ((BitgetFutures)m_oExchange).ApiCredentials);
 
             var oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToBalanceUpdatesAsync( BitgetProductTypeV2.UsdtFutures, OnBalance);
             if (oResult == null || !oResult.Success) return false;
@@ -66,10 +62,23 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionHistoryUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPositionHistory);
             if (oResult == null || !oResult.Success) return false;
 
+            m_oPrivateClient.FuturesApiV2.SubscribeToUserTradeUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnUserTradeUpdate);
+
             return true;
 
         }
 
+        public async Task Stop()
+        {
+            if (m_oPrivateClient != null)
+            {
+                await m_oPrivateClient.UnsubscribeAllAsync();
+                await Task.Delay(1000);
+                m_oPrivateClient.Dispose();
+                m_oPrivateClient = null;
+            }
+            await StopLoop();
+        }
         private void OnBalance( DataEvent<IEnumerable<BitgetFuturesBalanceUpdate>> oEvent )
         {
             if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
@@ -79,22 +88,32 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             }
             return;
         }
+        private void OnUserTradeUpdate(DataEvent<IEnumerable<BitgetFuturesUserTradeUpdate>> oEvent)
+        {
+            if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
+            foreach (var oData in oEvent.Data)
+            {
+            }
+            return;
+        }
+
+
         private void OnOrder(DataEvent<IEnumerable<BitgetFuturesOrderUpdate>> oEvent)
         {
-            if( oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0 ) return;
+            if( oEvent == null || oEvent.Data == null ) return;
             m_oOrderManager.Put(oEvent.Data);
             return;
         }
         private void OnPosition(DataEvent<IEnumerable<BitgetPositionUpdate>> oEvent)
         {
-            if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
+            if (oEvent == null || oEvent.Data == null ) return;
             m_oPositionManager.Put(oEvent.Data);
             return;
         }
         private void OnPositionHistory(DataEvent<IEnumerable<BitgetPositionHistoryUpdate>> oEvent)
         {
-            if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
-            m_oPositionManager.PutHistory(oEvent.Data);
+            if (oEvent == null || oEvent.Data == null ) return;
+            // m_oPositionManager.PutHistory(oEvent.Data);
             return;
         }
 

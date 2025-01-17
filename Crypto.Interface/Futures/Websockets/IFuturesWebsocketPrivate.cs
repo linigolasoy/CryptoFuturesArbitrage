@@ -11,14 +11,16 @@ namespace Crypto.Interface.Futures.Websockets
 {
     public interface IFuturesWebsocketPrivate
     {
+
         public IFuturesExchange Exchange { get; }
 
         public IFuturesSymbol[] FuturesSymbols { get; }
 
         public Task<bool> Start();
+        public Task Stop();
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get; }
-        public IWebsocketManager<IFuturesOrder> OrderManager { get; }
-        public IWebsocketManager<IFuturesPosition> PositionManager { get; }
+        public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get; }
+        public IWebsocketPrivateManager<IFuturesOrder> OrderManager { get; }
+        public IWebsocketPrivateManager<IFuturesPosition> PositionManager { get; }
     }
 }

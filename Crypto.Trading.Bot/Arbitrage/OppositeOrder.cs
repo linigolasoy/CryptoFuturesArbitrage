@@ -2,6 +2,7 @@
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using Serilog.Core;
 using System;
 using System.Collections.Generic;
@@ -24,42 +25,57 @@ namespace Crypto.Trading.Bot.Arbitrage
     {
         private bool m_bLeverageSet = false;
         private const string USDT = "USDT";
-        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort) 
-        { 
-            SymbolLong = oSymbolLong;
-            SymbolShort = oSymbolShort;
+        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage) 
+        {
+            Leverage = nLeverage;   
+            LongData = new ArbitrageOrderData(oSymbolLong);
+            ShortData = new ArbitrageOrderData(oSymbolShort);
         }
 
-        public IFuturesSymbol SymbolLong { get; }
+        public int Leverage { get; }
+        public IArbitrageOrderData LongData { get; }
+        public IArbitrageOrderData ShortData { get; }
 
-        public IFuturesSymbol SymbolShort { get; }
-
-        public decimal Profit { get; set; } = 0;
-        public decimal Fees { get; set; } = 0;
-        public decimal ProfitBalance { get; set; } = 0;
-        public int Leverage { get; set; } = 1;
-
-        public decimal Quantity { get; set; } = 0;
-
-        public IFuturesOrder? OpenOrderLong { get; private set; } = null;
-
-        public IFuturesOrder? OpenOrderShort { get; private set; } = null;
-
-        public IFuturesOrder? CloseOrderLong { get; private set; } = null;
-
-        public IFuturesOrder? CloseOrderShort { get; private set; } = null;
-
-        public IFuturesPosition? PositionLong { get; private set; } = null;
-
-        public IFuturesPosition? PositionShort { get; private set; } = null;
+        public decimal Profit { get; private set; } = 0;
+        public decimal Fees { get; private set; } = 0;
 
         public async Task<ICloseResult> TryCloseLimit()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Update with orderbooks and rest if not having them
+        /// </summary>
+        public decimal Update( decimal nMoney )
+        {
+            decimal nResult = -9E10M;
+            IFuturesWebsocketPublic? oWs = LongData.Symbol.Exchange.Market.Websocket;
+            if ( oWs != null )
+            {
+                IOrderbook? oBook = oWs.OrderbookManager.GetData(LongData.Symbol.Symbol);
+                if( oBook != null ) ((ArbitrageOrderData)LongData).Orderbook = oBook; 
+            }
+            oWs = ShortData.Symbol.Exchange.Market.Websocket;
+            if (oWs != null)
+            {
+                IOrderbook? oBook = oWs.OrderbookManager.GetData(ShortData.Symbol.Symbol);
+                if (oBook != null) ((ArbitrageOrderData)ShortData).Orderbook = oBook;
+            }
+
+            if (LongData.Orderbook == null || ShortData.Orderbook == null) return nResult;
+            IOrderbookPrice? oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
+            IOrderbookPrice? oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+
+            if( oPriceLong == null || oPriceShort == null ) return nResult; 
+            nResult = oPriceShort.Price - oPriceLong.Price;
+            return nResult;
+        }
+
         public async Task<ICloseResult> TryCloseMarket()
         {
+            throw new NotImplementedException();
+            /*
             OppositeCloseResult oResult = new OppositeCloseResult();
             if (PositionLong == null || PositionShort == null) return oResult;
             decimal nPnl = PositionLong.ProfitUnRealized + PositionShort.ProfitUnRealized;
@@ -82,11 +98,48 @@ namespace Crypto.Trading.Bot.Arbitrage
                 oResult.Success = true;
             }
             return oResult;
+            */
         }
 
-        public async Task<bool> TryOpenLimit()
+        /// <summary>
+        /// Open limit order
+        /// </summary>
+        /// <param name="nMoney"></param>
+        /// <returns></returns>
+        public async Task<bool> TryOpenLimit(decimal nMoney)
         {
-            throw new NotImplementedException();
+            decimal nDifference = Update(nMoney);
+            if( nDifference < 0 ) return false; 
+            IOrderbookPrice? oPriceLong = null;
+            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
+            IOrderbookPrice? oPriceShort = null;
+            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+
+            if (oPriceLong == null || oPriceShort == null) return false;
+
+            if( oPriceLong.Price > oPriceShort.Price ) return false;
+
+            decimal nPrice = Math.Max(oPriceLong.Price, oPriceShort.Price);
+
+            int nDecimals = Math.Min(LongData.Symbol.Decimals, ShortData.Symbol.Decimals);
+            decimal nQuantity = Math.Round(nMoney / nPrice, nDecimals);
+
+
+            if (nQuantity <= 0) return false;
+            if( nQuantity < LongData.Symbol.Minimum ) return false;
+            if( nQuantity < ShortData.Symbol.Minimum ) return false;    
+            // Set leverages
+            bool bResult = await SetLeverages();
+            if (!bResult) return false;
+            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
+            aTasks.Add(LongData.Symbol.Exchange.Trading.CreateLimitOrder(LongData.Symbol, true, nQuantity, oPriceLong.Price));
+            aTasks.Add(ShortData.Symbol.Exchange.Trading.CreateLimitOrder(ShortData.Symbol, false, nQuantity, oPriceShort.Price));
+
+
+            await Task.WhenAll(aTasks);
+            if (aTasks.Any(p => p.Result == null)) return false;
+
+            return await UpdatePositions(nQuantity);
         }
 
 
@@ -97,66 +150,100 @@ namespace Crypto.Trading.Bot.Arbitrage
         private async Task<bool> SetLeverages()
         {
             if (m_bLeverageSet) return true;
-            bool bResult = await SymbolLong.Exchange.Trading.SetLeverage(SymbolLong, Leverage);
+            bool bResult = await LongData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
             if (!bResult) return false;
-            bResult = await SymbolShort.Exchange.Trading.SetLeverage(SymbolShort, Leverage);
+            bResult = await ShortData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
             if (!bResult) return false;
             m_bLeverageSet = true;  
             return true;
         }
-        public async Task<bool> TryOpenMarket()
+
+
+        /// <summary>
+        /// Update position data
+        /// </summary>
+        /// <param name="nQuantity"></param>
+        /// <returns></returns>
+        private async Task<bool> UpdatePositions(decimal nQuantity)
         {
-            if( Leverage < 1 || Quantity < 1 ) return false;
-            // Set leverages
-            bool bResult = await SetLeverages();
-            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
-            aTasks.Add(SymbolLong.Exchange.Trading.CreateMarketOrder(SymbolLong, true, Quantity));
-            aTasks.Add(SymbolShort.Exchange.Trading.CreateMarketOrder(SymbolShort, false, Quantity));
-
-
-            await Task.WhenAll(aTasks);
-            if( aTasks.Any(p=> p.Result == null)) return false;
             // TODO: Rollback
             // Wait until we have orders and positions on websockets
+            ArbitrageOrderData oDataLong = (ArbitrageOrderData)LongData;    
+            ArbitrageOrderData oDataShort = (ArbitrageOrderData)ShortData;
             int nRetries = 10;
-            while( nRetries >= 0 )
+            while (nRetries >= 0)
             {
                 await Task.Delay(500);
 
-                if( OpenOrderLong == null )
+                if (oDataLong.OpenOrder == null)
                 {
-                    IFuturesOrder[] aOrdersLong = SymbolLong.Exchange.Account.OrderManager.GetData();
-                    OpenOrderLong = aOrdersLong.FirstOrDefault(p=> p.Symbol.Symbol == SymbolLong.Symbol && p.Quantity == Quantity && p.OrderDirection == FuturesOrderDirection.Buy);
+                    IFuturesOrder[] aOrdersLong = oDataLong.Symbol.Exchange.Account.OrderManager.GetData();
+                    oDataLong.OpenOrder = aOrdersLong.FirstOrDefault(p => p.Symbol.Symbol == oDataLong.Symbol.Symbol && p.Quantity == nQuantity && p.OrderDirection == FuturesOrderDirection.Buy);
                 }
-                else
+                if( oDataLong.Position == null) 
                 {
-                    IFuturesPosition[] aPositions = SymbolLong.Exchange.Account.PositionManager.GetData();  
-                    PositionLong = aPositions.FirstOrDefault(p=> p.Symbol.Symbol == SymbolLong.Symbol && p.Quantity == Quantity && p.Direction == FuturesPositionDirection.Long);
+                    IFuturesPosition[] aPositions = oDataLong.Symbol.Exchange.Account.PositionManager.GetData();
+                    oDataLong.Position = aPositions.FirstOrDefault(p => p.Symbol.Symbol == oDataLong.Symbol.Symbol && p.Quantity == nQuantity && p.Direction == FuturesPositionDirection.Long);
                 }
-                if ( OpenOrderShort == null ) 
+                if (oDataShort.OpenOrder == null)
                 {
-                    IFuturesOrder[] aOrdersShort = SymbolShort.Exchange.Account.OrderManager.GetData();
-                    OpenOrderShort = aOrdersShort.FirstOrDefault(p => p.Symbol.Symbol == SymbolShort.Symbol && p.Quantity == Quantity && p.OrderDirection == FuturesOrderDirection.Sell);
+                    IFuturesOrder[] aOrdersShort = oDataShort.Symbol.Exchange.Account.OrderManager.GetData();
+                    oDataShort.OpenOrder = aOrdersShort.FirstOrDefault(p => p.Symbol.Symbol == oDataLong.Symbol.Symbol && p.Quantity == nQuantity && p.OrderDirection == FuturesOrderDirection.Sell);
                 }
-                else
+                if( oDataShort.Position == null) 
                 {
-                    IFuturesPosition[] aPositions = SymbolShort.Exchange.Account.PositionManager.GetData();
-                    PositionShort= aPositions.FirstOrDefault(p => p.Symbol.Symbol == SymbolShort.Symbol && p.Quantity == Quantity && p.Direction == FuturesPositionDirection.Short);
+                    IFuturesPosition[] aPositions = oDataShort.Symbol.Exchange.Account.PositionManager.GetData();
+                    oDataShort.Position = aPositions.FirstOrDefault(p => p.Symbol.Symbol == oDataShort.Symbol.Symbol && p.Quantity == nQuantity && p.Direction == FuturesPositionDirection.Short);
 
                 }
 
-                if (PositionLong != null && PositionShort != null)
+                if (oDataLong.Position != null && oDataShort.Position != null)
                 {
-                    FeesOnPosition();
                     return true;
                 }
 
-                nRetries++; 
+                nRetries++;
             }
-
             return false;
+
+        }
+        public async Task<bool> TryOpenMarket(decimal nMoney)
+        {
+            decimal nDifference = Update(nMoney );
+            if (nDifference < 0) return false;
+
+            IOrderbookPrice? oPriceLong = null;
+            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
+            IOrderbookPrice? oPriceShort = null;
+            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+
+            if( oPriceLong == null || oPriceShort == null ) return false;
+
+
+            decimal nPrice = Math.Max(oPriceLong.Price, oPriceShort.Price); 
+
+            int nDecimals = Math.Min(LongData.Symbol.Decimals, ShortData.Symbol.Decimals);
+            decimal nQuantity = Math.Round(nMoney /  nPrice, nDecimals);
+
+            
+            if( nQuantity <= 0 ) return false;
+            // Set leverages
+            bool bResult = await SetLeverages();
+            if (!bResult) return false;
+            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
+            aTasks.Add(LongData.Symbol.Exchange.Trading.CreateMarketOrder(LongData.Symbol, true, nQuantity));
+            aTasks.Add(ShortData.Symbol.Exchange.Trading.CreateMarketOrder(ShortData.Symbol, false, nQuantity));
+
+
+            await Task.WhenAll(aTasks);
+            if (aTasks.Any(p => p.Result == null)) return false;
+
+            return await UpdatePositions(nQuantity);
+            /*
+            */
         }
 
+        /*
         /// <summary>
         /// Calculate fees based on position
         /// </summary>
@@ -168,6 +255,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
             Fees = nFeesLong + nFeesShort;
         }
+        */
 
         /// <summary>
         /// Create from positions
@@ -176,6 +264,9 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         public static async Task<IOppositeOrder[]?> CreateFromExchanges(IFuturesExchange[] aExchanges)
         {
+            return null;
+            // throw new NotImplementedException();
+            /*
             await Task.Delay(2000);
             List<IOppositeOrder> aResult = new List<IOppositeOrder>();  
             for( int i = 0; i < aExchanges.Length; i++ )
@@ -219,6 +310,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             }
 
             return aResult.ToArray();
+            */
         }
     }
 }

@@ -3,6 +3,7 @@ using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace Crypto.Exchanges.All.Bingx
 
         }
 
-
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Poisition; }
         public IFuturesSymbol Symbol { get; }
         public string Id { get; }   
         public FuturesPositionDirection Direction { get; }
@@ -60,12 +61,14 @@ namespace Crypto.Exchanges.All.Bingx
 
         public decimal ProfitUnRealized { get; private set; }
         public DateTime LastUpdate { get; private set; } = DateTime.Now;
+        public bool Closed { get; set; } = false;
         public void Update( IFuturesPosition oPos )
         {
             Quantity = oPos.Quantity;   
             ProfitRealized = oPos.ProfitRealized;
             ProfitUnRealized = oPos.ProfitUnRealized;
             LastUpdate = oPos.LastUpdate;
+            Closed = oPos.Closed;
         }
     }
 }

@@ -11,6 +11,23 @@ using System.Threading.Tasks;
 namespace Crypto.Trading.Bot.Arbitrage
 {
 
+
+    public interface IArbitrageOrderData
+    {
+        public IFuturesSymbol Symbol { get; }   
+        public decimal Quantity { get; }
+
+        public IFuturesOrder? OpenOrder { get; }
+        public IFuturesOrder? CloseOrder { get; }
+
+        public IFuturesPosition? Position { get; }  
+
+        public IOrderbook? Orderbook { get; }   
+
+        public decimal Profit { get; }  
+    }
+
+
     public interface ICloseResult
     {
         public bool Success { get; }    
@@ -18,16 +35,23 @@ namespace Crypto.Trading.Bot.Arbitrage
     }
     public interface IOppositeOrder
     {
+        public IArbitrageOrderData LongData { get; }    
+        public IArbitrageOrderData ShortData { get; }   
+
+        public decimal Profit { get; }
+        public decimal Fees { get; }
+        public int Leverage { get; }
+        /*
         public IFuturesSymbol SymbolLong { get; }
         public IFuturesSymbol SymbolShort { get; }
 
         public int Leverage { get; set; }
 
-        public decimal Quantity { get; set; }
+        public decimal Quantity { get; }
 
-        public decimal Profit { get; set; } 
-        public decimal ProfitBalance { get; set; }  
-        public decimal Fees { get; set; }   
+        public decimal Profit { get; } 
+        public decimal ProfitBalance { get; }  
+        public decimal Fees { get; }   
         public IFuturesOrder? OpenOrderLong { get; }
         public IFuturesOrder? OpenOrderShort { get; }
 
@@ -36,9 +60,12 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public IFuturesPosition? PositionLong { get; }
         public IFuturesPosition? PositionShort { get; }
+        */
 
-        public Task<bool> TryOpenLimit();
-        public Task<bool> TryOpenMarket();
+        public decimal Update(decimal nMoney);
+
+        public Task<bool> TryOpenLimit(decimal nMoney);
+        public Task<bool> TryOpenMarket(decimal nMoney);
         public Task<ICloseResult> TryCloseLimit();
         public Task<ICloseResult> TryCloseMarket();
     }

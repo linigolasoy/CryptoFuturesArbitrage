@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static Crypto.Interface.Futures.Account.IFuturesAccount;
 
 namespace Crypto.Exchanges.All.Bingx
 {
@@ -24,9 +25,10 @@ namespace Crypto.Exchanges.All.Bingx
         { 
             Exchange = oExchange;   
             m_oGlobalClient = oClient;
-            m_oWebsocket = new BingxWebsocketPrivate((BingxFutures)oExchange);
+            m_oWebsocket = new BingxWebsocketPrivate(this);
         }
         public IFuturesExchange Exchange { get; }
+        public event PrivateDelegate? OnPrivateEvent;
 
         public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oWebsocket.BalanceManager; }
 
@@ -49,6 +51,10 @@ namespace Crypto.Exchanges.All.Bingx
             return aResult.ToArray();
         }
 
+        public async Task PostEvent(IWebsocketQueueItem oItem)
+        {
+            if( OnPrivateEvent != null ) await OnPrivateEvent(oItem);
+        }
         /// <summary>
         /// Get positions
         /// </summary>

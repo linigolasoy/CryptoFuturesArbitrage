@@ -1,6 +1,7 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,8 @@ namespace Crypto.Exchanges.All.CoinEx
             ProfitRealized = 0;
             MarginFreezed = 0;  
         }
+
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Balance; }
         public string Currency { get; }
 
         public decimal Equity { get; }

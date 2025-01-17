@@ -88,38 +88,17 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             List<IFuturesWebsocketPublic> aWebsockets = new List<IFuturesWebsocketPublic>();
             foreach (var oExchange in Exchanges)
             {
+                Logger.Info($"FundingSocketData:    {oExchange.ExchangeType.ToString()}");
                 bool bResult = await oExchange.Market.StartSockets();
                 if (!bResult || oExchange.Market.Websocket == null) return false;
                 aWebsockets.Add(oExchange.Market.Websocket);  
+                bResult = await oExchange.Account.StartSockets();
+                if( !bResult ) return false;
             }
             Websockets = aWebsockets.ToArray();
             return true;
         }
 
-        /// <summary>
-        /// Subscribe to symbols
-        /// </summary>
-        /// <returns></returns>
-        private async Task<bool> Subscribe()
-        {
-            if (Websockets == null) return false;
-
-            Logger.Info("FundingSocketData: Subscribe to funding rates");
-            foreach (var oWebsocket in Websockets)
-            {
-                Logger.Info($"FundingSocketData:    {oWebsocket.Exchange.ExchangeType.ToString()}");
-                IFuturesSymbol[] aSubscribe = oWebsocket.FuturesSymbols.Where(p=> p.Quote == QUOTE).ToArray();
-                bool bResult = await oWebsocket.Start();
-                if( !bResult ) return false;
-                await Task.Delay(1000);
-                await oWebsocket.SubscribeToFundingRates(aSubscribe);   
-            }
-
-            await Task.Delay(1000);
-
-
-            return true;
-        }
 
         /// <summary>
         /// Starts
@@ -135,9 +114,6 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             // Create websockets
             bResult = await CreateWebsockets();
             if (!bResult) return false;
-            // Subscribe to funding rates
-            bResult = await Subscribe();
-            if ( !bResult ) return false;
             return true;
         }
         public async Task Stop()

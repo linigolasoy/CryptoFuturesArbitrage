@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Clients;
 using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -15,22 +16,22 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx.Websocket
 {
-    internal class BingxWebsocketPrivate : IFuturesWebsocketPrivate
+    internal class BingxWebsocketPrivate : BasePrivateQueueManager, IFuturesWebsocketPrivate
     {
 
         private BingXSocketClient? m_oAccountSocketClient = null;
 
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
-        private BingxFutures m_oExchange;
+        private IFuturesExchange m_oExchange;
         private IFuturesSymbol[]? m_aSymbols;
 
         private BingxBalanceManager m_oBalanceManager;
         private BingxOrderManager m_oOrderManager;
         private BingxPositionManager m_oPositionManager;
 
-        public BingxWebsocketPrivate(BingxFutures oExchange)
+        public BingxWebsocketPrivate(IFuturesAccount oAccount) : base(oAccount)
         {
-            m_oExchange = oExchange;
+            m_oExchange = oAccount.Exchange;
             m_oBalanceManager = new BingxBalanceManager(this);
             m_oOrderManager = new BingxOrderManager(this);  
             m_oPositionManager = new BingxPositionManager(this);    
@@ -40,11 +41,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols!; }
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
+        public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
-        public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
+        public IWebsocketPrivateManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
 
-        public IWebsocketManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
+        public IWebsocketPrivateManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
 
         /// <summary>
         /// Start websocket
@@ -52,20 +53,15 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// <returns></returns>
         public async Task<bool> Start()
         {
-            if( m_oAccountSocketClient != null )
-            {
-                await m_oAccountSocketClient.UnsubscribeAllAsync();
-                await Task.Delay(1000);
-                m_oAccountSocketClient.Dispose();
-                m_oAccountSocketClient = null;
-            }
+            await Stop();
+            await StartLoop();  
             m_aSymbols = await m_oExchange.Market.GetSymbols();
             if (m_aSymbols == null) throw new Exception("No symbols");
             m_oOrderManager.FuturesSymbols = m_aSymbols;
             m_oPositionManager.FuturesSymbols = m_aSymbols;
 
             m_oCancelSource = new CancellationTokenSource();
-            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
+            var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
             if (oResult == null || !oResult.Success) return false;
             string strListenKey = oResult.Data;
 
@@ -80,6 +76,19 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
             if (oResultSubscribe == null || !oResultSubscribe.Success) return false;
             return true;
+
+        }
+
+        public async Task Stop()
+        {
+            if (m_oAccountSocketClient != null)
+            {
+                await m_oAccountSocketClient.UnsubscribeAllAsync();
+                await Task.Delay(1000);
+                m_oAccountSocketClient.Dispose();
+                m_oAccountSocketClient = null;
+            }
+            await StopLoop();
 
         }
 

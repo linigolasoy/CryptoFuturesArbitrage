@@ -47,5 +47,9 @@ namespace Crypto.Exchanges.All.Bybit
         public string Base { get; }
 
         public string Quote { get; }
+
+        public int Decimals => throw new NotImplementedException();
+
+        public decimal Minimum => throw new NotImplementedException();
     }
 }

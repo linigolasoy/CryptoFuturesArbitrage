@@ -1,4 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Websockets;
@@ -11,73 +12,25 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexBalanceManager : IWebsocketManager<IFuturesBalance>
+    internal class CoinexBalanceManager : BaseBalanceManager, IWebsocketPrivateManager<IFuturesBalance>
     {
-        private IFuturesExchange m_oExchange;
-        private Task m_oBalanceTask;
-
-        private ConcurrentDictionary<string, IFuturesBalance> m_aBalances = new ConcurrentDictionary<string, IFuturesBalance>();
-        public int ReceiveCount { get; private set; } = 0;
-        public int Count { get => m_aBalances.Count; }
-        public CoinexBalanceManager(IFuturesExchange oExchange) 
+        public CoinexBalanceManager(IFuturesWebsocketPrivate oWebsocket) : base(oWebsocket) 
         { 
-            m_oExchange = oExchange;
-            m_oBalanceTask = DoInitialBalance();
         }
 
-        private async Task DoInitialBalance()
+        internal async Task LoadInitialBalances()
         {
-            try
+            IFuturesBalance[]? aBalances = await this.PrivateSocket.Exchange.Account.GetBalances();
+            if (aBalances == null || aBalances.Length <= 0) return;
+            foreach( var oBalance in aBalances )
             {
-                int nRetries = 10;
-                while(m_oExchange.Account == null && nRetries > 0 )
-                {
-                    await Task.Delay(500);
-                    nRetries--;
-                }
-                if (m_oExchange.Account == null) return;
-                IFuturesBalance[]? aBalances = await m_oExchange.Account.GetBalances();
-                if (aBalances == null) return;
-                foreach( var oBalance in aBalances )
-                {
-                    m_aBalances.AddOrUpdate( oBalance.Currency, p=> oBalance, (s,p)=> p);
-                }
-
-
-            }
-            catch (Exception ex)
-            {
-
+                PutData(oBalance.Currency, oBalance);   
             }
         }
-
-        public IFuturesBalance[] GetData()
-        {
-            List<IFuturesBalance> aResult = new List<IFuturesBalance>();
-            foreach( string strKey  in m_aBalances.Keys )
-            {
-                IFuturesBalance? oFound = GetData( strKey );
-                if( oFound != null ) aResult.Add( oFound );   
-            }
-                
-            return aResult.ToArray();
-        }
-
-        public IFuturesBalance? GetData(string strSymbol)
-        {
-            IFuturesBalance? oResult = null;
-            if( m_aBalances.TryGetValue(strSymbol, out oResult) )
-            {
-                return oResult;
-            }
-            return null;
-        }
-
         public void Put(CoinExFuturesBalance oUpdate )
         {
-            ReceiveCount++;
             IFuturesBalance oNewBalance = new CoinexBalance(oUpdate);
-            m_aBalances.AddOrUpdate(oNewBalance.Currency, p => oNewBalance, (s, p) => oNewBalance);
+            PutData(oNewBalance.Currency, oNewBalance); 
             return;
         }
 

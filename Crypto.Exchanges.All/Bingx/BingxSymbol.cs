@@ -21,6 +21,8 @@ namespace Crypto.Exchanges.All.Bingx
             LeverageMax = (int)( oContract.MaxLongLeverage < oContract.MaxShortLeverage? oContract.MaxLongLeverage: oContract.MaxShortLeverage);
             FeeMaker = oContract.MakerFeeRate;
             FeeTaker = oContract.TakerFeeRate;
+            Decimals = oContract.QuantityPrecision;
+            Minimum = oContract.MinOrderQuantity;
         }
 
         public IFuturesExchange Exchange { get; }
@@ -37,6 +39,8 @@ namespace Crypto.Exchanges.All.Bingx
         public string Base { get; }
 
         public string Quote { get; }
+        public int Decimals { get; }
+        public decimal Minimum { get; }
 
         public override string ToString()
         {

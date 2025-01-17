@@ -7,22 +7,29 @@ namespace Crypto.Tests.Coinex
     [TestClass]
     public class CoinexWebsocketTests
     {
+        private int m_nReceived1 = 0;
         [TestMethod]
         public async Task CoinexFundingAccountSocket()
         {
             IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
+            oExchange.Account.OnPrivateEvent += MyOnPrivateEvent;
 
 
             await Task.Delay(1000);
             bool bResultStart = await oExchange.Account.StartSockets();
             Assert.IsTrue(bResultStart);
 
-            await Task.Delay(1000);
+            await Task.Delay(10000);
             IFuturesBalance[] aBalances = oExchange.Account.BalanceManager.GetData();
             Assert.IsTrue(aBalances.Length > 0);
+            Assert.IsTrue(m_nReceived1 > 0);
         }
 
+        private async Task MyOnPrivateEvent(Interface.Futures.Websockets.IWebsocketQueueItem oItem)
+        {
+            m_nReceived1++;
+        }
 
         [TestMethod]
         public async Task CoinexAllSymbolsSocket()

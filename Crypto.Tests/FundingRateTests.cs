@@ -31,10 +31,32 @@ namespace Crypto.Tests
             Assert.IsNotNull(aSymbolsShort);
 
 
+            // Create websockets
+            bool bResultSocket = await oExchangeLong.Market.StartSockets();
+            Assert.IsTrue(bResultSocket);
+            bResultSocket = await oExchangeShort.Market.StartSockets();
+            Assert.IsTrue(bResultSocket);
+
+            bResultSocket = await oExchangeLong.Account.StartSockets();
+            Assert.IsTrue(bResultSocket);
+            bResultSocket = await oExchangeShort.Account.StartSockets();
+            Assert.IsTrue(bResultSocket);
+
             IFuturesSymbol? oSymbolLong = aSymbolsLong.FirstOrDefault(p=> p.Base == CURRENCY && p.Quote == USDT);
             Assert.IsNotNull(oSymbolLong);
             IFuturesSymbol? oSymbolShort = aSymbolsShort.FirstOrDefault(p => p.Base == CURRENCY && p.Quote == USDT);
             Assert.IsNotNull(oSymbolShort);
+
+            Assert.IsNotNull(oExchangeLong.Market.Websocket);
+            Assert.IsNotNull(oExchangeShort.Market.Websocket);
+
+            await Task.Delay(5000);
+            IOrderbook? oOrderbookLong = oExchangeLong.Market.Websocket.OrderbookManager.GetData(oSymbolLong.Symbol);
+            Assert.IsNotNull(oOrderbookLong);
+            IOrderbook? oOrderbookShort = oExchangeShort.Market.Websocket.OrderbookManager.GetData(oSymbolShort.Symbol);
+            Assert.IsNotNull(oOrderbookShort);
+
+
 
             /*
             IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(new ICryptoFuturesExchange[] { oExchangeShort, oExchangeLong });
@@ -47,11 +69,9 @@ namespace Crypto.Tests
                 ICloseResult oResult =  await oOpposite.TryCloseMarket();
             }
             */
-            IOppositeOrder oOrder = ArbitrageFactory.CreateOppositeOrder(oSymbolLong, oSymbolShort);
+            IOppositeOrder oOrder = ArbitrageFactory.CreateOppositeOrder(oSymbolLong, oSymbolShort, 10);
 
-            oOrder.Quantity = 5;
-            oOrder.Leverage = 10;
-            bool bResult = await oOrder.TryOpenMarket();
+            bool bResult = await oOrder.TryOpenLimit(13);
             Assert.IsTrue(bResult);
 
             await Task.Delay(3000);

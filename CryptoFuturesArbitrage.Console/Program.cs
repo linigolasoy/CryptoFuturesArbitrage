@@ -32,7 +32,6 @@ namespace CryptoFuturesArbitrage.Console
             return false;
 
         }
-        /*
 
         /// <summary>
         /// Bot loop
@@ -66,7 +65,6 @@ namespace CryptoFuturesArbitrage.Console
             await Task.Delay(2000);
 
         }
-        */
 
 
         /// <summary>
@@ -155,7 +153,7 @@ namespace CryptoFuturesArbitrage.Console
 
                 if (oResult.ProfitOrLoss != nProfit)
                 {
-                    oLogger.Info($"{o.SymbolLong.Base}-{o.SymbolLong.Quote} Profit or Loss {oResult.ProfitOrLoss}");
+                    oLogger.Info($"{o.LongData.Symbol.Base}-{o.ShortData.Symbol.Quote} Profit or Loss {oResult.ProfitOrLoss}");
                     if( oResult.ProfitOrLoss > 0 )
                     {
                         oLogger.Info("SUCCESSS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -271,6 +269,8 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
+            // await DoWebsocketFundingData(oSetup, oLogger);
+            await DoBot(oSetup, oLogger);
             /*
             if (TEST) await DoTester(oSetup, oLogger);
             else

@@ -1,5 +1,7 @@
 ﻿using CoinEx.Net.Clients;
 using CoinEx.Net.Objects.Models.V2;
+using CoinEx.Net.Enums;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -15,31 +17,31 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexWebsocketPrivate : IFuturesWebsocketPrivate
+    internal class CoinexWebsocketPrivate : BasePrivateQueueManager, IFuturesWebsocketPrivate
     {
         private CoinExSocketClient? m_oPrivateClient = null;
-        private CoinexFutures m_oExchange;
+        private IFuturesExchange m_oExchange;
 
         private CoinexOrderManager m_oOrderManager;
         private CoinexPoisitionManager m_oPositionManager;
         private CoinexBalanceManager m_oBalanceManager;
 
-        public CoinexWebsocketPrivate( CoinexFutures oExchange) 
+        public CoinexWebsocketPrivate( IFuturesAccount oAccount ): base(oAccount) 
         { 
-            m_oExchange = oExchange;    
+            m_oExchange = oAccount.Exchange;    
             m_oOrderManager = new CoinexOrderManager(this); 
             m_oPositionManager = new CoinexPoisitionManager(this);
-            m_oBalanceManager = new CoinexBalanceManager(this.m_oExchange);
+            m_oBalanceManager = new CoinexBalanceManager(this);
         } 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
         public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
-        public IWebsocketManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
+        public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
-        public IWebsocketManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
+        public IWebsocketPrivateManager<IFuturesOrder> OrderManager { get => m_oOrderManager; }
 
-        public IWebsocketManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
+        public IWebsocketPrivateManager<IFuturesPosition> PositionManager { get => m_oPositionManager; }
 
         /// <summary>
         /// Start private socket
@@ -48,15 +50,11 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         /// <exception cref="NotImplementedException"></exception>
         public async Task<bool> Start()
         {
-            if( m_oPrivateClient != null )
-            {
-                await m_oPrivateClient.UnsubscribeAllAsync();
-                await Task.Delay(1000);
-                m_oPrivateClient.Dispose();
-                m_oPrivateClient=null;  
-            }
+            await Stop();
+            await StartLoop();
             m_oPrivateClient = new CoinExSocketClient();
-            m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
+            m_oPrivateClient.SetApiCredentials( ((CoinexFutures)m_oExchange).ApiCredentials);
+            await m_oBalanceManager.LoadInitialBalances();  
 
             var oResult = await m_oPrivateClient.FuturesApi.SubscribeToBalanceUpdatesAsync(OnBalanceUpdates);
             if (oResult == null || !oResult.Success) return false;
@@ -74,6 +72,18 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             return true;
         }
 
+
+        public async Task Stop()
+        {
+            if (m_oPrivateClient != null)
+            {
+                await m_oPrivateClient.UnsubscribeAllAsync();
+                await Task.Delay(1000);
+                m_oPrivateClient.Dispose();
+                m_oPrivateClient = null;
+            }
+            await StopLoop();
+        }
         private void OnBalanceUpdates(DataEvent<IEnumerable<CoinExFuturesBalance>> oEvent)
         {
             if (oEvent == null || oEvent.Data == null || oEvent.Data.Count() <= 0) return;
@@ -91,7 +101,8 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private void OnPositionUpdates(DataEvent<CoinExPositionUpdate> oEvent)
         {
             if (oEvent == null || oEvent.Data == null) return;
-            m_oPositionManager.Put(oEvent.Data);
+            bool bClose = (oEvent.Data.Event == PositionUpdateType.Close);
+            m_oPositionManager.Put(oEvent.Data, bClose);
         }
 
     }

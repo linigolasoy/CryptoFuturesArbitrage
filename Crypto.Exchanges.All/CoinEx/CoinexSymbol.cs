@@ -22,6 +22,8 @@ namespace Crypto.Exchanges.All.CoinEx
             LeverageMin = oParsed.Leverage.Min();   
             FeeMaker = oParsed.MakerFeeRate;
             FeeTaker = oParsed.MakerFeeRate;    
+            Decimals = oParsed.QuantityPrecision;
+            Minimum = oParsed.MinOrderQuantity;
         }
         public IFuturesExchange Exchange { get; }
         public int LeverageMax { get; }
@@ -38,6 +40,8 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public string Quote { get; }
 
+        public int Decimals { get; }  
+        public decimal Minimum { get; } 
         public override string ToString()
         {
             return Symbol;

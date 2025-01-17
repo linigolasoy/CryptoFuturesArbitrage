@@ -13,6 +13,11 @@ namespace Crypto.Interface.Futures.Account
 
         public IFuturesExchange Exchange { get; }
 
+        public delegate Task PrivateDelegate(IWebsocketQueueItem oItem);
+
+        public event PrivateDelegate? OnPrivateEvent;
+
+        public Task PostEvent(IWebsocketQueueItem oItem);
 
         public Task<bool> StartSockets();
         public Task<IFuturesBalance[]?> GetBalances();

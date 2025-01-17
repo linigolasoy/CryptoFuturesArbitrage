@@ -1,4 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
@@ -12,85 +13,19 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
-    internal class CoinexPoisitionManager : IWebsocketManager<IFuturesPosition>
+    internal class CoinexPoisitionManager : BasePositionManager, IWebsocketPrivateManager<IFuturesPosition>
     {
 
-        private ConcurrentDictionary<string, IFuturesPosition> m_aPositions = new ConcurrentDictionary<string, IFuturesPosition>(); 
-        private CoinexWebsocketPrivate m_oWebsocket;
-        private Task m_oMainTask;
-        public int ReceiveCount { get; private set; } = 0;
-        public int Count { get => m_aPositions.Count; }
-        public CoinexPoisitionManager(CoinexWebsocketPrivate oWebsocket)
+        public CoinexPoisitionManager(CoinexWebsocketPrivate oWebsocket): base(oWebsocket)
         {
-            m_oWebsocket = oWebsocket;
-            m_oMainTask = UpdateExisting();
         }
-    
-        public IFuturesPosition[] GetData()
+        public void Put(CoinExPositionUpdate oUpdate, bool bClose)
         {
-            List<IFuturesPosition> aResult = new List<IFuturesPosition>();
-            foreach( string strId in m_aPositions.Keys )
-            {
-                IFuturesPosition? oFound = null;
-                if( m_aPositions.TryGetValue( strId, out oFound ) ) aResult.Add( oFound );
-            }
-            return aResult.ToArray();
-        }
-
-        public IFuturesPosition? GetData(string strSymbol)
-        {
-            IFuturesPosition[] aAll = GetData();
-            return aAll.FirstOrDefault(p=> p.Symbol.Symbol ==  strSymbol);  
-        }
-
-        /// <summary>
-        /// Update existing positions loop
-        /// </summary>
-        /// <returns></returns>
-        private async Task UpdateExisting()
-        {
-            while( true )
-            {
-                try
-                {
-                    if (m_oWebsocket.Exchange.Account != null)
-                    {
-                        IFuturesPosition[]? aPositions = await m_oWebsocket.Exchange.Account.GetPositions();
-                        if (aPositions != null && aPositions.Length > 0)
-                        {
-                            foreach (var oPos in aPositions) { UpdateLocal(oPos); }
-                        }
-                    }
-                }
-                catch( Exception e )
-                {
-
-                }
-                await Task.Delay(100);
-            }
-        }
-
-        private void UpdateLocal(IFuturesPosition oPosition)
-        {
-            ReceiveCount++;
-            if (oPosition.Quantity <= 0)
-            {
-                IFuturesPosition? oFound = null;
-                m_aPositions.TryRemove(oPosition.Id, out oFound);
-            }
-            else
-            {
-                m_aPositions.AddOrUpdate(oPosition.Id, p => oPosition, (s, p) => { p.Update(oPosition); return p; });
-            }
-
-        }
-
-        public void Put(CoinExPositionUpdate oUpdate)
-        {
-            IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == oUpdate.Position.Symbol);
+            IFuturesSymbol? oSymbol = PrivateSocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == oUpdate.Position.Symbol);
             if (oSymbol == null) return;
             IFuturesPosition oPosition = new CoinexPoisitionLocal(oSymbol, oUpdate);
-            UpdateLocal(oPosition);
+            if (bClose) RemoveData(oPosition);
+            else PutData(oPosition);
             return;
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,7 +46,7 @@ namespace Crypto.Interface.Futures.Trading
         Expired
     }
 
-    public interface IFuturesOrder
+    public interface IFuturesOrder: IWebsocketQueueItem
     {
         public long Id { get; }
         public IFuturesSymbol Symbol { get; }

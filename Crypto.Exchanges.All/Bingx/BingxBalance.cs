@@ -1,6 +1,7 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +34,7 @@ namespace Crypto.Exchanges.All.Bingx
             MarginUsed = 0;
             MarginFreezed = 0;
         }
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Balance; }
         public string Currency { get; }
 
         public decimal Equity { get; }

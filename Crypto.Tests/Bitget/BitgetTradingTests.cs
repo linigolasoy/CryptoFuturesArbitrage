@@ -2,8 +2,10 @@
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using Crypto.Tests.Bitget;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +17,7 @@ namespace Crypto.Tests.Bitget
     public class BitgetTradingTests
     {
 
+        private ConcurrentDictionary<WebsocketQueueType, int> m_aReceived = new ConcurrentDictionary<WebsocketQueueType, int>();
 
         [TestMethod]
         public async Task BitgetLeverageTests()
@@ -44,13 +47,14 @@ namespace Crypto.Tests.Bitget
         {
             IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
             await Task.Delay(1000);
-            bool bStarted = await oExchange.Account.StartSockets();
-            Assert.IsTrue(bStarted);
-            await Task.Delay(1000); 
-
+            oExchange.Account.OnPrivateEvent += Account_OnPrivateEvent;
             IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
             Assert.IsNotNull(aSymbols);
 
+            // Start sockets
+            bool bSockets = await oExchange.Account.StartSockets();
+            Assert.IsTrue(bSockets);
+            await Task.Delay(1000);
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
             Assert.IsNotNull(oSymbol);
 
@@ -62,10 +66,10 @@ namespace Crypto.Tests.Bitget
             Assert.IsNotNull(oNewLeverage);
             Assert.IsTrue(oNewLeverage.LongLeverage == 5);
             Assert.IsTrue(oNewLeverage.ShortLeverage == 5);
-            decimal nPrice = 0.5M;
+            decimal nPrice = 0.8M;
             IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);
             Assert.IsNotNull(oOrder);
-            await Task.Delay(1000);
+            await Task.Delay(3000);
             IFuturesOrder[] aOrdersWs = oExchange.Account.OrderManager.GetData();
             Assert.IsNotNull(aOrdersWs);
             IFuturesOrder? oOrderWs = aOrdersWs.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
@@ -83,13 +87,15 @@ namespace Crypto.Tests.Bitget
 
             bool bCanceled = await oExchange.Trading.CancelOrder(oFound);
             Assert.IsTrue(bCanceled);
+
             await Task.Delay(1000);
+
             Assert.IsTrue(oOrderWs.OrderStatus == FuturesOrderStatus.Canceled);
 
             decimal nQuantity = 5;
             IFuturesOrder? oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
             Assert.IsNotNull(oMarketOpen);
-            await Task.Delay(2000);
+            await Task.Delay(1000);
             IFuturesPosition[] aRest = oExchange.Account.PositionManager.GetData();
             Assert.IsNotNull(aRest);
             IFuturesPosition? oPosition = aRest.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
@@ -106,12 +112,19 @@ namespace Crypto.Tests.Bitget
             Assert.IsNotNull(aPositions);
             Assert.IsTrue(aPositions.Any());
 
-            bool bClosed = await oExchange.Trading.ClosePosition(oPosition);
-            Assert.IsTrue(bClosed);
-            await Task.Delay(3000);
+            bool bClose = await oExchange.Trading.ClosePosition(oPosition);
+            Assert.IsTrue(bClose);
+            await Task.Delay(50000);
+            Assert.IsTrue(oPosition.Closed);
+
             aRest = oExchange.Account.PositionManager.GetData();
             Assert.IsNotNull(aRest);
             Assert.IsTrue(!aRest.Any(p => p.Symbol.Symbol == oSymbol.Symbol));
+        }
+
+        private async Task Account_OnPrivateEvent(IWebsocketQueueItem oItem)
+        {
+            m_aReceived.AddOrUpdate(oItem.QueueType, p => 1, (t, p) => ++p);
         }
 
         [TestMethod]

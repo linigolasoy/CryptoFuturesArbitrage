@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Websockets;
 
 namespace Crypto.Exchanges.All.Bitget
 {
@@ -39,6 +40,7 @@ namespace Crypto.Exchanges.All.Bitget
             ProfitUnRealized = oUpdate.UnrealizedProfitAndLoss;
         }
 
+        public WebsocketQueueType QueueType { get => WebsocketQueueType.Poisition; }
         public IFuturesSymbol Symbol { get; }
 
         public string Id { get; }
@@ -46,7 +48,7 @@ namespace Crypto.Exchanges.All.Bitget
         public FuturesPositionDirection Direction { get; }
 
         public int Leverage { get; }
-
+        public bool Closed { get; set; } = false;
         public decimal Quantity { get; private set; }
 
         public decimal AveragePrice { get; private set; }
@@ -63,6 +65,7 @@ namespace Crypto.Exchanges.All.Bitget
             ProfitRealized = oPosition.ProfitRealized;
             ProfitUnRealized = oPosition.ProfitUnRealized;
             LastUpdate = oPosition.LastUpdate;
+            Closed = oPosition.Closed;  
         }
     }
 }

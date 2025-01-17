@@ -106,7 +106,10 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private async Task<bool> DoSubscribe( BingXSocketClient oClient, IFuturesSymbol oSymbol )
         {
             var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
-            if (oResult == null || !oResult.Success) return false;
+            if (oResult == null || !oResult.Success)
+            {
+                return false;
+            }
             return true;
         }
 
@@ -120,6 +123,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             int nTotal = 0;
             int nMax = 200;
+            int nTasks = BingxFutures.TASK_COUNT / 2;
 
             while (nTotal < aSymbols.Length)
             {
@@ -131,14 +135,14 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 List<Task<bool>> aTasks = new List<Task<bool>>();
                 foreach (var oSymbol in aPartial)
                 {
-                    if( aTasks.Count >= BingxFutures.TASK_COUNT )
+                    if( aTasks.Count >= nTasks)
                     {
                         await Task.WhenAll( aTasks.ToArray() );
                         if( aTasks.Any(p=> !p.Result))
                         {
                             return false;
                         }
-                        await Task.Delay(500);
+                        await Task.Delay(1000);
                         aTasks.Clear();
                     }
                     aTasks.Add(DoSubscribe(oClient, oSymbol));
