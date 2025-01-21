@@ -170,6 +170,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             {
                 IFuturesSymbol[] aSymbols = m_aSymbols[strKey];
                 List<IFundingRate> aRates = new List<IFundingRate>();
+                List<IOrderbook> aOrderbooks = new List<IOrderbook>();
                 bool bOk = true;
                 foreach( var oSymbol in aSymbols )
                 {
@@ -185,15 +186,50 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                         bOk = false;
                         break;
                     }
+
+                    IOrderbook? oOrderbook = oSocket.OrderbookManager.GetData(oSymbol.Symbol);
+                    if ( oOrderbook == null )
+                    {
+                        bOk = false;
+                        break;
+                    }
+                    aOrderbooks.Add( oOrderbook );  
                     aRates.Add( oRate );    
                 }
-
+                if( !CheckPrices(aOrderbooks.ToArray()) )
+                {
+                    bOk = false;
+                }
 
                 if (!bOk) continue;
                 PutDate(aResult, aSymbols, aRates.ToArray());
             }
 
             return aResult.ToArray();
+        }
+
+        /// <summary>
+        /// Check orderbook price difference
+        /// </summary>
+        /// <param name="aOrderbooks"></param>
+        /// <returns></returns>
+        private bool CheckPrices(IOrderbook[] aOrderbooks)
+        {
+            for( int i = 0; i < aOrderbooks.Length; i++ )
+            {
+                IOrderbookPrice oPrice1 = aOrderbooks[i].Bids[0];    
+                for( int j = i+1; j < aOrderbooks.Length; j++ )
+                {
+                    IOrderbookPrice oPrice2 = aOrderbooks[j].Bids[0];
+                    decimal nDifference = oPrice1.Price - oPrice2.Price;
+                    decimal nMin = Math.Min(oPrice1.Price, oPrice2.Price);
+                    if (nMin <= 0) return false;
+                    nDifference = 100M * Math.Abs(nDifference) / nMin;
+                    if( nDifference >= 10M ) return false;  
+                }
+
+            }
+            return true;
         }
 
 

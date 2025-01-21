@@ -55,17 +55,24 @@ namespace Crypto.Exchanges.All.Bingx
 
         public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
-            var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
-                    oSymbol.Symbol,
-                    (bLong ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
-                    BingX.Net.Enums.FuturesOrderType.Market,
-                    (bLong ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
-                    nQuantity
-                );
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
+            try
+            {
+                var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.PlaceOrderAsync(
+                        oSymbol.Symbol,
+                        (bLong ? BingX.Net.Enums.OrderSide.Buy : BingX.Net.Enums.OrderSide.Sell),
+                        BingX.Net.Enums.FuturesOrderType.Market,
+                        (bLong ? BingX.Net.Enums.PositionSide.Long : BingX.Net.Enums.PositionSide.Short),
+                        nQuantity
+                    );
+                if (oResult == null || !oResult.Success) return null;
+                if (oResult.Data == null) return null;
+                return new BingxOrder(oSymbol, oResult.Data);
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
 
-            return new BingxOrder(oSymbol, oResult.Data);
         }
 
 

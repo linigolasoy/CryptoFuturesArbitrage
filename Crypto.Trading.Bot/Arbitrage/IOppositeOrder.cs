@@ -17,12 +17,12 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesSymbol Symbol { get; }   
         public decimal Quantity { get; }
 
-        public IFuturesOrder? OpenOrder { get; }
-        public IFuturesOrder? CloseOrder { get; }
+        public IFuturesOrder? OpenOrder { get; set; }
+        public IFuturesOrder? CloseOrder { get; set; }
 
-        public IFuturesPosition? Position { get; }  
+        public IFuturesPosition? Position { get; set; }
 
-        public IOrderbook? Orderbook { get; }   
+        public IOrderbook? Orderbook { get; set; }   
 
         public decimal Profit { get; }  
     }
@@ -39,6 +39,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IArbitrageOrderData ShortData { get; }   
 
         public decimal Profit { get; }
+        public int ProfitUpdates { get; }
         public decimal Fees { get; }
         public int Leverage { get; }
         /*
@@ -62,7 +63,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesPosition? PositionShort { get; }
         */
 
-        public decimal Update(decimal nMoney);
+        public void Update();
 
         public Task<bool> TryOpenLimit(decimal nMoney);
         public Task<bool> TryOpenMarket(decimal nMoney);

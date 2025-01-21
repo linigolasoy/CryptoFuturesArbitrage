@@ -3,6 +3,7 @@ using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
+using CryptoExchange.Net.SharedApis;
 using Serilog.Core;
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,8 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IArbitrageOrderData ShortData { get; }
 
         public decimal Profit { get; private set; } = 0;
+
+        public int ProfitUpdates { get; private set; } = 0;
         public decimal Fees { get; private set; } = 0;
 
         public async Task<ICloseResult> TryCloseLimit()
@@ -44,17 +47,48 @@ namespace Crypto.Trading.Bot.Arbitrage
             throw new NotImplementedException();
         }
 
+
         /// <summary>
         /// Update with orderbooks and rest if not having them
         /// </summary>
-        public decimal Update( decimal nMoney )
+        public void Update()
         {
+            if( LongData.Orderbook == null )
+            {
+                if( LongData.Symbol.Exchange.Market.Websocket != null )
+                {
+                    IOrderbook? oOrderbook = LongData.Symbol.Exchange.Market.Websocket!.OrderbookManager.GetData(LongData.Symbol.Symbol);
+                    if( oOrderbook != null ) LongData.Orderbook = oOrderbook;   
+                }
+            }
+            if (ShortData.Orderbook == null)
+            {
+                if (ShortData.Symbol.Exchange.Market.Websocket != null)
+                {
+                    IOrderbook? oOrderbook = ShortData.Symbol.Exchange.Market.Websocket!.OrderbookManager.GetData(ShortData.Symbol.Symbol);
+                    if (oOrderbook != null) ShortData.Orderbook = oOrderbook;
+                }
+            }
+
+            // Put profit if we have positions
+            if( LongData.Position != null && ShortData.Position != null ) 
+            { 
+                if( LongData.Orderbook != null && ShortData.Orderbook != null)
+                {
+                    decimal nProfitLong = (LongData.Orderbook.Bids[0].Price - LongData.Position.AveragePrice) * LongData.Position.Quantity;
+                    decimal nProfitShort = (ShortData.Position.AveragePrice - ShortData.Orderbook.Asks[0].Price) * ShortData.Position.Quantity;
+                    decimal nProfit = nProfitLong + nProfitShort;
+                    this.Profit = nProfit;
+                    ProfitUpdates++;
+                }
+            }
+            /*
             decimal nResult = -9E10M;
             IFuturesWebsocketPublic? oWs = LongData.Symbol.Exchange.Market.Websocket;
-            if ( oWs != null )
+            if (oWs != null)
             {
                 IOrderbook? oBook = oWs.OrderbookManager.GetData(LongData.Symbol.Symbol);
-                if( oBook != null ) ((ArbitrageOrderData)LongData).Orderbook = oBook; 
+                if (oBook != null) ((ArbitrageOrderData)LongData).Orderbook = oBook;
             }
             oWs = ShortData.Symbol.Exchange.Market.Websocket;
             if (oWs != null)
@@ -67,38 +101,27 @@ namespace Crypto.Trading.Bot.Arbitrage
             IOrderbookPrice? oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
             IOrderbookPrice? oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
 
-            if( oPriceLong == null || oPriceShort == null ) return nResult; 
+            if (oPriceLong == null || oPriceShort == null) return nResult;
             nResult = oPriceShort.Price - oPriceLong.Price;
             return nResult;
+            */
         }
+
 
         public async Task<ICloseResult> TryCloseMarket()
         {
-            throw new NotImplementedException();
-            /*
-            OppositeCloseResult oResult = new OppositeCloseResult();
-            if (PositionLong == null || PositionShort == null) return oResult;
-            decimal nPnl = PositionLong.ProfitUnRealized + PositionShort.ProfitUnRealized;
+            Update();
+            OppositeCloseResult oResult = new OppositeCloseResult() { ProfitOrLoss = 0, Success = false };  
+            if (this.Profit < 0) return oResult;
+            oResult.ProfitOrLoss = this.Profit; 
+            if( LongData.Position == null || ShortData.Position == null ) { return oResult; }   
+            List<Task<bool>> aTasks = new List<Task<bool>>();
+            aTasks.Add(LongData.Symbol.Exchange.Trading.ClosePosition(LongData.Position));
+            aTasks.Add(ShortData.Symbol.Exchange.Trading.ClosePosition(ShortData.Position));
 
-            IFuturesBalance? oBalanceLong = SymbolLong.Exchange.Account.BalanceManager.GetData().FirstOrDefault(p => p.Currency == USDT);
-            IFuturesBalance? oBalanceShort = SymbolShort.Exchange.Account.BalanceManager.GetData().FirstOrDefault(p => p.Currency == USDT);
-            if( oBalanceLong != null && oBalanceShort != null )
-            {
-                this.ProfitBalance = oBalanceLong.ProfitUnrealized + oBalanceShort.ProfitUnrealized;
-            }
-            oResult.ProfitOrLoss = nPnl;
-            this.Profit = nPnl;
-            if ( nPnl > 0M )
-            {
-                List<Task<bool>> aTasks = new List<Task<bool>>();
-                aTasks.Add(SymbolLong.Exchange.Trading.ClosePosition(PositionLong));
-                aTasks.Add(SymbolShort.Exchange.Trading.ClosePosition(PositionShort));
-
-                await Task.WhenAll(aTasks); 
-                oResult.Success = true;
-            }
+            await Task.WhenAll(aTasks); 
+            oResult.Success = true;
             return oResult;
-            */
         }
 
         /// <summary>
@@ -108,8 +131,6 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         public async Task<bool> TryOpenLimit(decimal nMoney)
         {
-            decimal nDifference = Update(nMoney);
-            if( nDifference < 0 ) return false; 
             IOrderbookPrice? oPriceLong = null;
             if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
             IOrderbookPrice? oPriceShort = null;
@@ -139,7 +160,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             await Task.WhenAll(aTasks);
             if (aTasks.Any(p => p.Result == null)) return false;
 
-            return await UpdatePositions(nQuantity);
+            return true;
         }
 
 
@@ -152,13 +173,13 @@ namespace Crypto.Trading.Bot.Arbitrage
             if (m_bLeverageSet) return true;
             bool bResult = await LongData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
             if (!bResult) return false;
-            bResult = await ShortData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
+            bResult = await ShortData.Symbol.Exchange.Trading.SetLeverage(ShortData.Symbol, Leverage);
             if (!bResult) return false;
             m_bLeverageSet = true;  
             return true;
         }
 
-
+        /*
         /// <summary>
         /// Update position data
         /// </summary>
@@ -207,10 +228,11 @@ namespace Crypto.Trading.Bot.Arbitrage
             return false;
 
         }
+        */
         public async Task<bool> TryOpenMarket(decimal nMoney)
         {
-            decimal nDifference = Update(nMoney );
-            if (nDifference < 0) return false;
+            // decimal nDifference = Update(nMoney );
+            // if (nDifference < 0) return false;
 
             IOrderbookPrice? oPriceLong = null;
             if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
@@ -237,8 +259,8 @@ namespace Crypto.Trading.Bot.Arbitrage
 
             await Task.WhenAll(aTasks);
             if (aTasks.Any(p => p.Result == null)) return false;
-
-            return await UpdatePositions(nQuantity);
+            return true;
+            // return await UpdatePositions(nQuantity);
             /*
             */
         }
@@ -264,21 +286,19 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         public static async Task<IOppositeOrder[]?> CreateFromExchanges(IFuturesExchange[] aExchanges)
         {
-            return null;
             // throw new NotImplementedException();
-            /*
             await Task.Delay(2000);
             List<IOppositeOrder> aResult = new List<IOppositeOrder>();  
             for( int i = 0; i < aExchanges.Length; i++ )
             {
                 IFuturesExchange oExchange1 = aExchanges[i];
-                IFuturesPosition[] aPositions1 = oExchange1.Account.PositionManager.GetData();
-                if (aPositions1.Length <= 0) continue;
+                IFuturesPosition[]? aPositions1 = await oExchange1.Account.GetPositions();
+                if (aPositions1 == null || aPositions1.Length <= 0) continue;
                 for( int j = i +1; j < aExchanges.Length; j++ )
                 {
                     IFuturesExchange oExchange2 = aExchanges[j];
-                    IFuturesPosition[] aPositions2 = oExchange2.Account.PositionManager.GetData();
-                    if (aPositions2.Length <= 0) continue;
+                    IFuturesPosition[]? aPositions2 = await oExchange2.Account.GetPositions();
+                    if (aPositions2 == null || aPositions2.Length <= 0) continue;
 
                     foreach( IFuturesPosition oPosition1 in aPositions1)
                     {
@@ -290,18 +310,16 @@ namespace Crypto.Trading.Bot.Arbitrage
                         if( oPosition2 == null ) continue;  
                         if( oPosition1.Direction == FuturesPositionDirection.Long )
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol);
-                            oOrder.PositionLong = oPosition1;
-                            oOrder.PositionShort = oPosition2;
-                            oOrder.FeesOnPosition();
+                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10);
+                            oOrder.LongData.Position = oPosition1;
+                            oOrder.ShortData.Position = oPosition2;
                             aResult.Add(oOrder);    
                         }
                         else
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition2.Symbol);
-                            oOrder.PositionLong = oPosition2;
-                            oOrder.PositionShort = oPosition1;
-                            oOrder.FeesOnPosition();
+                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10);
+                            oOrder.LongData.Position = oPosition2;
+                            oOrder.ShortData.Position = oPosition1;
                             aResult.Add(oOrder);
 
                         }
@@ -310,7 +328,20 @@ namespace Crypto.Trading.Bot.Arbitrage
             }
 
             return aResult.ToArray();
-            */
+        }
+
+        public override string ToString()
+        {
+            StringBuilder oBuild = new StringBuilder();
+            oBuild.Append($"Currency [{this.LongData.Symbol.Base}] ");
+            oBuild.Append($"Long [{this.LongData.Symbol.Exchange.ExchangeType.ToString()}] ");
+            oBuild.Append($"Short [{this.ShortData.Symbol.Exchange.ExchangeType.ToString()}] ");
+            oBuild.Append($"Qty [{this.LongData.Quantity}] ");
+            if( LongData.Position != null && ShortData.Position != null )
+            {
+                oBuild.Append($"Positions. Profit [{this.Profit}] ");
+            }
+            return oBuild.ToString();
         }
     }
 }

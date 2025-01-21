@@ -1,5 +1,10 @@
-﻿using Crypto.Interface;
+﻿using Binance.Net.Objects.Models.Spot;
+using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
+using Crypto.Interface.Futures.Trading;
+using Crypto.Interface.Futures.Websockets;
 using Crypto.Trading.Bot.Arbitrage;
 using Crypto.Trading.Bot.FundingRates.Model;
 using Serilog;
@@ -14,11 +19,23 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
     internal class FundingRateBot : ITradingBot
     {
 
+        private enum BotStatus
+        {
+            Start,
+            FindChance,
+            WaitForOpen,
+            WaitForClose,
+            Close
+        }
+
         private IFundingSocketData? m_oSocketData = null;
+        private IOppositeOrder? m_oActiveOrder = null;
 
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
         private Task? m_oMainTask = null;   
+        private BotStatus m_eStatus = BotStatus.Start;
 
+        private DateTime m_dLastInfo = DateTime.Now;
         public FundingRateBot(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             Setup = oSetup;
@@ -86,7 +103,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
                 }
                 else if( oActual.Percent > oBest.Percent )
                 {
-                    oLog = oBest;   
+                    oLog = oActual;   
                 }
             }
 
@@ -95,20 +112,123 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
             return oLog;
         }
+
+
+        private IOppositeOrder? CreateActiveOrder( IFundingPair oPair )
+        {
+            double nMinutes = (oPair.FundingDate.DateTime - DateTime.Now).TotalMinutes;
+            if (nMinutes < 0 || nMinutes >= 60) return null;
+            IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage);
+            // Put orderbooks
+            if (oPair.BuySymbol.Exchange.Market.Websocket == null) return null;
+            IOrderbook? oFoundBuy = oPair.BuySymbol.Exchange.Market.Websocket.OrderbookManager.GetData().FirstOrDefault(p=> p.Symbol.Symbol == oPair.BuySymbol.Symbol);
+            if( oFoundBuy == null ) return null;    
+            if (oPair.SellSymbol.Exchange.Market.Websocket == null) return null;
+            IOrderbook? oFoundSell = oPair.SellSymbol.Exchange.Market.Websocket.OrderbookManager.GetData().FirstOrDefault(p => p.Symbol.Symbol == oPair.SellSymbol.Symbol);
+            if (oFoundSell == null) return null;
+
+            oResult.LongData.Orderbook = oFoundBuy;
+            oResult.ShortData.Orderbook = oFoundSell;
+            return oResult;
+
+        }
+
+        /// <summary>
+        /// Try open order
+        /// </summary>
+        /// <param name="oOrder"></param>
+        /// <returns></returns>
+        private async Task TryOpen( IOppositeOrder oOrder, decimal nMoney )
+        {
+            if( oOrder.LongData.Orderbook == null ) return;
+            IOrderbookPrice? oBestBuy = oOrder.LongData.Orderbook.GetBestPrice(true, null, nMoney); 
+            if( oBestBuy == null ) return;
+            if (oOrder.ShortData.Orderbook == null) return;
+            IOrderbookPrice? oBestSell = oOrder.ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+            if (oBestSell == null) return;
+            decimal nDiff = oBestSell.Price - oBestBuy.Price;   
+            DateTime dNow = DateTime.Now;
+            if( (dNow - m_dLastInfo).TotalMinutes >= 1 )
+            {
+                Logger.Info($"  Waiting for buy {oOrder.LongData.Symbol.Base} Difference {nDiff}");
+                m_dLastInfo = dNow; 
+            }
+
+            // if( oBestBuy.Price > oBestSell.Price ) return;
+            Logger.Info($"  Found !!!!! buy {oOrder.LongData.Symbol.Base} Difference {nDiff}");
+
+            // bool bOrder = await oOrder.TryOpenLimit(nMoney);
+            bool bOrder = await oOrder.TryOpenMarket(nMoney);
+            if ( bOrder )
+            {
+                m_eStatus = BotStatus.WaitForClose;
+            }
+        }
+
+        /// <summary>
+        /// Wait to close order
+        /// </summary>
+        /// <param name="oOrder"></param>
+        /// <param name="oPair"></param>
+        /// <returns></returns>
+        private async Task WaitForClose( IOppositeOrder? oOrder, IFundingPair? oPair )
+        {
+            if( oOrder == null || oPair == null ) return;   
+            if( oOrder.LongData.Position == null ) return;  
+            if( oOrder.ShortData.Position == null ) return; 
+        }
+
         /// <summary>
         /// Main loop
         /// </summary>
         /// <returns></returns>
         private async Task MainLoop()
         {
-            IOppositeOrder? oActiveOrder = null;
             IFundingPair? oActiveChance = null;
-            decimal nMoney = 30;
+            decimal nMoney = this.Setup.Leverage * this.Setup.Amount;
             IFundingPair? oBestChance = null;
             bool bTrade = true;
 
+            BotStatus eActual = m_eStatus;
             while ( !m_oCancelSource.IsCancellationRequested )
             {
+                switch( m_eStatus )
+                {
+                    case BotStatus.Start:
+                        m_eStatus = BotStatus.FindChance;
+                        break;
+                    case BotStatus.FindChance:
+                        oActiveChance = await GetChance();
+                        if (oActiveChance != null)
+                        {
+                            oBestChance = LogBest(oActiveChance, oBestChance);
+
+                            m_oActiveOrder = CreateActiveOrder(oActiveChance);    
+                            if(m_oActiveOrder != null )
+                            {
+                                m_eStatus = BotStatus.WaitForOpen;
+                            }
+                        }
+                        break;
+                    case BotStatus.WaitForOpen:
+                        if( m_oActiveOrder != null )
+                        {
+                            await TryOpen( m_oActiveOrder, nMoney );    
+                        }
+                        break;
+                    case BotStatus.WaitForClose:
+                        await WaitForClose( m_oActiveOrder, oActiveChance); 
+                        break;
+                    case BotStatus.Close:
+                        break;
+                }
+
+                if( eActual != m_eStatus )
+                {
+                    eActual = m_eStatus;
+                    Logger.Info($"New status {eActual.ToString()}");
+                }
+                /*
                 if( oActiveOrder != null )
                 {
                     if( oActiveOrder.LongData.Position == null && oActiveOrder.ShortData.Position == null )
@@ -148,7 +268,8 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
                         }
                     }
                 }
-                await Task.Delay(100);
+                */
+                await Task.Delay(200);
             }
         }
 
@@ -165,8 +286,103 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             bool bStarted = await m_oSocketData.Start();
             if (!bStarted) throw new Exception("Could not start socket data");
             await Task.Delay(1000);
+            await CreateEvents();
+            await Task.Delay(1000);
             m_oMainTask = MainLoop();
         }
+
+        private async Task CreateEvents()
+        {
+            if (m_oSocketData == null) return;
+            foreach( var oExchange in m_oSocketData.Exchanges )
+            {
+                oExchange.Account.OnPrivateEvent += OnPrivateEvent;
+                await oExchange.Account.StartSockets(); 
+            }
+        }
+
+        private async Task PutOrder(IWebsocketQueueItem oItem)
+        {
+            if (m_oActiveOrder == null) return;
+            IFuturesOrder oOrder = (IFuturesOrder)oItem;    
+            if( oOrder.Symbol.Exchange.ExchangeType == m_oActiveOrder.LongData.Symbol.Exchange.ExchangeType )
+            {
+                if( oOrder.Symbol.Symbol == m_oActiveOrder.LongData.Symbol.Symbol )
+                {
+                    if( oOrder.OrderDirection == FuturesOrderDirection.Buy )
+                    {
+                        m_oActiveOrder.LongData.OpenOrder = oOrder;
+                        Logger.Info($"  Order open buy on {oOrder.Symbol.Exchange.ExchangeType.ToString()} {oOrder.Symbol.Symbol} Status {oOrder.OrderStatus.ToString()}");
+                    }
+                    else
+                    {
+                        m_oActiveOrder.LongData.CloseOrder = oOrder;
+                        Logger.Info($"  Order close buy on {oOrder.Symbol.Exchange.ExchangeType.ToString()} {oOrder.Symbol.Symbol} Status {oOrder.OrderStatus.ToString()}");
+                    }
+                }
+            }
+            if (oOrder.Symbol.Exchange.ExchangeType == m_oActiveOrder.ShortData.Symbol.Exchange.ExchangeType)
+            {
+                if (oOrder.Symbol.Symbol == m_oActiveOrder.ShortData.Symbol.Symbol)
+                {
+                    if (oOrder.OrderDirection == FuturesOrderDirection.Sell)
+                    {
+                        m_oActiveOrder.ShortData.OpenOrder = oOrder;
+                        Logger.Info($"  Order open sell on {oOrder.Symbol.Exchange.ExchangeType.ToString()} {oOrder.Symbol.Symbol} Status {oOrder.OrderStatus.ToString()}");
+                    }
+                    else
+                    {
+                        m_oActiveOrder.ShortData.CloseOrder = oOrder;
+                        Logger.Info($"  Order close sell on {oOrder.Symbol.Exchange.ExchangeType.ToString()} {oOrder.Symbol.Symbol} Status {oOrder.OrderStatus.ToString()}");
+                    }
+                }
+
+            }
+        }
+
+        private async Task PutPosition(IWebsocketQueueItem oItem)
+        {
+            if (m_oActiveOrder == null) return;
+            IFuturesPosition oPosition = (IFuturesPosition)oItem;
+            if (oPosition.Symbol.Exchange.ExchangeType == m_oActiveOrder.LongData.Symbol.Exchange.ExchangeType)
+            {
+                if (oPosition.Symbol.Symbol == m_oActiveOrder.LongData.Symbol.Symbol)
+                {
+                    if (oPosition.Direction == FuturesPositionDirection.Long )
+                    {
+                        m_oActiveOrder.LongData.Position = oPosition;
+                        Logger.Info($"  Position long on {oPosition.Symbol.Exchange.ExchangeType.ToString()} {oPosition.Symbol.Symbol} ");
+                    }
+                }
+            }
+            if (oPosition.Symbol.Exchange.ExchangeType == m_oActiveOrder.ShortData.Symbol.Exchange.ExchangeType)
+            {
+                if (oPosition.Symbol.Symbol == m_oActiveOrder.ShortData.Symbol.Symbol)
+                {
+                    if (oPosition.Direction == FuturesPositionDirection.Short)
+                    {
+                        m_oActiveOrder.ShortData.Position = oPosition;
+                        Logger.Info($"  Position short on  {oPosition.Symbol.Exchange.ExchangeType.ToString()} {oPosition.Symbol.Symbol}");
+                    }
+                }
+
+            }
+        }
+        private async Task OnPrivateEvent(IWebsocketQueueItem oItem)
+        {
+            switch( oItem.QueueType )
+            {
+                case WebsocketQueueType.Poisition:
+                    await PutPosition(oItem);
+                    break;
+                case WebsocketQueueType.Order:
+                    await PutOrder(oItem);
+                    break;
+                case WebsocketQueueType.Balance:
+                    break;
+            }
+        }
+
         public async Task Stop()
         {
             if (m_oSocketData != null)

@@ -20,13 +20,13 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public decimal Quantity { get; internal set; } = 0;
 
-        public IFuturesOrder? OpenOrder { get; internal set; } = null;
+        public IFuturesOrder? OpenOrder { get; set; } = null;
 
-        public IFuturesOrder? CloseOrder { get; internal set; } = null;
+        public IFuturesOrder? CloseOrder { get; set; } = null;
 
-        public IFuturesPosition? Position { get; internal set; } = null;
+        public IFuturesPosition? Position { get; set; } = null;
 
-        public IOrderbook? Orderbook { get; internal set; } = null;
+        public IOrderbook? Orderbook { get; set; } = null;
 
         public decimal Profit { get; internal set; } = 0;
     }

@@ -49,7 +49,7 @@ namespace Crypto.Common
 
 
         public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures}; }
-        public decimal Amount { get => 100; }
+        public decimal Amount { get => 30; }
         public int Leverage { get => 10; }
         public decimal PercentMinimum { get => 0.15M; }
         public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
