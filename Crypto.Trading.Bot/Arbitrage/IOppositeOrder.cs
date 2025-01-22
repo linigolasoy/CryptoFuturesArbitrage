@@ -15,7 +15,7 @@ namespace Crypto.Trading.Bot.Arbitrage
     public interface IArbitrageOrderData
     {
         public IFuturesSymbol Symbol { get; }   
-        public decimal Quantity { get; }
+        public decimal Quantity { get; set; }
 
         public IFuturesOrder? OpenOrder { get; set; }
         public IFuturesOrder? CloseOrder { get; set; }

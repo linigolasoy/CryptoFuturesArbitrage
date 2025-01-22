@@ -18,7 +18,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public IFuturesSymbol Symbol { get; }
 
-        public decimal Quantity { get; internal set; } = 0;
+        public decimal Quantity { get; set; } = 0;
 
         public IFuturesOrder? OpenOrder { get; set; } = null;
 

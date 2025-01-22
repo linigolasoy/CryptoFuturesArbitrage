@@ -148,19 +148,26 @@ namespace CryptoFuturesArbitrage.Console
         private async Task LogData()
         {
             DateTime dNow = DateTime.Now;
+            int nDelay = 2;
             double nMinutes = (dNow - m_dLastDate).TotalMinutes;    
-            if( nMinutes < 2 ) return;  
+            if( nMinutes < (double)nDelay ) return;  
+            if( dNow.Second != 0 ) return;
+            if( dNow.Minute % nDelay != 0 ) return; 
+
             m_dLastDate = dNow;
             if (m_oActiveOrder == null) return;
             if( m_oActiveOrder.LongData.Orderbook == null || m_oActiveOrder.ShortData.Orderbook == null ) return;
 
-            string strLog = $"  Orderbook dates. Long {m_oActiveOrder.LongData.Orderbook.UpdateDate.ToShortTimeString()} Short {m_oActiveOrder.ShortData.Orderbook.UpdateDate.ToShortTimeString()} LastProfit {m_oActiveOrder.Profit} Updates {m_oActiveOrder.ProfitUpdates}";
+            string strLog = $"  Orderbook dates. Long {m_oActiveOrder.LongData.Orderbook.UpdateDate.ToShortTimeString()} Short "+
+                           $"{m_oActiveOrder.ShortData.Orderbook.UpdateDate.ToShortTimeString()} LastProfit {m_oActiveOrder.Profit} "+
+                           $" LongProfit({m_oActiveOrder.LongData.Profit}) ShortProfit({m_oActiveOrder.ShortData.Profit}) Updates {m_oActiveOrder.ProfitUpdates}";
             Logger.Info(strLog);    
         }
         private async Task MainLoop()
         {
-            decimal nMoney = 500;
+            decimal nMoney = 1400;
             decimal nMaxProfit = -9E10M;
+            decimal nProfitToClose = 20M;
             await Task.Delay(2000);
             bool bCreatedOrder = false; 
             IOppositeOrder[]? aOrders = await ArbitrageFactory.CreateOppositeOrderFromExchanges(Exchanges!);
@@ -191,7 +198,7 @@ namespace CryptoFuturesArbitrage.Console
                             nMaxProfit = m_oActiveOrder.Profit;
                             Logger.Info($"  Max profit {nMaxProfit} ==> {m_oActiveOrder.ToString()}");
                         }
-                        if (m_oActiveOrder.Profit > 0)
+                        if ( m_oActiveOrder.Profit >= nProfitToClose)
                         {
                             Logger.Info("   Trying to close....");
                             ICloseResult oResult = await m_oActiveOrder.TryCloseMarket();

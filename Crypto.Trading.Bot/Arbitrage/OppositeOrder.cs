@@ -78,6 +78,9 @@ namespace Crypto.Trading.Bot.Arbitrage
                     decimal nProfitLong = (LongData.Orderbook.Bids[0].Price - LongData.Position.AveragePrice) * LongData.Position.Quantity;
                     decimal nProfitShort = (ShortData.Position.AveragePrice - ShortData.Orderbook.Asks[0].Price) * ShortData.Position.Quantity;
                     decimal nProfit = nProfitLong + nProfitShort;
+                    ((ArbitrageOrderData)this.LongData).Profit = nProfitLong;
+                    ((ArbitrageOrderData)this.ShortData).Profit = nProfitShort;
+
                     this.Profit = nProfit;
                     ProfitUpdates++;
                 }
@@ -312,14 +315,18 @@ namespace Crypto.Trading.Bot.Arbitrage
                         {
                             OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10);
                             oOrder.LongData.Position = oPosition1;
+                            oOrder.LongData.Quantity = oPosition1.Quantity; 
                             oOrder.ShortData.Position = oPosition2;
+                            oOrder.ShortData.Quantity = oPosition2.Quantity;
                             aResult.Add(oOrder);    
                         }
                         else
                         {
                             OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10);
                             oOrder.LongData.Position = oPosition2;
+                            oOrder.LongData.Quantity = oPosition2.Quantity;
                             oOrder.ShortData.Position = oPosition1;
+                            oOrder.ShortData.Quantity = oPosition1.Quantity;
                             aResult.Add(oOrder);
 
                         }

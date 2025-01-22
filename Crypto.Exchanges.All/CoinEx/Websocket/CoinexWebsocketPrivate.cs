@@ -64,6 +64,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
             if (oResult == null || !oResult.Success) return false;
             await Task.Delay(500);
 
+            CoinExTrade oTade;
             oResult = await m_oPrivateClient.FuturesApi.SubscribeToPositionUpdatesAsync(OnPositionUpdates);
             if (oResult == null || !oResult.Success) return false;
             await Task.Delay(500);
