@@ -19,7 +19,7 @@ namespace Crypto.Exchanges.All.Bitget
         public BitgetOrder( IFuturesSymbol oSymbol, BitgetOrderId oId, bool bBuy, bool bLong, FuturesOrderType eType, decimal nQuantity, decimal? nPrice) 
         {
             Symbol = oSymbol;
-            Id = long.Parse(oId.OrderId);
+            Id = oId.OrderId;
             PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
             OrderDirection = (bBuy? FuturesOrderDirection.Buy : FuturesOrderDirection.Sell);
             OrderType = eType;
@@ -30,7 +30,7 @@ namespace Crypto.Exchanges.All.Bitget
         public BitgetOrder( IFuturesSymbol oSymbol, BitgetFuturesOrderUpdate oUpdate )
         {
             Symbol =oSymbol;
-            Id = long.Parse(oUpdate.OrderId);
+            Id = oUpdate.OrderId;
             PositionDirection = (oUpdate.PositionSide == PositionSide.Long ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
             OrderDirection = (oUpdate.Side == OrderSide.Buy ? FuturesOrderDirection.Buy : FuturesOrderDirection.Sell);
             OrderType = (oUpdate.OrderType == BitgetOrderType.Limit ? FuturesOrderType.Limit : FuturesOrderType.Market);
@@ -41,7 +41,7 @@ namespace Crypto.Exchanges.All.Bitget
         public BitgetOrder(IFuturesSymbol oSymbol, BitgetFuturesOrder oUpdate)
         {
             Symbol = oSymbol;
-            Id = long.Parse(oUpdate.OrderId);
+            Id = oUpdate.OrderId;
             PositionDirection = (oUpdate.PositionSide == PositionSide.Long ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
             OrderDirection = (oUpdate.Side == OrderSide.Buy ? FuturesOrderDirection.Buy : FuturesOrderDirection.Sell);
             OrderType = (oUpdate.OrderType == BitgetOrderType.Limit ? FuturesOrderType.Limit : FuturesOrderType.Market);
@@ -69,7 +69,7 @@ namespace Crypto.Exchanges.All.Bitget
         }
 
         public WebsocketQueueType QueueType { get => WebsocketQueueType.Order; }
-        public long Id { get; }
+        public string Id { get; }
 
         public IFuturesSymbol Symbol { get; }
 

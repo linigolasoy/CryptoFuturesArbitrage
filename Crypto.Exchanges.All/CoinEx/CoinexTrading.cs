@@ -241,7 +241,7 @@ namespace Crypto.Exchanges.All.CoinEx
         }
         public async Task<bool> CancelOrder(IFuturesOrder oOrder)
         {
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, oOrder.Id);
+            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, long.Parse(oOrder.Id));
             if( oResult == null || !oResult.Success ) return false;
             return true;
         }

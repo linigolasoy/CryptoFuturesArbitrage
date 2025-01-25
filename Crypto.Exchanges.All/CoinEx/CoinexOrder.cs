@@ -17,7 +17,7 @@ namespace Crypto.Exchanges.All.CoinEx
         public CoinexOrder( IFuturesSymbol oSymbol, bool bBuy, bool bLong, CoinExFuturesOrder oParsed, OrderUpdateType eType) 
         {
             Symbol = oSymbol;
-            Id = oParsed.Id;
+            Id = oParsed.Id.ToString();
             PutStatus(oParsed.Status, eType, oParsed.Quantity, oParsed.QuantityFilled);
 
             PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
@@ -87,7 +87,7 @@ namespace Crypto.Exchanges.All.CoinEx
         }
 
         public WebsocketQueueType QueueType { get => WebsocketQueueType.Order; }
-        public long Id { get; }
+        public string Id { get; }
 
         public IFuturesSymbol Symbol { get; }
 

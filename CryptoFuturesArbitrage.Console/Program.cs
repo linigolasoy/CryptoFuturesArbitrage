@@ -43,8 +43,8 @@ namespace CryptoFuturesArbitrage.Console
         {
             try
             {
-                // ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
-                ITradingBot oBot = new OppositeOrderTester(oSetup, oLogger);
+                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
+                // ITradingBot oBot = new OppositeOrderTester(oSetup, oLogger);
 
                 oLogger.Info("Enter main program");
                 await oBot.Start();

@@ -83,7 +83,7 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxOrder(IFuturesSymbol oSymbol, BingXFuturesOrderDetails oParsed) 
         {
             Symbol = oSymbol;
-            Id = oParsed.OrderId;
+            Id = oParsed.OrderId.ToString();
             PutTypes(oParsed.Side, oParsed.PositionSide!.Value, oParsed.Type);
             if (oParsed.Quantity != null) Quantity = oParsed.Quantity.Value;
             if (oParsed.Price != null) Price = oParsed.Price.Value;
@@ -93,7 +93,7 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxOrder(IFuturesSymbol oSymbol, BingXFuturesOrder oParsed) 
         { 
             Symbol = oSymbol;
-            Id = oParsed.OrderId;
+            Id = oParsed.OrderId.ToString();
 
             PutTypes(oParsed.Side, oParsed.PositionSide!.Value, oParsed.Type);
 
@@ -104,7 +104,7 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxOrder(IFuturesSymbol oSymbol, BingXFuturesOrderUpdate oParsed)
         {
             Symbol = oSymbol;
-            Id = oParsed.OrderId;
+            Id = oParsed.OrderId.ToString();
             PutTypes(oParsed.Side, oParsed.PositionSide, oParsed.Type);
 
             if (oParsed.Quantity != null) Quantity = oParsed.Quantity.Value;
@@ -113,7 +113,7 @@ namespace Crypto.Exchanges.All.Bingx
         }
 
         public WebsocketQueueType QueueType { get => WebsocketQueueType.Order; }
-        public long Id { get; }
+        public string Id { get; }
 
         public IFuturesSymbol Symbol { get; }
 

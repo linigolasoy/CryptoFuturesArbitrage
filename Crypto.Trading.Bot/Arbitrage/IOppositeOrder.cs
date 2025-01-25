@@ -65,6 +65,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public void Update();
 
+        public Task<bool> SetLeverages();
         public Task<bool> TryOpenLimit(decimal nMoney);
         public Task<bool> TryOpenMarket(decimal nMoney);
         public Task<ICloseResult> TryCloseLimit();

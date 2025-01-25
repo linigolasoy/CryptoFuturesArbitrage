@@ -120,7 +120,7 @@ namespace CryptoFuturesArbitrage.Console
         /// <returns></returns>
         private async Task<IOppositeOrder?> CreateTesterOrder()
         {
-            string strBase = "GMT";
+            string strBase = "BLAST";
             string strQuote = "USDT";
             if (Exchanges == null) return null;
             IFuturesExchange? oExchangeBuy = Exchanges.FirstOrDefault(p=> p.ExchangeType == ExchangeType.CoinExFutures);
@@ -138,6 +138,9 @@ namespace CryptoFuturesArbitrage.Console
             if (oSymbolSell == null) return null;
 
             IOppositeOrder oResult = ArbitrageFactory.CreateOppositeOrder(oSymbolBuy, oSymbolSell, 10);
+
+            bool bResult = await oResult.SetLeverages();
+            if (!bResult) { Logger.Info("ERROR! Could not set leverages!!!"); return null; }
             return oResult;
         }
 
@@ -163,13 +166,40 @@ namespace CryptoFuturesArbitrage.Console
                            $" LongProfit({m_oActiveOrder.LongData.Profit}) ShortProfit({m_oActiveOrder.ShortData.Profit}) Updates {m_oActiveOrder.ProfitUpdates}";
             Logger.Info(strLog);    
         }
+
+        private decimal CalculateSpreadPercent(decimal nMoney)
+        {
+            IOrderbookPrice? oPriceLong = m_oActiveOrder!.LongData.Orderbook!.GetBestPrice(true, null, nMoney);
+            IOrderbookPrice? oPriceShort = m_oActiveOrder!.ShortData.Orderbook!.GetBestPrice(false, null, nMoney);
+
+            if (oPriceLong == null || oPriceShort == null) return 9E10M;
+
+            decimal nPriceMin = Math.Min(oPriceLong.Price, oPriceShort.Price);  
+            decimal nPriceMax = Math.Max(oPriceLong.Price, oPriceShort.Price);
+
+            decimal nSpread = (nPriceMax - nPriceMin) / nPriceMin;
+            nSpread *= 100M;
+            nSpread = Math.Round(nSpread, 3);
+            return nSpread;
+        }
+
+        private void LogSpread( decimal nSpread )
+        {
+            DateTime dNow = DateTime.Now;
+            if ((dNow - m_dLastDate).TotalMinutes < 2) return;
+            m_dLastDate = dNow;
+            Logger.Info($"   Last spread {nSpread} %");
+        }
         private async Task MainLoop()
         {
-            decimal nMoney = 1400;
+            decimal nMoney = 1000;
             decimal nMaxProfit = -9E10M;
-            decimal nProfitToClose = 20M;
+            decimal nProfitToClose = 10M;
+            decimal nMaxSpread = 0.5M;
             await Task.Delay(2000);
-            bool bCreatedOrder = false; 
+            bool bCreatedOrder = false;
+
+            decimal nActualMaxSpread = 9E10M;
             IOppositeOrder[]? aOrders = await ArbitrageFactory.CreateOppositeOrderFromExchanges(Exchanges!);
             if( aOrders != null && aOrders.Length > 0 )
             {
@@ -189,7 +219,17 @@ namespace CryptoFuturesArbitrage.Console
                     m_oActiveOrder.Update();
                     if (!bCreatedOrder)
                     {
-                        bCreatedOrder = await m_oActiveOrder.TryOpenMarket(nMoney);
+                        decimal nSpread = CalculateSpreadPercent(nMoney);
+                        if( nSpread < nActualMaxSpread )
+                        {
+                            Logger.Info($"  Minimum spread {nSpread} %");
+                            nActualMaxSpread = nSpread;
+                        }
+                        LogSpread(nSpread);
+                        if( nSpread < nMaxSpread )
+                        {
+                            bCreatedOrder = await m_oActiveOrder.TryOpenMarket(nMoney);
+                        }
                     }
                     else
                     {

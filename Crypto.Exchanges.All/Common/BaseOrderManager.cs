@@ -12,7 +12,7 @@ namespace Crypto.Exchanges.All.Common
 {
     internal class BaseOrderManager
     {
-        private ConcurrentDictionary<long, IFuturesOrder> m_aOrders = new ConcurrentDictionary<long, IFuturesOrder>();
+        private ConcurrentDictionary<string, IFuturesOrder> m_aOrders = new ConcurrentDictionary<string, IFuturesOrder>();
 
         public int ReceiveCount { get; private set; } = 0;
         public int Count { get => m_aOrders.Count; }
@@ -27,10 +27,10 @@ namespace Crypto.Exchanges.All.Common
         public IFuturesOrder[] GetData()
         {
             List<IFuturesOrder> aResult = new List<IFuturesOrder>();
-            foreach (long nId in m_aOrders.Keys)
+            foreach (string strId in m_aOrders.Keys)
             {
                 IFuturesOrder? oFound = null;
-                if (m_aOrders.TryGetValue(nId, out oFound))
+                if (m_aOrders.TryGetValue(strId, out oFound))
                 {
                     aResult.Add(oFound);
                 }
@@ -45,7 +45,7 @@ namespace Crypto.Exchanges.All.Common
             return oResult;
         }
 
-        internal void PutData( long nKey, IFuturesOrder oNew )
+        internal void PutData( string nKey, IFuturesOrder oNew )
         {
             ReceiveCount++;
             m_aOrders.AddOrUpdate(oNew.Id, p => AddFunction(oNew), (s, p) => UpdateFunction(p,oNew) );

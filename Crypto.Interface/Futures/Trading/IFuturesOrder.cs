@@ -48,7 +48,7 @@ namespace Crypto.Interface.Futures.Trading
 
     public interface IFuturesOrder: IWebsocketQueueItem
     {
-        public long Id { get; }
+        public string Id { get; }
         public IFuturesSymbol Symbol { get; }
         public FuturesOrderDirection OrderDirection { get; }
         public FuturesPositionDirection PositionDirection { get; }

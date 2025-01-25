@@ -1,4 +1,5 @@
 ﻿using Bitget.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bitget
 {
-    internal class BitgetSymbol : IFuturesSymbol
+    internal class BitgetSymbol : BaseFuturesSymbol, IFuturesSymbol
     {
-        public BitgetSymbol( IFuturesExchange oExchange, BitgetContract oParsed) 
+        public BitgetSymbol( IFuturesExchange oExchange, BitgetContract oParsed) :
+            base(oExchange)
         {
-            Exchange = oExchange;
             Symbol = oParsed.Symbol;
             Base = oParsed.BaseAsset;
             Quote = oParsed.QuoteAsset;
@@ -26,26 +27,5 @@ namespace Crypto.Exchanges.All.Bitget
 
         }
 
-        public IFuturesExchange Exchange { get; }
-        public int LeverageMax { get; }
-
-        public int LeverageMin { get; }
-
-        public decimal FeeMaker { get; }
-
-        public decimal FeeTaker { get; }
-
-        public string Symbol { get; }
-
-        public string Base { get; }
-
-        public string Quote { get; }
-        public int Decimals { get; }    
-        public decimal Minimum { get; } 
-
-        public override string ToString()
-        {
-            return Symbol;
-        }
     }
 }

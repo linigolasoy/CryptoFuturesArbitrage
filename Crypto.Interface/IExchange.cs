@@ -10,8 +10,8 @@ namespace Crypto.Interface
         //BingxSpot,
         CoinExFutures,
         BingxFutures,
-        BitgetFutures
-        // ByBitFutures
+        BitgetFutures,
+        BitmartFutures
     }
     /// <summary>
     /// Exchange base, independent of futures or spot

@@ -1,4 +1,25 @@
-﻿
+﻿00 Exchange List
+
+	0.00 NO Futures
+		0.00.01 Binance
+		0.00.02 Bybit
+		0.00.03 Mexc
+		0.00.04 HTX
+		0.00.05 OKX
+		0.00.06 Kraken
+		0.00.07 Kucoin
+		0.00.08 Crypto.com
+		0.00.09 GateIo
+
+
+	0.01 YES Futures
+		0.01.01 Bingx
+		0.01.02 Bitget
+		0.01.03 Coinex
+		0.01.04 LBank 
+		0.01.05 Blofin
+		0.01.05 BitMart????
+		0.01.05 DigiFinex????
 
 OK 01 Exchange BINGX:
 
@@ -21,11 +42,37 @@ OK 03 Exchange COINEX:
 	OK 3.03 Websocket Position Close Event Test
 
 
-04 Bot.
+04 Exchange BITMART:
+	OK 4.00 Exchange main class.
+	OK 4.01 Market:
+		OK 4.01.01 Symbols
+		OK 4.01.02 Funding rates
+		OK 4.01.03 Websocket base
+		OK 4.01.04 Websocket orderbooks
+		OK 4.01.05 Websocket funding rates
+	4.02 Account:
+		4.02.01 Balances
+		OK 4.02.02 Positions
+		OK 4.02.03 Websocket base
+		OK 4.02.04 Websocket balances
+		OK 4.02.05 Websocket positions
+		OK 4.02.06 Websocket orders
+	4.03 History:
+		OK 4.03.01 Funding rates
+		4.03.02 Bars
+	OK 4.04 Trading:
+		OK 4.03.01 Leverages (get/set)
+		OK 4.03.02 Market Order
+		OK 4.03.03 Limit Order
+		OK 4.03.04 Cancel Order
+		OK 4.03.05 Close Position
+		OK 4.03.06 Get orders
 
-	4.01 Opposite order create interface
-	4.02 Opposite order market
-	4.03 Opposite order limit
-	4.04 Opposite order try close
-	4.05 Start funding bot
+05 Bot.
+
+	5.01 Opposite order create interface
+	5.02 Opposite order market
+	5.03 Opposite order limit
+	5.04 Opposite order try close
+	5.05 Start funding bot
 

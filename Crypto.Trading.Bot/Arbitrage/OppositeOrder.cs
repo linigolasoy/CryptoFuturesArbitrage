@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using XT.Net.Objects.Models;
 
 namespace Crypto.Trading.Bot.Arbitrage
 {
@@ -75,14 +76,20 @@ namespace Crypto.Trading.Bot.Arbitrage
             { 
                 if( LongData.Orderbook != null && ShortData.Orderbook != null)
                 {
-                    decimal nProfitLong = (LongData.Orderbook.Bids[0].Price - LongData.Position.AveragePrice) * LongData.Position.Quantity;
-                    decimal nProfitShort = (ShortData.Position.AveragePrice - ShortData.Orderbook.Asks[0].Price) * ShortData.Position.Quantity;
-                    decimal nProfit = nProfitLong + nProfitShort;
-                    ((ArbitrageOrderData)this.LongData).Profit = nProfitLong;
-                    ((ArbitrageOrderData)this.ShortData).Profit = nProfitShort;
+                    IOrderbookPrice? oPriceLong = LongData.Orderbook.GetBestPrice(false, LongData.Quantity, null);
+                    IOrderbookPrice? oPriceShort = ShortData.Orderbook.GetBestPrice(true, ShortData.Quantity, null);
+                    if( oPriceLong != null &&  oPriceShort != null )
+                    {
+                        decimal nProfitLong = (oPriceLong.Price - LongData.Position.AveragePrice) * LongData.Position.Quantity;
+                        decimal nProfitShort = (ShortData.Position.AveragePrice - oPriceShort.Price) * ShortData.Position.Quantity;
+                        decimal nProfit = nProfitLong + nProfitShort;
+                        ((ArbitrageOrderData)this.LongData).Profit = nProfitLong;
+                        ((ArbitrageOrderData)this.ShortData).Profit = nProfitShort;
 
-                    this.Profit = nProfit;
-                    ProfitUpdates++;
+                        this.Profit = nProfit;
+                        ProfitUpdates++;
+
+                    }
                 }
             }
             /*
@@ -171,7 +178,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// Set leverates
         /// </summary>
         /// <returns></returns>
-        private async Task<bool> SetLeverages()
+        public async Task<bool> SetLeverages()
         {
             if (m_bLeverageSet) return true;
             bool bResult = await LongData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
@@ -246,15 +253,18 @@ namespace Crypto.Trading.Bot.Arbitrage
 
 
             decimal nPrice = Math.Max(oPriceLong.Price, oPriceShort.Price); 
-
+            decimal nPriceMin = Math.Min(oPriceLong.Price, oPriceShort.Price);
+            decimal nPercent = (nPrice - nPriceMin) * 100 / nPriceMin;
+            if( nPercent > 0.2M ) return false; 
             int nDecimals = Math.Min(LongData.Symbol.Decimals, ShortData.Symbol.Decimals);
             decimal nQuantity = Math.Round(nMoney /  nPrice, nDecimals);
 
             
             if( nQuantity <= 0 ) return false;
             // Set leverages
-            bool bResult = await SetLeverages();
-            if (!bResult) return false;
+            //bool bResult = await SetLeverages();
+            // if (!bResult) return false;
+
             List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
             aTasks.Add(LongData.Symbol.Exchange.Trading.CreateMarketOrder(LongData.Symbol, true, nQuantity));
             aTasks.Add(ShortData.Symbol.Exchange.Trading.CreateMarketOrder(ShortData.Symbol, false, nQuantity));

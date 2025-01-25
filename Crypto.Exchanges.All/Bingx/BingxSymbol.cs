@@ -1,4 +1,5 @@
 ﻿using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx
 {
-    internal class BingxSymbol : IFuturesSymbol
+    internal class BingxSymbol : BaseFuturesSymbol, IFuturesSymbol
     {
-        public BingxSymbol(IFuturesExchange oExchange, BingXContract oContract) 
+        public BingxSymbol(IFuturesExchange oExchange, BingXContract oContract) :
+            base(oExchange)
         {
-            Exchange = oExchange;   
             Symbol = oContract.Symbol;
             Base = oContract.Asset;
             Quote = oContract.Currency;
@@ -25,26 +26,5 @@ namespace Crypto.Exchanges.All.Bingx
             Minimum = oContract.MinOrderQuantity;
         }
 
-        public IFuturesExchange Exchange { get; }
-        public int LeverageMax { get; }
-
-        public int LeverageMin { get => 1; }
-
-        public decimal FeeMaker { get; }
-
-        public decimal FeeTaker { get; }
-
-        public string Symbol { get; }
-
-        public string Base { get; }
-
-        public string Quote { get; }
-        public int Decimals { get; }
-        public decimal Minimum { get; }
-
-        public override string ToString()
-        {
-            return Symbol;
-        }
     }
 }

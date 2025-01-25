@@ -60,8 +60,10 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
             IFundingPair? oBest = null;
             IFundingDate? oNext = await m_oSocketData.GetNext(null);
+            if( oNext == null ) return null;
             while (oNext != null)
             {
+                IFundingPair[] aPairsSorted = oNext.Pairs.OrderByDescending(p => p.Percent).Take(10).ToArray();
                 IFundingPair? oPair = oNext.GetBest();
                 if (oPair != null)
                 {

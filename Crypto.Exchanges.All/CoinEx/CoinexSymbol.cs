@@ -1,4 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,12 +10,12 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
-    internal class CoinexSymbol : IFuturesSymbol
+    internal class CoinexSymbol : BaseFuturesSymbol, IFuturesSymbol
     {
 
-        public CoinexSymbol(IFuturesExchange oExchange, CoinExFuturesSymbol oParsed) 
+        public CoinexSymbol(IFuturesExchange oExchange, CoinExFuturesSymbol oParsed) :
+            base(oExchange)
         {
-            Exchange = oExchange;
             Symbol = oParsed.Symbol;
             Base = oParsed.BaseAsset;
             Quote = oParsed.QuoteAsset;
@@ -24,27 +25,6 @@ namespace Crypto.Exchanges.All.CoinEx
             FeeTaker = oParsed.MakerFeeRate;    
             Decimals = oParsed.QuantityPrecision;
             Minimum = oParsed.MinOrderQuantity;
-        }
-        public IFuturesExchange Exchange { get; }
-        public int LeverageMax { get; }
-
-        public int LeverageMin { get; }
-
-        public decimal FeeMaker { get; }
-
-        public decimal FeeTaker { get; }
-
-        public string Symbol { get; }
-
-        public string Base { get; }
-
-        public string Quote { get; }
-
-        public int Decimals { get; }  
-        public decimal Minimum { get; } 
-        public override string ToString()
-        {
-            return Symbol;
         }
     }
 }

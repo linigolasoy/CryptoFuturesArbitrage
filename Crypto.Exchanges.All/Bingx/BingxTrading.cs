@@ -207,7 +207,7 @@ namespace Crypto.Exchanges.All.Bingx
         /// <exception cref="NotImplementedException"></exception>
         public async Task<bool> CancelOrder( IFuturesOrder oOrder)
         {
-            var oResultLong = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, oOrder.Id);
+            var oResultLong = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, long.Parse(oOrder.Id));
             if (oResultLong == null || !oResultLong.Success) return false;
             return true;
         }

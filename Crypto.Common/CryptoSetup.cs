@@ -48,7 +48,7 @@ namespace Crypto.Common
         public IApiKey[] ApiKeys { get; }
 
 
-        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures}; }
+        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures, ExchangeType.BitmartFutures}; }
         public decimal Amount { get => 30; }
         public int Leverage { get => 10; }
         public decimal PercentMinimum { get => 0.15M; }

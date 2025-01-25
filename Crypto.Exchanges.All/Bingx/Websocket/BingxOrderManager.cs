@@ -31,7 +31,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             IFuturesSymbol? oFound = FuturesSymbols.FirstOrDefault(p=> p.Symbol == oUpdate.Symbol);
             if (oFound == null) return;
             IFuturesOrder oNewOrder = new BingxOrder(oFound, oUpdate);
-            PutData(oUpdate.OrderId, oNewOrder);    
+            PutData(oUpdate.OrderId.ToString(), oNewOrder);    
 
         }
 

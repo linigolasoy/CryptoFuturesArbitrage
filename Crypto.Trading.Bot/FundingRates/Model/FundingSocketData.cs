@@ -27,6 +27,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             List<IFuturesExchange> aExchanges = new List<IFuturesExchange>();
             foreach (var eType in oSetup.ExchangeTypes)
             {
+                // if (eType == ExchangeType.BitmartFutures) continue;
                 Task<IFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup);
                 oTask.Wait();
                 IFuturesExchange oNew = oTask.Result;
