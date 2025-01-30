@@ -14,7 +14,7 @@ namespace Crypto.Exchanges.All.Bitmart
         public BitmartFundingRateLocal(IFuturesSymbol oSymbol, BitMartFundingRateUpdate oRate)
         {
             Symbol = oSymbol;
-            Rate = oRate.FundingRate;
+            Rate = oRate.ExpectedFundingRate;
             SettleDate = oRate.NextFundingTime!.Value.ToLocalTime();
         }
 
@@ -36,6 +36,12 @@ namespace Crypto.Exchanges.All.Bitmart
         {
             Rate = obj.Rate;
             SettleDate = obj.SettleDate;
+
+            if (this.Symbol.Symbol == "BANUSDT")
+            {
+                return;
+            }
+
         }
     }
 

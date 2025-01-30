@@ -3,6 +3,7 @@ using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Trading.Bot;
 using Crypto.Trading.Bot.Arbitrage;
+using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates;
 using Crypto.Trading.Bot.FundingRates.Model;
 using System.Text;
@@ -261,6 +262,23 @@ namespace CryptoFuturesArbitrage.Console
         }
 
 
+        private static async Task DoSocketManager(ICryptoSetup oSetup, ICommonLogger oLogger)
+        {
+            ISocketManager oManager = BotFactory.CreateSocketManager(oSetup, oLogger);
+
+            bool bStarted = await oManager.Start();
+
+            await Task.Delay(5000);
+
+            var aFundings = oManager.GetFundingRates();
+            var aOrderbooks = oManager.GetOrderbooks();
+
+            await Task.Delay(2000);
+
+
+            await oManager.Stop();
+
+        }
 
         public static async Task<int> Main(string[] args)
         {
@@ -271,7 +289,8 @@ namespace CryptoFuturesArbitrage.Console
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
             // await DoWebsocketFundingData(oSetup, oLogger);
-            await DoBot(oSetup, oLogger);
+            // await DoBot(oSetup, oLogger);
+            await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) await DoTester(oSetup, oLogger);
             else

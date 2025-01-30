@@ -25,5 +25,10 @@ namespace Crypto.Trading.Bot
             return new FundingSocketData(oLogger, oSetup);
         }
 
+        public static ISocketManager CreateSocketManager(ICryptoSetup oSetup, ICommonLogger oLogger)
+        {
+            return new BaseSocketManager(oSetup, oLogger);  
+        }
+
     }
 }

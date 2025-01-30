@@ -55,6 +55,11 @@ namespace Crypto.Tests.Bitmart
             Assert.IsNotNull(aFunding);
             Assert.IsTrue(aFunding.Length == aSymbols.Length);
 
+            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BAN" && p.Quote == "USDT");
+            Assert.IsNotNull(oSymbol);
+            IFundingRate? oRateFound = oExchange.Market.Websocket.FundingRateManager.GetData(oSymbol.Symbol);
+            Assert.IsNotNull(oRateFound);
+
             bool bResultStop = await oExchange.Market.EndSockets();
             Assert.IsTrue(bResultStop);
         }

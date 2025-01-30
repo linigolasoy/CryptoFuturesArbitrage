@@ -23,9 +23,12 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         {
             Start,
             FindChance,
+            SetLeverage,
             WaitForOpen,
+            Hold,
             WaitForClose,
-            Close
+            Close,
+            Done
         }
 
         private IFundingSocketData? m_oSocketData = null;
@@ -36,6 +39,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         private BotStatus m_eStatus = BotStatus.Start;
 
         private DateTime m_dLastInfo = DateTime.Now;
+        private decimal m_nMinSpread = 100M;
         public FundingRateBot(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             Setup = oSetup;
@@ -78,7 +82,10 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
                 }
                 oNext = await m_oSocketData.GetNext(oNext.DateTime);
-
+                if( oNext != null )
+                {
+                    if ((oNext.DateTime - DateTime.Now).TotalMinutes > 180) break;
+                }
             }
 
             if (oBest == null) return null;
@@ -119,8 +126,8 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         private IOppositeOrder? CreateActiveOrder( IFundingPair oPair )
         {
             double nMinutes = (oPair.FundingDate.DateTime - DateTime.Now).TotalMinutes;
-            if (nMinutes < 0 || nMinutes >= 60) return null;
-            IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage);
+            if (nMinutes < 0 || nMinutes >= 120) return null;
+            IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage, oPair.FundingDate.DateTime);
             // Put orderbooks
             if (oPair.BuySymbol.Exchange.Market.Websocket == null) return null;
             IOrderbook? oFoundBuy = oPair.BuySymbol.Exchange.Market.Websocket.OrderbookManager.GetData().FirstOrDefault(p=> p.Symbol.Symbol == oPair.BuySymbol.Symbol);
@@ -135,6 +142,22 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
         }
 
+        private decimal CalculateSpreadPercent( IOppositeOrder oOrder, decimal nMoney)
+        {
+            IOrderbookPrice? oPriceLong = oOrder.LongData.Orderbook!.GetBestPrice(true, null, nMoney);
+            IOrderbookPrice? oPriceShort = oOrder!.ShortData.Orderbook!.GetBestPrice(false, null, nMoney);
+
+            if (oPriceLong == null || oPriceShort == null) return 9E10M;
+
+            decimal nPriceMin = Math.Min(oPriceLong.Price, oPriceShort.Price);
+            decimal nPriceMax = Math.Max(oPriceLong.Price, oPriceShort.Price);
+
+            decimal nSpread = (nPriceMax - nPriceMin) / nPriceMin;
+            nSpread *= 100M;
+            nSpread = Math.Round(nSpread, 3);
+            return nSpread;
+        }
+
         /// <summary>
         /// Try open order
         /// </summary>
@@ -142,28 +165,34 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         /// <returns></returns>
         private async Task TryOpen( IOppositeOrder oOrder, decimal nMoney )
         {
-            if( oOrder.LongData.Orderbook == null ) return;
-            IOrderbookPrice? oBestBuy = oOrder.LongData.Orderbook.GetBestPrice(true, null, nMoney); 
-            if( oBestBuy == null ) return;
-            if (oOrder.ShortData.Orderbook == null) return;
-            IOrderbookPrice? oBestSell = oOrder.ShortData.Orderbook.GetBestPrice(false, null, nMoney);
-            if (oBestSell == null) return;
-            decimal nDiff = oBestSell.Price - oBestBuy.Price;   
-            DateTime dNow = DateTime.Now;
+            oOrder.Update();
+            decimal nSpread = CalculateSpreadPercent( oOrder, nMoney );
+
+            DateTime dNow = DateTime.Now;   
             if( (dNow - m_dLastInfo).TotalMinutes >= 1 )
             {
-                Logger.Info($"  Waiting for buy {oOrder.LongData.Symbol.Base} Difference {nDiff}");
+                Logger.Info($"  Waiting for buy {oOrder.LongData.Symbol.Base} Money {nMoney} Spread {nSpread}");
                 m_dLastInfo = dNow; 
             }
-
-            // if( oBestBuy.Price > oBestSell.Price ) return;
-            Logger.Info($"  Found !!!!! buy {oOrder.LongData.Symbol.Base} Difference {nDiff}");
+            if( nSpread < m_nMinSpread )
+            {
+                Logger.Info($"  Minimum spread {nSpread} %");
+                m_nMinSpread = nSpread;
+            }
+            if( dNow >= oOrder.LimitDate )
+            {
+                Logger.Info("   Funding date passed, no positions...");
+                m_eStatus = BotStatus.Done;
+                return;
+            }
+            if( nSpread > 0.3M ) return;
+            Logger.Info($"  Found !!!!! buy {oOrder.LongData.Symbol.Base} Difference {nSpread}");
 
             // bool bOrder = await oOrder.TryOpenLimit(nMoney);
             bool bOrder = await oOrder.TryOpenMarket(nMoney);
             if ( bOrder )
             {
-                m_eStatus = BotStatus.WaitForClose;
+                m_eStatus = BotStatus.Hold;
             }
         }
 
@@ -180,6 +209,42 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             if( oOrder.ShortData.Position == null ) return; 
         }
 
+
+        /// <summary>
+        /// Hold order
+        /// </summary>
+        /// <param name="oOrder"></param>
+        /// <returns></returns>
+        private async Task DoHold( IOppositeOrder oOrder )
+        {
+
+        }
+
+        /// <summary>
+        /// Log top funding rates
+        /// </summary>
+        private async void LogTopFundings()
+        {
+            List<IFundingRate> aRates = new List<IFundingRate>();
+
+            if(m_oSocketData == null || m_oSocketData.Websockets == null ) return;
+            foreach( var oSocket in m_oSocketData.Websockets )
+            {
+                aRates.AddRange(oSocket.FundingRateManager.GetData());
+            }
+
+            IFundingRate[] aTop = aRates.OrderByDescending(p=> Math.Abs(p.Rate) ).Take(10).ToArray();
+
+            Logger.Info("TOP Funding rates =============================================================================");
+            foreach( var oTop in aTop )
+            {
+                decimal nPercent = Math.Round(oTop.Rate * 100, 3);
+                Logger.Info($"{nPercent} % {oTop.Symbol.Exchange.ExchangeType.ToString()} {oTop.Symbol.Base} {oTop.SettleDate.ToShortDateString()} {oTop.SettleDate.ToShortTimeString()}");
+            }
+            Logger.Info("End TOP Funding rates =========================================================================");
+            await Task.Delay(1000);
+        }
+
         /// <summary>
         /// Main loop
         /// </summary>
@@ -190,7 +255,9 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             decimal nMoney = this.Setup.Leverage * this.Setup.Amount;
             IFundingPair? oBestChance = null;
             bool bTrade = true;
+            await Task.Delay(5000);
 
+            LogTopFundings();
             BotStatus eActual = m_eStatus;
             while ( !m_oCancelSource.IsCancellationRequested )
             {
@@ -208,6 +275,16 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
                             m_oActiveOrder = CreateActiveOrder(oActiveChance);    
                             if(m_oActiveOrder != null )
                             {
+                                m_eStatus = BotStatus.SetLeverage;
+                            }
+                        }
+                        break;
+                    case BotStatus.SetLeverage:
+                        if( m_oActiveOrder != null )
+                        {
+                            bool bResult = await m_oActiveOrder.SetLeverages();
+                            if( bResult )
+                            {
                                 m_eStatus = BotStatus.WaitForOpen;
                             }
                         }
@@ -218,8 +295,14 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
                             await TryOpen( m_oActiveOrder, nMoney );    
                         }
                         break;
+                    case BotStatus.Hold:
+                        if( m_oActiveOrder != null )
+                        {
+                            await DoHold(m_oActiveOrder!);
+                        }
+                        break;
                     case BotStatus.WaitForClose:
-                        await WaitForClose( m_oActiveOrder, oActiveChance); 
+                        // await WaitForClose( m_oActiveOrder, oActiveChance); 
                         break;
                     case BotStatus.Close:
                         break;
@@ -350,7 +433,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             {
                 if (oPosition.Symbol.Symbol == m_oActiveOrder.LongData.Symbol.Symbol)
                 {
-                    if (oPosition.Direction == FuturesPositionDirection.Long )
+                    if (oPosition.Direction == FuturesPositionDirection.Long && m_oActiveOrder.LongData.Position == null)
                     {
                         m_oActiveOrder.LongData.Position = oPosition;
                         Logger.Info($"  Position long on {oPosition.Symbol.Exchange.ExchangeType.ToString()} {oPosition.Symbol.Symbol} ");
@@ -361,7 +444,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             {
                 if (oPosition.Symbol.Symbol == m_oActiveOrder.ShortData.Symbol.Symbol)
                 {
-                    if (oPosition.Direction == FuturesPositionDirection.Short)
+                    if (oPosition.Direction == FuturesPositionDirection.Short && m_oActiveOrder.ShortData.Position == null)
                     {
                         m_oActiveOrder.ShortData.Position = oPosition;
                         Logger.Info($"  Position short on  {oPosition.Symbol.Exchange.ExchangeType.ToString()} {oPosition.Symbol.Symbol}");

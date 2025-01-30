@@ -28,10 +28,12 @@ namespace Crypto.Tests.Coinex
             Assert.IsNotNull(aHistorySingle);
             Assert.IsTrue(aHistorySingle.Length > 10);
 
-            IFundingRate[]? aHistoryMulti = await oExchange.History.GetFundingRatesHistory(aSymbols.Take(30).ToArray(), dFrom);
+            IFundingRate[]? aHistoryMulti = await oExchange.History.GetFundingRatesHistory(aSymbols.ToArray(), dFrom);
             Assert.IsNotNull(aHistoryMulti);
             Assert.IsTrue(aHistoryMulti.Length > 100);
 
+            IFundingRate[] aFound = aHistoryMulti.Where(p => p.Rate * 100M > 0.7M).OrderByDescending(p => p.SettleDate).ToArray();
+            Assert.IsTrue(aFound.Any());
 
             IFundingRateSnapShot? oRateFound = await oExchange.Market.GetFundingRates(oToFind);
             Assert.IsNotNull(oRateFound);

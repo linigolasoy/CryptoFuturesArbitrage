@@ -82,5 +82,11 @@ namespace Crypto.Exchanges.All.Bingx
         {
             return await m_oWebsocket.Start();
         }
+
+        public async Task StopSockets()
+        {
+            if (m_oWebsocket == null) return;
+            await m_oWebsocket.Stop();  
+        }
     }
 }

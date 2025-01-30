@@ -4,6 +4,7 @@ using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Trading.Bot;
+using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates.Model;
 
 namespace Crypto.Tests
@@ -51,6 +52,23 @@ namespace Crypto.Tests
             await Task.Delay(2000);
         }
 
+        [TestMethod]
+        public async Task SocketManagerTests()
+        {
+            CancellationTokenSource oSource = new CancellationTokenSource();
+            ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "SocketManagerTests", oSource.Token);
+
+
+            ISocketManager oManager = BotFactory.CreateSocketManager(oSetup, oLogger);  
+
+            bool bStarted = await oManager.Start();
+            Assert.IsTrue(bStarted);
+
+            if (!bStarted) return;
+            await Task.Delay(10000);
+            await oManager.Stop();  
+        }
 
         /*
         [TestMethod]

@@ -42,6 +42,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public int ProfitUpdates { get; }
         public decimal Fees { get; }
         public int Leverage { get; }
+        public DateTime LimitDate { get; }  
         /*
         public IFuturesSymbol SymbolLong { get; }
         public IFuturesSymbol SymbolShort { get; }

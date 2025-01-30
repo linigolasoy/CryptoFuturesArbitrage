@@ -16,10 +16,10 @@
 		0.01.01 Bingx
 		0.01.02 Bitget
 		0.01.03 Coinex
-		0.01.04 LBank 
-		0.01.05 Blofin
-		0.01.05 BitMart????
-		0.01.05 DigiFinex????
+		0.01.04 BitMart
+		0.01.05 LBank 
+		0.01.06 Blofin
+		0.01.07 DigiFinex????
 
 OK 01 Exchange BINGX:
 

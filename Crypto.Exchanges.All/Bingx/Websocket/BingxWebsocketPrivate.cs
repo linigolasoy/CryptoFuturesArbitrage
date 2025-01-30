@@ -29,6 +29,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private BingxOrderManager m_oOrderManager;
         private BingxPositionManager m_oPositionManager;
 
+        private string? m_strListenKey = null;
         public BingxWebsocketPrivate(IFuturesAccount oAccount) : base(oAccount)
         {
             m_oExchange = oAccount.Exchange;
@@ -63,11 +64,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             m_oCancelSource = new CancellationTokenSource();
             var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
             if (oResult == null || !oResult.Success) return false;
-            string strListenKey = oResult.Data;
+            m_strListenKey = oResult.Data;
 
             m_oAccountSocketClient = new BingXSocketClient();
             var oResultSubscribe = await m_oAccountSocketClient.PerpetualFuturesApi.SubscribeToUserDataUpdatesAsync(
-                strListenKey,
+                m_strListenKey,
                 OnAccountUpdate,
                 OnOrderUpdate,
                 OnConfigUpdate,
@@ -85,6 +86,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             {
                 await m_oAccountSocketClient.UnsubscribeAllAsync();
                 await Task.Delay(1000);
+
+                var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StopUserStreamAsync(m_strListenKey!);
+
                 m_oAccountSocketClient.Dispose();
                 m_oAccountSocketClient = null;
             }

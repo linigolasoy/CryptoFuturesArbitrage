@@ -120,10 +120,10 @@ namespace CryptoFuturesArbitrage.Console
         /// <returns></returns>
         private async Task<IOppositeOrder?> CreateTesterOrder()
         {
-            string strBase = "BLAST";
+            string strBase = "VINE";
             string strQuote = "USDT";
             if (Exchanges == null) return null;
-            IFuturesExchange? oExchangeBuy = Exchanges.FirstOrDefault(p=> p.ExchangeType == ExchangeType.CoinExFutures);
+            IFuturesExchange? oExchangeBuy = Exchanges.FirstOrDefault(p=> p.ExchangeType == ExchangeType.BitgetFutures);
             if( oExchangeBuy == null) return null;
             IFuturesExchange? oExchangeSell = Exchanges.FirstOrDefault(p => p.ExchangeType == ExchangeType.BingxFutures);
             if (oExchangeSell == null) return null;
@@ -137,7 +137,7 @@ namespace CryptoFuturesArbitrage.Console
             IFuturesSymbol? oSymbolSell = aSymbolsSell.FirstOrDefault(p => p.Base == strBase && p.Quote == strQuote);
             if (oSymbolSell == null) return null;
 
-            IOppositeOrder oResult = ArbitrageFactory.CreateOppositeOrder(oSymbolBuy, oSymbolSell, 10);
+            IOppositeOrder oResult = ArbitrageFactory.CreateOppositeOrder(oSymbolBuy, oSymbolSell, 10, DateTime.Now);
 
             bool bResult = await oResult.SetLeverages();
             if (!bResult) { Logger.Info("ERROR! Could not set leverages!!!"); return null; }
@@ -194,7 +194,7 @@ namespace CryptoFuturesArbitrage.Console
         {
             decimal nMoney = 1000;
             decimal nMaxProfit = -9E10M;
-            decimal nProfitToClose = 10M;
+            decimal nProfitToClose = 2M;
             decimal nMaxSpread = 0.5M;
             await Task.Delay(2000);
             bool bCreatedOrder = false;

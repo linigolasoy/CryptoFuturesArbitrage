@@ -82,5 +82,10 @@ namespace Crypto.Exchanges.All.Bitget
             return bResult;
         }
 
+        public async Task StopSockets()
+        {
+            await m_oWebsocketPrivate.Stop();   
+        }
+
     }
 }

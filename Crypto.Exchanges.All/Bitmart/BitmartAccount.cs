@@ -69,5 +69,9 @@ namespace Crypto.Exchanges.All.Bitmart
         {
             return await m_oWebsocket.Start();
         }
+        public async Task StopSockets()
+        {
+            await m_oWebsocket.Stop();
+        }
     }
 }

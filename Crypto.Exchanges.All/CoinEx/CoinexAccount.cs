@@ -86,5 +86,11 @@ namespace Crypto.Exchanges.All.CoinEx
 
             return bResult;
         }
+        public async Task StopSockets()
+        {
+            if (m_oWebsocketPrivate == null) return;
+            await m_oWebsocketPrivate.Stop();
+        }
+
     }
 }

@@ -20,6 +20,7 @@ namespace Crypto.Interface.Futures.Account
         public Task PostEvent(IWebsocketQueueItem oItem);
 
         public Task<bool> StartSockets();
+        public Task StopSockets();
         public Task<IFuturesBalance[]?> GetBalances();
         public Task<IFuturesPosition[]?> GetPositions();
 

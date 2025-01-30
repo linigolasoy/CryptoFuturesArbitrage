@@ -19,19 +19,21 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private class MarketSockets
         {
-            public MarketSockets(BingXSocketClient oClient)
+            public MarketSockets(BingXSocketClient oClient) // , string strListenKey )
             {
                 SocketClient = oClient;
+                // ListenKey = strListenKey;
             }
             public BingXSocketClient SocketClient { get; }
 
+            // public string ListenKey { get; }
             public List<IFuturesSymbol> Symbols { get; } = new List<IFuturesSymbol>();
         }
 
         private List<MarketSockets> m_aMarketSockets = new List<MarketSockets>();
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
-        private string? m_strListenKey = null;
+        // private string? m_strListenKey = null;
         private IFuturesSymbol[] m_aSymbols;
 
         private BingxOrderbookManager m_oOrderbookManager;

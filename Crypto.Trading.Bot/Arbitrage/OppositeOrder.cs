@@ -27,13 +27,15 @@ namespace Crypto.Trading.Bot.Arbitrage
     {
         private bool m_bLeverageSet = false;
         private const string USDT = "USDT";
-        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage) 
+        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage, DateTime dLimitDate) 
         {
             Leverage = nLeverage;   
             LongData = new ArbitrageOrderData(oSymbolLong);
             ShortData = new ArbitrageOrderData(oSymbolShort);
+            LimitDate = dLimitDate;
         }
 
+        public DateTime LimitDate { get; }
         public int Leverage { get; }
         public IArbitrageOrderData LongData { get; }
         public IArbitrageOrderData ShortData { get; }
@@ -318,12 +320,12 @@ namespace Crypto.Trading.Bot.Arbitrage
                         IFuturesPosition? oPosition2 = aPositions2
                             .FirstOrDefault(p => p.Symbol.Base == oPosition1.Symbol.Base &&
                                                 p.Symbol.Quote == oPosition1.Symbol.Quote && 
-                                                p.Quantity == oPosition1.Quantity &&
+                                                //Math.Round(p.Quantity,0) == Math.Round(oPosition1.Quantity,0) &&
                                                 p.Direction != oPosition1.Direction);
                         if( oPosition2 == null ) continue;  
                         if( oPosition1.Direction == FuturesPositionDirection.Long )
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10);
+                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10, DateTime.Now);
                             oOrder.LongData.Position = oPosition1;
                             oOrder.LongData.Quantity = oPosition1.Quantity; 
                             oOrder.ShortData.Position = oPosition2;
@@ -332,7 +334,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                         }
                         else
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10);
+                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10, DateTime.Now);
                             oOrder.LongData.Position = oPosition2;
                             oOrder.LongData.Quantity = oPosition2.Quantity;
                             oOrder.ShortData.Position = oPosition1;
