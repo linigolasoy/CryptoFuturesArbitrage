@@ -65,12 +65,10 @@ namespace Crypto.Exchanges.All.CoinEx
 
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null || oResult.Data.Items == null ) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if( aSymbols == null ) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oItem in oResult.Data.Items )
             {
-                IFuturesSymbol? oFound = aSymbols.FirstOrDefault(p=> p.Symbol == oItem.Symbol);
+                IFuturesSymbol? oFound = Exchange.SymbolManager.GetSymbol(oItem.Symbol);
                 if (oFound == null) continue;   
                 IFuturesPosition oNew = new CoinexPoisitionLocal(oFound, oItem);
                 aResult.Add(oNew);
@@ -79,9 +77,6 @@ namespace Crypto.Exchanges.All.CoinEx
         }
         public async Task<bool> StartSockets()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if (aSymbols == null) return false;
-            m_oWebsocketPrivate.FuturesSymbols = aSymbols;
             bool bResult = await m_oWebsocketPrivate.Start();
 
             return bResult;

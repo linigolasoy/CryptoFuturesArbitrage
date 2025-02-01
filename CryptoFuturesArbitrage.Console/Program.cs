@@ -1,6 +1,7 @@
 ﻿using Crypto.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.Market;
 using Crypto.Trading.Bot;
 using Crypto.Trading.Bot.Arbitrage;
 using Crypto.Trading.Bot.Common;
@@ -44,7 +45,8 @@ namespace CryptoFuturesArbitrage.Console
         {
             try
             {
-                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
+                ITradingBot oBot = BotFactory.CreateFuturesArbitrageBot(oSetup, oLogger);
+                // ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
                 // ITradingBot oBot = new OppositeOrderTester(oSetup, oLogger);
 
                 oLogger.Info("Enter main program");
@@ -273,6 +275,45 @@ namespace CryptoFuturesArbitrage.Console
             var aFundings = oManager.GetFundingRates();
             var aOrderbooks = oManager.GetOrderbooks();
 
+            decimal nBestArbitrage = -99.0M;
+            decimal nMoney = 1000;
+            int nLoops = 10000;
+
+            while (nLoops-- >= 0)
+            {
+                foreach (var eTypeBuy in aOrderbooks.Keys)
+                {
+                    foreach (var eTypeSell in aOrderbooks.Keys)
+                    {
+                        if (eTypeBuy == eTypeSell) continue;
+                        foreach (var oBookBuy in aOrderbooks[eTypeBuy])
+                        {
+                            IOrderbookPrice? oPriceBuy = oBookBuy.GetBestPrice(true, null, nMoney);
+                            if (oPriceBuy == null) continue;
+                            IOrderbook? oBookSell = aOrderbooks[eTypeSell].FirstOrDefault(p => p.Symbol.Base == oBookBuy.Symbol.Base && p.Symbol.Quote == oBookBuy.Symbol.Quote);
+                            if (oBookSell == null) continue;
+                            IOrderbookPrice? oPriceSell = oBookSell.GetBestPrice(false, null, nMoney);
+                            if (oPriceSell == null) continue;
+                            if (oPriceBuy.Price > oPriceSell.Price) continue;
+
+                            decimal nPercent = Math.Round((oPriceSell.Price - oPriceBuy.Price) * 100M / oPriceBuy.Price, 3);
+                            if (nPercent > nBestArbitrage)
+                            {
+                                nBestArbitrage = nPercent;
+                                oLogger.Info($"Best {nBestArbitrage}");
+                            }
+
+                        }
+
+                    }
+                }
+
+                if( nLoops % 100 == 0 )
+                {
+                    oLogger.Info($"  {nLoops} Loop");
+                }
+                await Task.Delay(200);
+            }
             await Task.Delay(2000);
 
 
@@ -289,8 +330,8 @@ namespace CryptoFuturesArbitrage.Console
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
             // await DoWebsocketFundingData(oSetup, oLogger);
-            // await DoBot(oSetup, oLogger);
-            await DoSocketManager(oSetup, oLogger);
+            await DoBot(oSetup, oLogger);
+            // await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) await DoTester(oSetup, oLogger);
             else

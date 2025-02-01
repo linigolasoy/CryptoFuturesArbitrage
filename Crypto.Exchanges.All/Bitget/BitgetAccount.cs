@@ -59,12 +59,10 @@ namespace Crypto.Exchanges.All.Bitget
             var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.GetPositionsAsync(BitgetProductTypeV2.UsdtFutures, BitgetTrading.USDT);
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if( aSymbols == null ) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oData in oResult.Data )
             {
-                IFuturesSymbol? oFound = aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol); 
+                IFuturesSymbol? oFound = Exchange.SymbolManager.GetSymbol(oData.Symbol); 
                 if( oFound == null ) continue;
                 IFuturesPosition oPosition = new BitgetPositionLocal(oFound, oData);
                 aResult.Add( oPosition );
@@ -74,9 +72,6 @@ namespace Crypto.Exchanges.All.Bitget
 
         public async Task<bool> StartSockets()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if (aSymbols == null) return false;
-            m_oWebsocketPrivate.FuturesSymbols = aSymbols;
             bool bResult = await m_oWebsocketPrivate.Start();
 
             return bResult;

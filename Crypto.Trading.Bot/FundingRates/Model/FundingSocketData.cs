@@ -55,7 +55,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             foreach( var oExchange in Exchanges )
             {
                 Logger.Info($"FundingSocketData:    {oExchange.ExchangeType.ToString()}");
-                IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+                IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
                 if( aSymbols == null ) return false;
                 foreach( var oSymbol in aSymbols ) 
                 { 

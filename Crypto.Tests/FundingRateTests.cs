@@ -25,9 +25,9 @@ namespace Crypto.Tests
             IFuturesExchange oExchangeLong = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
             IFuturesExchange oExchangeShort = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
 
-            IFuturesSymbol[]? aSymbolsLong = await oExchangeLong.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbolsLong = oExchangeLong.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbolsLong);
-            IFuturesSymbol[]? aSymbolsShort = await oExchangeShort.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbolsShort = oExchangeShort.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbolsShort);
 
 

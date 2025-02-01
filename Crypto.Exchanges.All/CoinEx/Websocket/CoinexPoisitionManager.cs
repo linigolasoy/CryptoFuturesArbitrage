@@ -21,7 +21,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         }
         public void Put(CoinExPositionUpdate oUpdate, bool bClose)
         {
-            IFuturesSymbol? oSymbol = PrivateSocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == oUpdate.Position.Symbol);
+            IFuturesSymbol? oSymbol = PrivateSocket.Exchange.SymbolManager.GetSymbol( oUpdate.Position.Symbol);
             if (oSymbol == null) return;
             IFuturesPosition oPosition = new CoinexPoisitionLocal(oSymbol, oUpdate);
             if (bClose) RemoveData(oPosition);

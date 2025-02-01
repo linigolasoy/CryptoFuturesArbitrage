@@ -36,7 +36,7 @@ namespace Crypto.Tests.Bitmart
             IFuturesExchange oExchange = await BitmartCommon.CreateExchange();
 
             await Task.Delay(1000);
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
             bool bResultStart = await oExchange.Market.StartSockets();
             Assert.IsTrue(bResultStart);
@@ -50,6 +50,10 @@ namespace Crypto.Tests.Bitmart
             IOrderbook[]? aData = oExchange.Market.Websocket.OrderbookManager.GetData();
             Assert.IsNotNull(aData);
             Assert.IsTrue(aData.Length >= aSymbols.Length - 2);
+
+            IOrderbook? oBtc = aData.FirstOrDefault(p => p.Symbol.Base == "BTC" && p.Symbol.Quote == "USDT");
+            Assert.IsNotNull(oBtc);
+
 
             IFundingRate[]? aFunding = oExchange.Market.Websocket.FundingRateManager.GetData();
             Assert.IsNotNull(aFunding);

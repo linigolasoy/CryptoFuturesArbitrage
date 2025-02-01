@@ -1,5 +1,6 @@
 ﻿using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Trading.Bot.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,12 +17,12 @@ namespace Crypto.Trading.Bot
     {
         public ICryptoSetup Setup { get; }  
 
-        public IFuturesExchange[]? Exchanges { get; }
+        public ISocketManager SocketManager { get; }
 
         // public IBotStrategy? Strategy { get; }
 
         public ICommonLogger Logger { get; }    
-        public Task Start();
+        public Task<bool> Start();
 
 
         public Task Stop(); 

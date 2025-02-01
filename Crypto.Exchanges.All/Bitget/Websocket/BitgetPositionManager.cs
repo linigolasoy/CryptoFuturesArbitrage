@@ -16,6 +16,8 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     internal class BitgetPositionManager : BasePositionManager, IWebsocketPrivateManager<IFuturesPosition>
     {
 
+        private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();    
+        private Task? m_oMainLoop = null;
         public BitgetPositionManager(BitgetWebsocketPrivate oWebsocket): base(oWebsocket)
         {
         }
@@ -25,7 +27,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             List<IFuturesPosition> aNews = new List<IFuturesPosition>();    
             foreach( var oParsed in aParsed )
             {
-                IFuturesSymbol? oFound = PrivateSocket.FuturesSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);
+                IFuturesSymbol? oFound = PrivateSocket.Exchange.SymbolManager.GetSymbol(oParsed.Symbol);
                 if (oFound == null) continue;
                 IFuturesPosition oPos = new BitgetPositionLocal(oFound, oParsed);
                 aNews.Add(oPos);    
@@ -34,6 +36,43 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             PutData(aNews.ToArray());
         }
 
+        internal async Task<bool> Start()
+        {
+            await Stop();
+            m_oCancelSource = new CancellationTokenSource();
+            m_oMainLoop = MainLoop();
+            return true;
+        }
+
+        internal async Task Stop()
+        {
+            m_oCancelSource.Cancel();
+            if( m_oMainLoop != null)
+            {
+                await m_oMainLoop;
+                m_oMainLoop = null;
+            }
+        }
+
+
+        private async Task MainLoop()
+        {
+            while(!m_oCancelSource.IsCancellationRequested)
+            {
+                try
+                {
+                    IFuturesPosition[]? aPositions = await PrivateSocket.Exchange.Account.GetPositions();
+                    if( aPositions != null)
+                    {
+                        PutData(aPositions);    
+                    }
+                }
+                catch( Exception e ) { }
+                await Task.Delay(500);
+            }
+
+            await Task.Delay(500);
+        }
         /*
         public void PutHistory(IEnumerable<BitgetPositionHistoryUpdate> aParsed)
         {

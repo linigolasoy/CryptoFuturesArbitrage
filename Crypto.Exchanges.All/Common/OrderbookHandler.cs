@@ -23,6 +23,8 @@ namespace Crypto.Exchanges.All.Common
 
         public int ReceiveCount { get => m_nUpdates; }
 
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
+
         public IOrderbook[] GetData()
         {
             List<IOrderbook> aResult = new List<IOrderbook>();
@@ -51,6 +53,7 @@ namespace Crypto.Exchanges.All.Common
         /// <exception cref="NotImplementedException"></exception>
         public void Update(IOrderbook oOrderbook)
         {
+            LastUpdate = oOrderbook.UpdateDate;
             m_aOrderbooks.AddOrUpdate(oOrderbook.Symbol.Symbol, p => oOrderbook, (s, p) => { p.Update(oOrderbook); return p; });
         }
 

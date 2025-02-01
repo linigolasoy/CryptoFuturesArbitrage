@@ -1,6 +1,7 @@
 ﻿using BitMart.Net.Clients;
 using BitMart.Net.Interfaces.Clients;
 using BitMart.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -24,16 +25,14 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
 
         private BitmartFundingRateManager m_oFundingManarger;
         private BitmartOrderbookManager m_oOrderbookManager;
-        public BitmartWebsocketPublic( BitmartFutures oExchange, IFuturesSymbol[] aSymbols) 
+        public BitmartWebsocketPublic( BitmartFutures oExchange) 
         {
-            FuturesSymbols = aSymbols;
             m_oExchange = oExchange;
-            m_oFundingManarger = new BitmartFundingRateManager(aSymbols);
+            m_oFundingManarger = new BitmartFundingRateManager(this);
             m_oOrderbookManager = new BitmartOrderbookManager(this);
         }
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get; }
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
@@ -45,7 +44,7 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
         /// <returns></returns>
         private async Task<bool> CreateFundingSockets()
         {
-            string[] aSymbols = FuturesSymbols.Select(p => p.Symbol).ToArray();
+            string[] aSymbols = Exchange.SymbolManager.GetAllKeys();    
             List<BitMartSocketClient> aFundingClients = new List<BitMartSocketClient>();
             int nActual = 0;
             int nStep = 50;
@@ -71,7 +70,7 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
         /// <returns></returns>
         private async Task<bool> CreateOrderbookSockets()
         {
-            string[] aSymbols = FuturesSymbols.Select(p => p.Symbol).ToArray();
+            string[] aSymbols = Exchange.SymbolManager.GetAllKeys();
             List<BitMartSocketClient> aClients = new List<BitMartSocketClient>();
             int nActual = 0;
             int nStep = 50;

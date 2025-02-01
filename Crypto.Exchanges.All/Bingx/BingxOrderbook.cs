@@ -16,7 +16,6 @@ namespace Crypto.Exchanges.All.Bingx
         public BingxOrderbook( IFuturesSymbol oSymbol, DateTime dDate, BingXOrderBook oBook ):
             base(oSymbol, dDate, DateTime.Now)
         {
-
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oBook.Asks.OrderBy(p => p.Price))
             {

@@ -17,7 +17,6 @@ namespace Crypto.Exchanges.All.CoinEx
     {
         private CoinexFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
-        private IFuturesSymbol[]? m_aSymbols = null;
 
         private CoinexWebsocket? m_oWebsocket = null;
         
@@ -37,17 +36,15 @@ namespace Crypto.Exchanges.All.CoinEx
         public async Task<bool> StartSockets()
         {
             await EndSockets();
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if( aSymbols == null ) return false;    
-            m_oWebsocket = new CoinexWebsocket(m_oExchange, aSymbols);
+            m_oWebsocket = new CoinexWebsocket(m_oExchange);
 
             bool bResult = await m_oWebsocket.Start();
             if (!bResult) return false;
-            await Task.Delay(1000);
-            bResult = await m_oWebsocket.SubscribeToFundingRates(aSymbols); 
+            await Task.Delay(2000);
+            bResult = await m_oWebsocket.SubscribeToFundingRates(m_oExchange.SymbolManager.GetAllValues()); 
             if( !bResult ) return false;    
-            bResult = await m_oWebsocket.SubscribeToMarket(aSymbols);
-            await Task.Delay(1000); 
+            bResult = await m_oWebsocket.SubscribeToMarket(m_oExchange.SymbolManager.GetAllValues());
+            await Task.Delay(2000); 
 
             return bResult;
         }
@@ -101,25 +98,5 @@ namespace Crypto.Exchanges.All.CoinEx
         }
 
 
-        /// <summary>
-        /// Get symbol list
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IFuturesSymbol[]?> GetSymbols()
-        {
-            if (m_aSymbols != null) return m_aSymbols;
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetSymbolsAsync();
-            if (oResult == null || !oResult.Success) return null;
-
-            if (oResult.Data == null) return null;
-            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
-            foreach (CoinExFuturesSymbol oParsed in oResult.Data)
-            {
-                aResult.Add(new CoinexSymbol(this.Exchange, oParsed));
-            }
-            m_aSymbols = aResult.ToArray();
-            return m_aSymbols;
-
-        }
     }
 }

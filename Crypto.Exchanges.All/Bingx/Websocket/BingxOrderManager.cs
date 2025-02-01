@@ -23,12 +23,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
 
 
-        public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
 
         public void Put(BingXFuturesOrderUpdate oUpdate)
         {
-            IFuturesSymbol? oFound = FuturesSymbols.FirstOrDefault(p=> p.Symbol == oUpdate.Symbol);
+            IFuturesSymbol? oFound = this.PrivateSocket.Exchange.SymbolManager.GetSymbol(oUpdate.Symbol);
             if (oFound == null) return;
             IFuturesOrder oNewOrder = new BingxOrder(oFound, oUpdate);
             PutData(oUpdate.OrderId.ToString(), oNewOrder);    

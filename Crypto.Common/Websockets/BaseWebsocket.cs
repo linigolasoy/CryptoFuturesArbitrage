@@ -36,8 +36,10 @@ namespace Crypto.Common.Websockets
 
 
         private ConcurrentQueue<string> m_oQueueSend = new ConcurrentQueue<string>();
+        private ConcurrentQueue<string> m_oQueueReceive = new ConcurrentQueue<string>();    
 
         private Task? m_oSendTask = null;
+        private Task? m_oReceiveTask = null;
         private WatsonWsClient? m_oWsClient = null;
         private UTF8Encoding m_oUtf8Encoder = new UTF8Encoding();
 
@@ -80,6 +82,27 @@ namespace Crypto.Common.Websockets
             }
         }
 
+
+        private async Task ReceiveTask()
+        {
+            while( !m_oTokenSource.IsCancellationRequested )
+            {
+                string? strMessage = null;
+                if( m_oQueueReceive.TryDequeue( out strMessage ) )
+                {
+                    if( OnReceived != null )
+                    {
+                        try
+                        {
+                            OnReceived( strMessage );   
+                        }
+                        catch( Exception ) { }
+                    }
+                }
+                else await Task.Delay( 100 );    
+            }
+        }
+
         /// <summary>
         /// Send message
         /// </summary>
@@ -104,6 +127,7 @@ namespace Crypto.Common.Websockets
 
             m_oTokenSource = new CancellationTokenSource();
             m_oSendTask = MainSendTask();
+            m_oReceiveTask = ReceiveTask();
             m_oWsClient = new WatsonWsClient(new Uri(Url));
             m_oWsClient.ServerConnected += ClientOnServerConnected;
             m_oWsClient.ServerDisconnected += ClientOnServerDisconnected;
@@ -133,16 +157,7 @@ namespace Crypto.Common.Websockets
                 m_oQueueSend.Enqueue(PONG);
                 return;
             }
-            // if (e.MessageType != System.Net.WebSockets.WebSocketMessageType.Text) return;
-            // string strText = m_oUtf8Encoder.GetString(e.Data.ToArray());
-            if( OnReceived != null )
-            {
-                try
-                {
-                    OnReceived(strText);    
-                }
-                catch (Exception ex) { }
-            }
+            m_oQueueReceive.Enqueue(strText);
         }
 
         private static string HandleReceivedMessage(byte[] buffer, int length)
@@ -189,12 +204,16 @@ namespace Crypto.Common.Websockets
         {
             if (m_oWsClient == null) return;
 
-            if( m_oSendTask != null )
+            m_oTokenSource.Cancel();
+            if ( m_oSendTask != null )
             {
-                m_oTokenSource.Cancel();
-                await Task.Delay(1000);
                 await m_oSendTask;
                 m_oSendTask = null; 
+            }
+            if( m_oReceiveTask != null )
+            {
+                await m_oReceiveTask;
+                m_oReceiveTask = null;
             }
 
             if( m_oWsClient.Connected )

@@ -10,6 +10,9 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Gmail.v1;
 using Google.Apis.Util.Store;
 using Google.Apis.Services;
+using Crypto.Interface.Futures;
+using Crypto.Tests.Bitget;
+using Newtonsoft.Json.Linq;
 
 namespace Crypto.Tests
 {
@@ -17,6 +20,7 @@ namespace Crypto.Tests
     public class CommonWebsocketTests   
     {
 
+        private static DateTime m_dLastReceived = DateTime.MinValue;    
         [TestMethod]
         public async Task GmailTest()
         {
@@ -87,6 +91,67 @@ namespace Crypto.Tests
         }
 
 
+        private string GetSubscribeOrderbook(string[] aSymbols)
+        {
+            JObject oObject = new JObject();
+            oObject["op"] = "subscribe";
+
+            JArray oArray = new JArray();
+            foreach (string aSymbol in aSymbols)
+            {
+                JObject oNew = new JObject();
+                oNew["instType"] = "USDT-FUTURES";
+                oNew["channel"] = "books15";
+                oNew["instId"] = aSymbol;
+                oArray.Add(oNew);
+            }
+            oObject["args"] = oArray;
+
+            return oObject.ToString();  
+            // "{\"op\": \"subscribe\", \"args\": [ {\r\n            \"instType\": \"USDT-FUTURES\",\r\n            \"channel\": \"books15\",\r\n            \"instId\": \"BTCUSDT\"\r\n        }\r\n    ]\r\n}";
+
+        }
+
+        [TestMethod]
+        public async Task BasicBitgetWs()
+        {
+
+            IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
+            string[] aSymbolString = oExchange.SymbolManager.GetAllKeys();
+            ICommonWebsocket oWs = CommonFactory.CreateWebsocket("wss://ws.bitget.com/v2/ws/public", 20);
+
+            oWs.OnReceived += OWs_OnReceived;
+            // oWs.OnPing += BasicMexcOnPing;
+            bool bResult = await oWs.Start();
+            Assert.IsTrue(bResult);
+
+            // Send subscribe
+
+            // string strSend = "{\r\n    \"method\": \"SUBSCRIPTION\",\r\n    \"params\": [\r\n                \"spot@public.limit.depth.v3.api@BTCUSDT@5\"\r\n\r\n   ]\r\n}";
+
+            string strSend = GetSubscribeOrderbook(aSymbolString);
+            bool bSent = await oWs.Send(strSend);
+            Assert.IsTrue(bSent);
+            // Send subscribe message
+            await Task.Delay(50000);
+
+            decimal nDelay = (decimal)(DateTime.Now - m_dLastReceived).TotalMilliseconds;
+            await oWs.Stop();
+
+            Assert.IsTrue(oWs.Statistics.PingCount > 0);
+            Assert.IsTrue(oWs.Statistics.ReceivedCount > 10);
+            Assert.IsTrue(oWs.Statistics.SentCount > 1);
+
+        }
+
+        private void OWs_OnReceived(string strMessage)
+        {
+            JObject oObject = JObject.Parse(strMessage);
+            if (oObject.ContainsKey("event")) return;
+            if (!oObject.ContainsKey("action")) return;
+            m_dLastReceived = DateTime.Now;
+            return;
+        }
 
         [TestMethod]
         public async Task BasicPingMexc()

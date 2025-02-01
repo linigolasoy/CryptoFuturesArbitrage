@@ -17,14 +17,16 @@ namespace Crypto.Exchanges.All.Bitmart
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oUpdate.Asks.OrderBy(p => p.Price))
             {
-                aAsks.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
+                decimal nQuantity = item.Quantity * oSymbol.ContractSize;
+                aAsks.Add(new BaseOrderbookPrice(this, item.Price, nQuantity));
             }
             Asks = aAsks.ToArray();
 
             List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
             foreach (var item in oUpdate.Bids.OrderByDescending(p => p.Price))
             {
-                aBids.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
+                decimal nQuantity = item.Quantity * oSymbol.ContractSize;
+                aBids.Add(new BaseOrderbookPrice(this, item.Price, nQuantity));
             }
             Bids = aBids.ToArray();
 

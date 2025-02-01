@@ -15,5 +15,6 @@ namespace Crypto.Interface.Futures.Websockets
 
         public int Count { get; }
         public int ReceiveCount { get; }
+        public DateTime LastUpdate { get; } 
     }
 }

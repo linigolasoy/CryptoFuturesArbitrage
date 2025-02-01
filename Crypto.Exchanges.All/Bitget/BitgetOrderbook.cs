@@ -1,10 +1,13 @@
 ﻿using Bitget.Net.Objects.Models.V2;
 using Crypto.Exchanges.All.Bingx;
+using Crypto.Exchanges.All.Bitget.Websocket;
 using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,6 +28,7 @@ namespace Crypto.Exchanges.All.Bitget
             {
                 aAsks.Add(new BaseOrderbookPrice(this, item.Price, item.Quantity));
             }
+            // base.PutAsks(aAsks.ToArray());
             Asks = aAsks.ToArray();
 
             List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
@@ -35,5 +39,31 @@ namespace Crypto.Exchanges.All.Bitget
             Bids = aBids.ToArray();
 
         }
+
+        public BitgetOrderbook(IFuturesSymbol oSymbol, DateTime dTimestamp, BitgetDataAction oAction ) :
+            base(oSymbol, dTimestamp.ToLocalTime() , DateTime.Now)
+        {
+            if (oAction.Data == null || oAction.Data.Count <= 0) return;
+            var oData = oAction.Data[0];
+            if( oData.AskData == null || oData.BidData == null ) return;
+            List<IOrderbookPrice> aAsks = new List<IOrderbookPrice> ();
+            foreach (var oItem in oData.AskData)
+            {
+
+                decimal nPrice = Decimal.Parse(oItem[0], CultureInfo.InvariantCulture);
+                decimal nVolume = Decimal.Parse(oItem[1], CultureInfo.InvariantCulture);
+                aAsks.Add( new BaseOrderbookPrice(this, nPrice, nVolume) );
+            }
+            Asks = aAsks.ToArray();
+            List<IOrderbookPrice> aBids = new List<IOrderbookPrice>();
+            foreach (var oItem in oData.BidData)
+            {
+                decimal nPrice = Decimal.Parse(oItem[0], CultureInfo.InvariantCulture);
+                decimal nVolume = Decimal.Parse(oItem[1], CultureInfo.InvariantCulture);
+                aBids.Add(new BaseOrderbookPrice(this, nPrice, nVolume));
+            }
+            Bids = aBids.ToArray();
+        }
+
     }
 }

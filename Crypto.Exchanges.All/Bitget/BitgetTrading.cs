@@ -192,7 +192,7 @@ namespace Crypto.Exchanges.All.Bitget
             IFuturesSymbol[]? aMatch = aSymbols;
             if (aMatch == null)
             {
-                aMatch = await Exchange.Market.GetSymbols();
+                aMatch = Exchange.SymbolManager.GetAllValues();
             }
             if (aMatch == null) return null;
             foreach (var oSymbol in aMatch)
@@ -212,7 +212,7 @@ namespace Crypto.Exchanges.All.Bitget
             var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.GetOpenOrdersAsync(BitgetProductTypeV2.UsdtFutures);
             if( oResult == null || !oResult.Success ) return null;  
             if( oResult.Data == null || oResult.Data.Orders == null ) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = Exchange.SymbolManager.GetAllValues();
             if (aSymbols == null) return null;
             List<IFuturesOrder> aResult = new List<IFuturesOrder>();    
             foreach( var oData in oResult.Data.Orders )

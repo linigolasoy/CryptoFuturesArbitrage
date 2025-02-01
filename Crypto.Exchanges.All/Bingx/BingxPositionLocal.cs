@@ -40,7 +40,7 @@ namespace Crypto.Exchanges.All.Bingx
             Direction = eDirection;
             Leverage = 0;
             Quantity = oParsed.Size;
-            AveragePrice = 0;
+            AveragePrice = oParsed.EntryPrice;
             ProfitRealized = oParsed.RealizedPnl;
             ProfitUnRealized = oParsed.UnrealizedPnl;
 
@@ -55,7 +55,7 @@ namespace Crypto.Exchanges.All.Bingx
 
         public decimal Quantity { get; private set; }
 
-        public decimal AveragePrice { get; }
+        public decimal AveragePrice { get; private set; }
 
         public decimal ProfitRealized { get; private set; }
 
@@ -64,7 +64,8 @@ namespace Crypto.Exchanges.All.Bingx
         public bool Closed { get; set; } = false;
         public void Update( IFuturesPosition oPos )
         {
-            Quantity = oPos.Quantity;   
+            Quantity = oPos.Quantity;
+            AveragePrice = oPos.AveragePrice;
             ProfitRealized = oPos.ProfitRealized;
             ProfitUnRealized = oPos.ProfitUnRealized;
             LastUpdate = oPos.LastUpdate;

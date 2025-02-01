@@ -14,8 +14,6 @@ namespace Crypto.Interface.Futures.Websockets
 
         public IFuturesExchange Exchange { get; }
 
-        public IFuturesSymbol[] FuturesSymbols { get; }
-
         public Task<bool> Start();
         public Task Stop();
 

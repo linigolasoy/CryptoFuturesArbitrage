@@ -15,17 +15,17 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 {
     internal class CoinexOrderbookManager : OrderbookHandler, IOrderbookManager
     {
-        private IFuturesSymbol[] m_aSymbols;
+        private IFuturesSymbolManager m_oSymbolManager;
 
-        public CoinexOrderbookManager(IFuturesSymbol[] aSymbols ) 
-        { 
-            m_aSymbols = aSymbols;
+        public CoinexOrderbookManager(IFuturesWebsocketPublic oWebsocket ) 
+        {
+            m_oSymbolManager = oWebsocket.Exchange.SymbolManager;
         }
 
 
         public void Put(CoinExOrderBook oParsed)
         {
-            IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);
+            IFuturesSymbol? oFound = m_oSymbolManager.GetSymbol(oParsed.Symbol);
             if (oFound == null) return;
             CoinexOrderbook oBook = new CoinexOrderbook(oFound, oParsed);
             this.Update(oBook);

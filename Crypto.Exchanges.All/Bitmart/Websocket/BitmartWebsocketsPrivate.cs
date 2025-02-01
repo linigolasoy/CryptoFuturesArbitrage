@@ -22,7 +22,6 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
     {
         private BitMartSocketClient? m_oSocketClient = null;
         private BitmartFutures m_oExchange;
-        private IFuturesSymbol[]? m_aSymbols;
 
         private BitmartBalanceManager m_oBalanceManager;
         private BitmartOrderManager m_oOrderManager;
@@ -38,7 +37,6 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols!; }
 
         public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
@@ -50,8 +48,8 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
         {
             await Stop();
             await StartLoop();
-            m_aSymbols = await m_oExchange.Market.GetSymbols();
-            if (m_aSymbols == null) throw new Exception("No symbols");
+            // m_aSymbols = await m_oExchange.Market.GetSymbols();
+            // if (m_aSymbols == null) throw new Exception("No symbols");
             // m_oOrderManager.FuturesSymbols = m_aSymbols;
             // m_oPositionManager.FuturesSymbols = m_aSymbols;
 

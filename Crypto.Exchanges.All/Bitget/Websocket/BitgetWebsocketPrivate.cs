@@ -35,7 +35,6 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
         public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
@@ -48,6 +47,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             await Stop();
             await StartLoop();
 
+            bool bPosStarted = await m_oPositionManager.Start(); 
             m_oPrivateClient = new BitgetSocketClient();
             m_oPrivateClient.SetApiCredentials( ((BitgetFutures)m_oExchange).ApiCredentials);
 
@@ -57,12 +57,12 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToOrderUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnOrder);
             if (oResult == null || !oResult.Success) return false;
 
-            oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPosition);
-            if (oResult == null || !oResult.Success) return false;
-            oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionHistoryUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPositionHistory);
-            if (oResult == null || !oResult.Success) return false;
+            // oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPosition);
+            // if (oResult == null || !oResult.Success) return false;
+            // oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionHistoryUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPositionHistory);
+            // if (oResult == null || !oResult.Success) return false;
 
-            m_oPrivateClient.FuturesApiV2.SubscribeToUserTradeUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnUserTradeUpdate);
+            // m_oPrivateClient.FuturesApiV2.SubscribeToUserTradeUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnUserTradeUpdate);
 
             return true;
 
@@ -70,6 +70,8 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         public async Task Stop()
         {
+            await m_oPositionManager.Stop();
+                
             if (m_oPrivateClient != null)
             {
                 await m_oPrivateClient.UnsubscribeAllAsync();

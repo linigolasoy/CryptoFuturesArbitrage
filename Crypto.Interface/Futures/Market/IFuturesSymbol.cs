@@ -17,6 +17,9 @@ namespace Crypto.Interface.Futures.Market
         public decimal FeeTaker { get; }
 
         public int Decimals { get; }  
+        public decimal ContractSize { get; }    
+        public bool UseContractSize { get; }    
+        public int QuantityDecimals { get; }    
 
         public decimal Minimum { get; }
     }

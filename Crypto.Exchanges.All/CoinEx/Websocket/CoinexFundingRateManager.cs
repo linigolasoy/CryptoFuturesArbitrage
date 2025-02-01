@@ -21,12 +21,12 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
         public int ReceiveCount { get; private set; } = 0;
         public int Count { get=> m_aFundingRates.Count; }
-        private IFuturesExchange m_oExchange;
-        private IFuturesSymbol[] m_aSymbols;
-        public CoinexFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
+
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
+        private IFuturesSymbolManager m_oSymbolManager;
+        public CoinexFundingRateManager(IFuturesWebsocketPublic oWebsocket)
         {
-            m_oExchange = oExchamge;    
-            m_aSymbols = aSymbols;
+            m_oSymbolManager = oWebsocket.Exchange.SymbolManager;
         }
         /// <summary>
         /// Get all data
@@ -70,13 +70,14 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
                 {
                     continue;
                 }
-                IFuturesSymbol? oSymbol = m_aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol);
+                IFuturesSymbol? oSymbol = m_oSymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
                 IFundingRate oRate = new CoinexFundingRate(oSymbol, oData);
 
                 m_aFundingRates.AddOrUpdate(oSymbol.Symbol, p => oRate, (s, p) => oRate);   
 
             }
+            LastUpdate = DateTime.Now;
         }
     }
 }

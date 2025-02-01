@@ -16,11 +16,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
     internal class BingxBalanceManager : BaseBalanceManager, IWebsocketPrivateManager<IFuturesBalance>
     {
 
+        
 
         public BingxBalanceManager(IFuturesWebsocketPrivate oWebsocket) : base(oWebsocket)
         { 
         }
-
 
         public void Put(BingXFuturesBalanceChange oChange)
         {

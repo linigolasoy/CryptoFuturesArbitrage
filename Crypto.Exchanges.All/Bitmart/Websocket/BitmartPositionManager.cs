@@ -14,7 +14,6 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
         { 
         }
 
-        public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
 
         public void Put(DataEvent<IEnumerable<BitMartPositionUpdate>> oUpdate)
@@ -27,7 +26,7 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
                 {
                     if( strSymbol == null ) strSymbol = oPos.Symbol;
                     if (strSymbol == null) continue;
-                    IFuturesSymbol? oSymbol = this.PrivateSocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == strSymbol);
+                    IFuturesSymbol? oSymbol = this.PrivateSocket.Exchange.SymbolManager.GetSymbol(strSymbol);
                     if (oSymbol == null) continue;
                     IFuturesPosition oNew = new BitmartPositionLocal(oSymbol, oPos);
                     aPositions.Add(oNew);

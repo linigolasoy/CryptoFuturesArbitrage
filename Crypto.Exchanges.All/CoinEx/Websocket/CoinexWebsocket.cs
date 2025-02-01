@@ -1,5 +1,6 @@
 ﻿using CoinEx.Net.Clients;
 using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -37,17 +38,17 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private CoinexFundingRateManager m_oFundingManager;
 
 
-        public CoinexWebsocket( CoinexFutures oExchange, IFuturesSymbol[] aSymbols )
+
+
+        public CoinexWebsocket( CoinexFutures oExchange )
         {
             m_oExchange = oExchange;
-            FuturesSymbols = aSymbols;
-            m_oOrderbookManager = new CoinexOrderbookManager(aSymbols);
-            m_oFundingManager = new CoinexFundingRateManager(oExchange, aSymbols);
+            m_oOrderbookManager = new CoinexOrderbookManager(this);
+            m_oFundingManager = new CoinexFundingRateManager(this);
         }
     
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get; }
 
         public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
         public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();

@@ -6,6 +6,7 @@ using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
 using Crypto.Trading.Bot.Arbitrage;
+using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates.Model;
 using Serilog;
 using System;
@@ -40,13 +41,16 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
         private DateTime m_dLastInfo = DateTime.Now;
         private decimal m_nMinSpread = 100M;
+        
         public FundingRateBot(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             Setup = oSetup;
             Logger = oLogger;
+            SocketManager = new BaseSocketManager(oSetup, oLogger);
         }
         public ICryptoSetup Setup { get; }
 
+        public ISocketManager SocketManager { get; }
         public IFuturesExchange[]? Exchanges => throw new NotImplementedException();
 
         public ICommonLogger Logger { get; }
@@ -363,7 +367,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         /// Starts socket data
         /// </summary>
         /// <returns></returns>
-        public async Task Start()
+        public async Task<bool> Start()
         {
             await Stop();
             m_oCancelSource = new CancellationTokenSource();
@@ -374,6 +378,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             await CreateEvents();
             await Task.Delay(1000);
             m_oMainTask = MainLoop();
+            return true;
         }
 
         private async Task CreateEvents()

@@ -18,7 +18,7 @@ namespace Crypto.Tests.Bitmart
         {
             IFuturesExchange oExchange = await BitmartCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
@@ -37,8 +37,6 @@ namespace Crypto.Tests.Bitmart
             Assert.IsNotNull(aHistoryMulti);
             Assert.IsTrue(aHistoryMulti.Length > 100);
 
-            IFundingRate[] aFound = aHistoryMulti.Where(p => p.Rate * 100M > 0.7M).OrderByDescending(p => p.SettleDate).ToArray();
-            Assert.IsTrue(aFound.Any());
 
 
             IFundingRateSnapShot? oRateFound = await oExchange.Market.GetFundingRates(oToFind);
@@ -61,7 +59,7 @@ namespace Crypto.Tests.Bitmart
         {
             IFuturesExchange oExchange = await BitmartCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 

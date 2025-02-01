@@ -24,8 +24,8 @@ namespace Crypto.Exchanges.All.Bitmart
             Decimals = (int)Math.Log10( (double)( 1M / oContract.PricePrecision ) );
             Minimum = oContract.MinQuantity * oContract.ContractQuantity;
             ContractSize = oContract.ContractQuantity;
+            UseContractSize = true;
         }
 
-        internal decimal ContractSize { get; }
     }
 }

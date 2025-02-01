@@ -4,6 +4,7 @@ using CoinEx.Net.Objects.Models.V2;
 using Crypto.Common;
 using Crypto.Exchanges.All.Bingx;
 using Crypto.Exchanges.All.CoinEx.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -29,7 +30,6 @@ namespace Crypto.Exchanges.All.CoinEx
         private IApiKey m_oApiKey;
         private IExchangeRestClient m_oGlobalClient;
 
-        private IFuturesSymbol[]? m_aSymbols = null;
         private ApiCredentials m_oApiCredentials;
 
         public CoinexFutures( ICryptoSetup oSetup ) 
@@ -46,6 +46,12 @@ namespace Crypto.Exchanges.All.CoinEx
                 options.ApiCredentials = m_oApiCredentials;
             });
             m_oGlobalClient = new ExchangeRestClient();
+
+
+            Task<IFuturesSymbol[]?> oTask = GetSymbols();
+            oTask.Wait();
+            if (oTask.Result == null) throw new Exception("No symbols");
+            SymbolManager = new FuturesSymbolManager(oTask.Result); 
             // m_oBarFeeder = new BingxBarFeeder(this);
             Trading = new CoinexTrading(this, m_oGlobalClient);
             Account = new CoinexAccount(this, m_oGlobalClient);
@@ -53,6 +59,7 @@ namespace Crypto.Exchanges.All.CoinEx
             History = new CoinexHistory(this);  
         }
 
+        public IFuturesSymbolManager SymbolManager { get; }
         public IFuturesHistory History { get; }
         public IFuturesMarket Market { get; }
         public IFuturesTrading Trading { get; }
@@ -70,11 +77,27 @@ namespace Crypto.Exchanges.All.CoinEx
         /// <exception cref="NotImplementedException"></exception>
         public async Task<IFuturesWebsocketPublic?> CreateWebsocket()
         {
-            IFuturesSymbol[]? aSymbols = await Market.GetSymbols();    
-            if( aSymbols == null ) return null; 
-            return new CoinexWebsocket(this, aSymbols); 
+            return new CoinexWebsocket(this); 
         }
 
+        /// <summary>
+        /// Get symbol list
+        /// </summary>
+        /// <returns></returns>
+        private async Task<IFuturesSymbol[]?> GetSymbols()
+        {
+            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetSymbolsAsync();
+            if (oResult == null || !oResult.Success) return null;
+
+            if (oResult.Data == null) return null;
+            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
+            foreach (CoinExFuturesSymbol oParsed in oResult.Data)
+            {
+                aResult.Add(new CoinexSymbol(this, oParsed));
+            }
+            return aResult.ToArray();
+
+        }
 
 
     }

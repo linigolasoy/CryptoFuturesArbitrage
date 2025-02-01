@@ -2,6 +2,7 @@
 using BingX.Net.Objects.Models;
 using Crypto.Common;
 using Crypto.Exchanges.All.Bingx.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -28,7 +29,6 @@ namespace Crypto.Exchanges.All.Bingx
         private IExchangeRestClient m_oGlobalClient;
         public const int TASK_COUNT = 20;
 
-
         public BingxFutures( ICryptoSetup oSetup ) 
         {
             Setup = oSetup;
@@ -41,12 +41,36 @@ namespace Crypto.Exchanges.All.Bingx
                 options.ApiCredentials = new ApiCredentials(m_oApiKey.ApiKey, m_oApiKey.ApiSecret);
             });
             m_oGlobalClient = new ExchangeRestClient();
+            IFuturesSymbol[]? aSymbols = GetSymbols();
+            if (aSymbols == null) throw new Exception("No symbols");
+            SymbolManager = new FuturesSymbolManager(aSymbols); 
             Trading = new BingxTrading(this, m_oGlobalClient);
             Account = new BingxAccount(this, m_oGlobalClient);
             Market = new BingxMarket(this);
             History = new BingxHistory(this);   
         }
 
+        private IFuturesSymbol[]? GetSymbols()
+        {
+            Task<CryptoExchange.Net.Objects.WebCallResult<IEnumerable<BingXContract>>> oTask = m_oGlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetContractsAsync();
+            oTask.Wait();
+
+            var oResult = oTask.Result; 
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+            if (oResult.Data.Count() <= 0) return null;
+
+            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
+            foreach (BingXContract oData in oResult.Data)
+            {
+                aResult.Add(new BingxSymbol(this, oData));
+            }
+
+            return aResult.ToArray();
+
+        }
+
+        public IFuturesSymbolManager SymbolManager { get; }
         public IFuturesHistory History { get; }
 
         public IFuturesMarket Market { get; }
@@ -64,9 +88,7 @@ namespace Crypto.Exchanges.All.Bingx
 
         public async Task<IFuturesWebsocketPublic?> CreateWebsocket()
         {
-            IFuturesSymbol[]? aSymbols = await Market.GetSymbols();
-            if (aSymbols == null) return null;
-            return new BingxWebsocket(this, aSymbols);
+            return new BingxWebsocket(this);
         }
 
 

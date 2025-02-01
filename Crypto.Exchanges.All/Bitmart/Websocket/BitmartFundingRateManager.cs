@@ -1,4 +1,5 @@
 ﻿using BitMart.Net.Objects.Models;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
@@ -13,17 +14,19 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
 {
     internal class BitmartFundingRateManager : IWebsocketManager<IFundingRate>
     {
-        private IFuturesSymbol[] m_aSymbols;
 
-        private ConcurrentDictionary<string, IFundingRate> m_aRates = new ConcurrentDictionary<string, IFundingRate> ();    
-        public BitmartFundingRateManager(IFuturesSymbol[] aSymbols) 
-        { 
-            m_aSymbols = aSymbols;
+        private ConcurrentDictionary<string, IFundingRate> m_aRates = new ConcurrentDictionary<string, IFundingRate> ();
+        private IFuturesSymbolManager m_oSymbolManager;
+        public BitmartFundingRateManager(IFuturesWebsocketPublic oWebsocket) 
+        {
+            m_oSymbolManager = oWebsocket.Exchange.SymbolManager;
         }
 
         public int Count { get => m_aRates.Count; }
 
         public int ReceiveCount { get; private set; } = 0;
+
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
 
         public IFundingRate[] GetData()
         {
@@ -55,11 +58,11 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
                 return; 
             }
 
-            IFuturesSymbol? oSymbol = m_aSymbols.FirstOrDefault(p=> p.Symbol == oUpdate.Data.Symbol);
+            IFuturesSymbol? oSymbol = m_oSymbolManager.GetSymbol(oUpdate.Data.Symbol);
             if (oSymbol == null) return;
             ReceiveCount++;
             IFundingRate oNew = new BitmartFundingRateLocal(oSymbol, oUpdate.Data);
-
+            LastUpdate = DateTime.Now;
             m_aRates.AddOrUpdate(oSymbol.Symbol, p => oNew, (s, p) => { p.Update(oNew); return p; });
         }
     }

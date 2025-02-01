@@ -28,6 +28,5 @@ namespace Crypto.Trading.Bot.Common
         public Task Stop();
 
 
-
     }
 }

@@ -24,5 +24,6 @@ namespace Crypto.Interface.Futures
 
         public IFuturesTrading Trading { get; } 
         public IFuturesAccount Account { get; }
+        public IFuturesSymbolManager SymbolManager { get; }
     }
 }

@@ -4,6 +4,7 @@ using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,8 @@ namespace Crypto.Exchanges.All.Bitget
             FeeTaker = oParsed.TakerFeeRate;    
             Decimals = oParsed.QuantityDecimals;
             Minimum = oParsed.MinOrderQuantity;
+            ContractSize = 1;
+            QuantityDecimals = oParsed.QuantityDecimals;
 
         }
 

@@ -38,19 +38,9 @@ namespace Crypto.Exchanges.All.Bitget
         public async Task<bool> StartSockets()
         {
             await EndSockets();
-            if( m_aSymbols == null )
-            {
-                m_aSymbols = await this.Exchange.Market.GetSymbols();
-                if (m_aSymbols == null) return false;
-            }
-            m_oWebsocket = new BitgetWebsocket(m_oExchange, m_aSymbols);
+            m_oWebsocket = new BitgetWebsocket(m_oExchange);
             bool bResult = await m_oWebsocket.Start();  
-            if( !bResult ) return false;
-            bResult = await m_oWebsocket.SubscribeToMarket(m_aSymbols);
-            if( !bResult ) return false;    
-            bResult = await m_oWebsocket.SubscribeToFundingRates(m_aSymbols);   
 
-            await Task.Delay(1000);
             return bResult;
 
         }
@@ -109,25 +99,5 @@ namespace Crypto.Exchanges.All.Bitget
             return aResult.ToArray();
         }
 
-        /// <summary>
-        /// Get symbol list
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IFuturesSymbol[]?> GetSymbols()
-        {
-            if (m_aSymbols != null) return m_aSymbols;
-            var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.ExchangeData.GetContractsAsync(BitgetProductTypeV2.UsdtFutures);
-            if (oResult == null || oResult.Data == null) return null;
-            if (!oResult.Success) return null;
-            if (oResult.Data.Count() <= 0) return null;
-
-            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
-            foreach (var oParsed in oResult.Data)
-            {
-                aResult.Add(new BitgetSymbol(this.Exchange, oParsed));
-            }
-            m_aSymbols = aResult.ToArray();
-            return m_aSymbols;
-        }
     }
 }

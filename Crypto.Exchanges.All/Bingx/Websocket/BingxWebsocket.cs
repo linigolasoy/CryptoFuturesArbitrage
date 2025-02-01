@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Clients;
 using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
@@ -34,20 +35,18 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
 
         // private string? m_strListenKey = null;
-        private IFuturesSymbol[] m_aSymbols;
 
         private BingxOrderbookManager m_oOrderbookManager;
         private BingxFundingRateManager m_oFundingManager;
-        public BingxWebsocket(BingxFutures oExchange, IFuturesSymbol[] aSymbols)
+        public BingxWebsocket(BingxFutures oExchange)
         {
             m_oExchange = oExchange;
-            m_aSymbols = aSymbols;
             m_oOrderbookManager = new BingxOrderbookManager(this);
-            m_oFundingManager = new BingxFundingRateManager(oExchange, aSymbols);
+            m_oFundingManager = new BingxFundingRateManager(this);
         }
         private BingxFutures m_oExchange;
         public IFuturesExchange Exchange { get => m_oExchange; }
-        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }
+        // public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols; }
 
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
@@ -55,7 +54,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
 
         public IWebsocketManager<IFundingRate> FundingRateManager { get => m_oFundingManager; }
-
 
 
 

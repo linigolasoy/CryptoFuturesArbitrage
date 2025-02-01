@@ -152,7 +152,7 @@ namespace Crypto.Exchanges.All.Bitmart
             IFuturesSymbol[]? aCheckSymbols = aSymbols;
             if( aCheckSymbols == null)
             {
-                aSymbols = await Exchange.Market.GetSymbols();
+                aSymbols = Exchange.SymbolManager.GetAllValues();
             }
             if (aCheckSymbols == null) return null;
             List<IFuturesLeverage> aResult = new List<IFuturesLeverage>();
@@ -166,15 +166,13 @@ namespace Crypto.Exchanges.All.Bitmart
 
         public async Task<IFuturesOrder[]?> GetOrders()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if( aSymbols == null) return null;  
             var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.GetOpenOrdersAsync();
             if( oResult == null || !oResult.Success ) return null;
             if (oResult.Data == null) return null;
             List<IFuturesOrder> aResult = new List<IFuturesOrder>();
             foreach( var oData in oResult.Data )
             {
-                IFuturesSymbol? oFound = aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol );
+                IFuturesSymbol? oFound = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oFound == null) continue;
                 aResult.Add( new BitmartOrder(oFound, oData) );
             }

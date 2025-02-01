@@ -1,5 +1,6 @@
 ﻿using BitMart.Net.Clients;
 using BitMart.Net.Objects;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -7,6 +8,7 @@ using Crypto.Interface.Futures.History;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using CryptoClients.Net;
+using CryptoClients.Net.Enums;
 using CryptoClients.Net.Interfaces;
 using CryptoExchange.Net.Authentication;
 using System;
@@ -40,12 +42,18 @@ namespace Crypto.Exchanges.All.Bitmart
             });
 
             m_oGlobalClient = new ExchangeRestClient();
+            Task<IFuturesSymbol[]?> oTask = GetSymbols();
+            oTask.Wait();
+            if (oTask.Result == null) throw new Exception("No symbols");
+
+            SymbolManager = new FuturesSymbolManager(oTask.Result); 
             Market = new BitmartMarket(this);
             History = new BitmartHistory(this); 
             Account = new BitmartAccount(this); 
             Trading = new BitmartTrading(this); 
         }
 
+        public IFuturesSymbolManager SymbolManager { get; }
         internal BitMartApiCredentials Credentials { get => m_oCredentials; }
         internal IApiKey ApiKey { get => m_oApiKey; }   
         internal IExchangeRestClient GlobalClient { get => m_oGlobalClient; }
@@ -60,5 +68,25 @@ namespace Crypto.Exchanges.All.Bitmart
         public IFuturesTrading Trading { get; }
 
         public IFuturesAccount Account { get; }
+
+
+        /// <summary>
+        /// Get symbols
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private async Task<IFuturesSymbol[]?> GetSymbols()
+        {
+            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetContractsAsync();
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null || oResult.Data.Count() <= 0) return null;
+            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
+            foreach (var oData in oResult.Data)
+            {
+                aResult.Add(new BitmartSymbol(this, oData));
+            }
+            return aResult.ToArray();
+        }
+
     }
 }

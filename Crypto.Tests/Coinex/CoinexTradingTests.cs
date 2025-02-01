@@ -18,7 +18,7 @@ namespace Crypto.Tests.Coinex
         {
             IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -43,7 +43,7 @@ namespace Crypto.Tests.Coinex
 
             await Task.Delay(1000);
             oExchange.Account.OnPrivateEvent += Account_OnPrivateEvent;
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             // Start sockets

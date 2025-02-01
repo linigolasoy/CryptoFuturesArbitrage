@@ -168,7 +168,7 @@ namespace Crypto.Exchanges.All.CoinEx
             IFuturesSymbol[]? aMatch = aSymbols;
             if( aMatch == null )
             {
-                aMatch = await Exchange.Market.GetSymbols();
+                aMatch = Exchange.SymbolManager.GetAllValues();
             }
             if (aMatch == null) return null;
             foreach( var oSymbol in aMatch )
@@ -189,12 +189,10 @@ namespace Crypto.Exchanges.All.CoinEx
             var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.GetOpenOrdersAsync();
             if (oResult == null || !oResult.Success) return null;
             if( oResult.Data == null || oResult.Data.Items == null ) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if (aSymbols == null) return null;
             List<IFuturesOrder> aResult = new List<IFuturesOrder>();
             foreach( var oData in oResult.Data.Items )
             {
-                IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol);
+                IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
                 bool bBuy = false;
                 if (oData.Side == OrderSide.Buy) bBuy = true;

@@ -13,16 +13,17 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 {
     internal class BitgetFundingRateManager : IWebsocketManager<IFundingRate>
     {
-        private IFuturesSymbol[] m_aSymbols;
 
         private ConcurrentDictionary<string, IFundingRate> m_aFundingRates = new ConcurrentDictionary<string, IFundingRate>();
         public int ReceiveCount { get; private set; } = 0;
 
-        public int Count { get=>  m_aFundingRates.Count; }  
+        public int Count { get=>  m_aFundingRates.Count; }
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
 
-        public BitgetFundingRateManager(IFuturesSymbol[] aSymbols ) 
-        { 
-            m_aSymbols = aSymbols;  
+        private IFuturesSymbolManager m_oSymbolManager;
+        public BitgetFundingRateManager(IFuturesWebsocketPublic oWebsocket) 
+        {
+            m_oSymbolManager = oWebsocket.Exchange.SymbolManager;
         }
 
 
@@ -50,13 +51,14 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         public void Put(BitgetFuturesTickerUpdate oTicker )
         {
             ReceiveCount++;
-            IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p=> p.Symbol == oTicker.Symbol);
+            IFuturesSymbol? oFound = m_oSymbolManager.GetSymbol( oTicker.Symbol);
             if (oFound == null) return;
             if (oTicker.FundingRate == null) return;
             if( oTicker.NextFundingTime == null) return;
             IFundingRate oRate = new BitgetFuturesFundingRate(oFound, oTicker);
 
-            m_aFundingRates.AddOrUpdate(oFound.Symbol, p=> oRate, (s, r) => oRate); 
+            m_aFundingRates.AddOrUpdate(oFound.Symbol, p=> oRate, (s, r) => oRate);
+            LastUpdate = DateTime.Now;
             return;
         }
 

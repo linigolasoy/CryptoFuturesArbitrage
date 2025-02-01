@@ -24,7 +24,7 @@ namespace Crypto.Tests.Bitget
         {
             IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -48,7 +48,7 @@ namespace Crypto.Tests.Bitget
             IFuturesExchange oExchange = await BitgetCommon.CreateExchange();
             await Task.Delay(1000);
             oExchange.Account.OnPrivateEvent += Account_OnPrivateEvent;
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             // Start sockets
@@ -114,7 +114,7 @@ namespace Crypto.Tests.Bitget
 
             bool bClose = await oExchange.Trading.ClosePosition(oPosition);
             Assert.IsTrue(bClose);
-            await Task.Delay(50000);
+            await Task.Delay(5000);
             Assert.IsTrue(oPosition.Closed);
 
             aRest = oExchange.Account.PositionManager.GetData();

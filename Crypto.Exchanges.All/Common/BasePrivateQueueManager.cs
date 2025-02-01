@@ -1,4 +1,5 @@
 ﻿using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
 using System;
 using System.Collections.Concurrent;

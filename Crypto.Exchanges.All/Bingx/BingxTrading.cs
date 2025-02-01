@@ -132,7 +132,7 @@ namespace Crypto.Exchanges.All.Bingx
             IFuturesSymbol[]? aRequestSymbols;
             if( aSymbols == null )
             {
-               aRequestSymbols = await Exchange.Market.GetSymbols();
+               aRequestSymbols = Exchange.SymbolManager.GetAllValues();
             }
             else
             {
@@ -166,7 +166,7 @@ namespace Crypto.Exchanges.All.Bingx
         /// <exception cref="NotImplementedException"></exception>
         public async Task<IFuturesOrder[]?> GetOrders()
         {
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();   
+            IFuturesSymbol[]? aSymbols = Exchange.SymbolManager.GetAllValues();   
             if ( aSymbols == null ) return null;
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.GetOpenOrdersAsync();
             if (oResult == null || !oResult.Success) return null;

@@ -19,7 +19,6 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
 
 
 
-        public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
 
         public void Put(DataEvent<IEnumerable<BitMartFuturesOrderUpdateEvent>> oUpdate)
@@ -31,7 +30,7 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
             {
                 if (strSymbol == null) strSymbol = oData.Order.Symbol;
                 if (strSymbol == null) continue;
-                IFuturesSymbol? oFound = this.PrivateSocket.FuturesSymbols.FirstOrDefault(p => p.Symbol == strSymbol);
+                IFuturesSymbol? oFound = this.PrivateSocket.Exchange.SymbolManager.GetSymbol(strSymbol);
                 if (oFound == null) continue;
 
                 IFuturesOrder oOrder = new BitmartOrder(oFound, oData.Event, oData.Order);

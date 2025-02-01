@@ -18,7 +18,7 @@ namespace Crypto.Exchanges.All.Common
         public int ReceiveCount { get; internal set; } = 0;
 
         public int Count { get => m_aBalances.Count; }
-
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
         public BaseBalanceManager(IFuturesWebsocketPrivate oWebsocket) 
         { 
             PrivateSocket = oWebsocket; 
@@ -64,6 +64,7 @@ namespace Crypto.Exchanges.All.Common
 
         internal void PutData( string strKey, IFuturesBalance oNew )
         {
+            LastUpdate = DateTime.Now;
             ReceiveCount++;
             m_aBalances.AddOrUpdate(strKey, (strKey) => AddFunction(oNew), (strKey, oSource) => UpdateFunction(oSource, oNew));
             ReceiveCount++;

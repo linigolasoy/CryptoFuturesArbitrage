@@ -11,7 +11,6 @@ namespace Crypto.Interface.Futures.Market
     {
         public IFuturesExchange Exchange { get; }
 
-        public Task<IFuturesSymbol[]?> GetSymbols();
 
         public Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol);
         public Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols);

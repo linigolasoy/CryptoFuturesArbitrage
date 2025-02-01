@@ -14,7 +14,6 @@ namespace Crypto.Exchanges.All.Bingx
     internal class BingxMarket : IFuturesMarket
     {
         private BingxFutures m_oExchange;
-        private IFuturesSymbol[]? m_aSymbols = null;
         public BingxMarket( BingxFutures oExchange ) 
         { 
             m_oExchange = oExchange;
@@ -30,17 +29,11 @@ namespace Crypto.Exchanges.All.Bingx
         public async Task<bool> StartSockets()
         {
             await EndSockets();
-            if( m_aSymbols == null )
-            {
-                m_aSymbols = await Exchange.Market.GetSymbols();
-                if (m_aSymbols == null) return false;
-
-            }
-            m_oWebsocket = new BingxWebsocket(m_oExchange, m_aSymbols);
+            m_oWebsocket = new BingxWebsocket(m_oExchange);
             
             bool bResult = await m_oWebsocket.Start();
             if( !bResult ) return false;
-            bResult = await m_oWebsocket.SubscribeToMarket(m_aSymbols);
+            bResult = await m_oWebsocket.SubscribeToMarket(m_oExchange.SymbolManager.GetAllValues());
             return bResult;
         }
         public async Task<bool> EndSockets()
@@ -89,26 +82,5 @@ namespace Crypto.Exchanges.All.Bingx
             return aResult.ToArray();
         }
 
-        /// <summary>
-        /// Get futures symbols
-        /// </summary>
-        /// <returns></returns>
-        public async Task<IFuturesSymbol[]?> GetSymbols()
-        {
-            if (m_aSymbols != null) return m_aSymbols;
-            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetContractsAsync();
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
-            if (oResult.Data.Count() <= 0) return null;
-
-            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
-            foreach (BingXContract oData in oResult.Data)
-            {
-                aResult.Add(new BingxSymbol(this.Exchange, oData));
-            }
-
-            m_aSymbols = aResult.ToArray();
-            return m_aSymbols;
-        }
     }
 }

@@ -45,15 +45,13 @@ namespace Crypto.Exchanges.All.Bitmart
         /// <returns></returns>
         public async Task<IFuturesPosition[]?> GetPositions()
         {
-            IFuturesSymbol[]? aSymbols = await this.Exchange.Market.GetSymbols();
-            if (aSymbols == null) return null;
             var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.GetPositionsAsync();
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oData in  oResult.Data )
             {
-                IFuturesSymbol? oFound = aSymbols.FirstOrDefault(p=> p.Symbol == oData.Symbol); 
+                IFuturesSymbol? oFound = Exchange.SymbolManager.GetSymbol(oData.Symbol); 
                 if (oFound == null) continue;
                 aResult.Add(new BitmartPositionLocal(oFound, oData));
             }

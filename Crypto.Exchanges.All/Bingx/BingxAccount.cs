@@ -64,12 +64,10 @@ namespace Crypto.Exchanges.All.Bingx
             var oResult = await m_oGlobalClient.BingX.PerpetualFuturesApi.Trading.GetPositionsAsync();  
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
-            IFuturesSymbol[]? aSymbols = await Exchange.Market.GetSymbols();
-            if (aSymbols == null) return null;
             List<IFuturesPosition> aResult = new List<IFuturesPosition>();
             foreach( var oData in oResult.Data)
             {
-                IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p=> p.Symbol== oData.Symbol); 
+                IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol( oData.Symbol); 
                 if (oSymbol == null) continue;
 
                 IFuturesPosition oNew = new BingxPositionLocal(oSymbol, oData);

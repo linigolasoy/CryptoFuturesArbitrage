@@ -49,9 +49,9 @@ namespace Crypto.Common
 
 
         public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures, ExchangeType.BitmartFutures}; }
-        public decimal Amount { get => 100; }
+        public decimal Amount { get => 20; }
         public int Leverage { get => 10; }
-        public decimal PercentMinimum { get => 0.15M; }
+        public decimal PercentMinimum { get => 0.3M; }
         public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
 
         public static ICryptoSetup? LoadFromFile( string strFile )

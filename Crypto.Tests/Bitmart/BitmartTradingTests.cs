@@ -18,7 +18,7 @@ namespace Crypto.Tests.Bitmart
         {
             IFuturesExchange oExchange = await BitmartCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             IFuturesSymbol? oBtc = aSymbols.FirstOrDefault(p => p.Base == "BTC" && p.Quote == "USDT");
@@ -47,7 +47,7 @@ namespace Crypto.Tests.Bitmart
 
             await Task.Delay(1000);
             oExchange.Account.OnPrivateEvent += Account_OnPrivateEvent;
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
 
             // Start sockets

@@ -23,7 +23,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         private CancellationTokenSource m_oCancelSource = new CancellationTokenSource();
         private IFuturesExchange m_oExchange;
-        private IFuturesSymbol[]? m_aSymbols;
 
         private BingxBalanceManager m_oBalanceManager;
         private BingxOrderManager m_oOrderManager;
@@ -40,7 +39,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get => m_aSymbols!; }
 
         public IWebsocketPrivateManager<IFuturesBalance> BalanceManager { get => m_oBalanceManager; }
 
@@ -56,10 +54,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             await Stop();
             await StartLoop();  
-            m_aSymbols = await m_oExchange.Market.GetSymbols();
-            if (m_aSymbols == null) throw new Exception("No symbols");
-            m_oOrderManager.FuturesSymbols = m_aSymbols;
-            m_oPositionManager.FuturesSymbols = m_aSymbols;
 
             m_oCancelSource = new CancellationTokenSource();
             var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);

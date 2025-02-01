@@ -13,7 +13,6 @@ namespace Crypto.Exchanges.All.Bitmart
         private IExchangeRestClient m_oGlobalClient;
 
         private BitmartFutures m_oExchange;
-        private IFuturesSymbol[]? m_aSymbols = null;
         private BitmartWebsocketPublic? m_oWebsocket = null;
         public BitmartMarket(BitmartFutures oExchange) 
         { 
@@ -60,25 +59,6 @@ namespace Crypto.Exchanges.All.Bitmart
             return aResult.ToArray();
         }
 
-        /// <summary>
-        /// Get symbols
-        /// </summary>
-        /// <returns></returns>
-        /// <exception cref="NotImplementedException"></exception>
-        public async Task<IFuturesSymbol[]?> GetSymbols()
-        {
-            if ( m_aSymbols != null ) return m_aSymbols;
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetContractsAsync();
-            if (oResult == null || !oResult.Success) return null;
-            if( oResult.Data == null || oResult.Data.Count() <= 0 ) return null;    
-            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();  
-            foreach( var oData  in oResult.Data )
-            {
-                aResult.Add( new BitmartSymbol(Exchange, oData));   
-            }
-            m_aSymbols = aResult.ToArray();
-            return m_aSymbols;
-        }
 
         /// <summary>
         /// Starts websockets
@@ -88,17 +68,11 @@ namespace Crypto.Exchanges.All.Bitmart
         public async Task<bool> StartSockets()
         {
             await EndSockets();
-            if (m_aSymbols == null)
-            {
-                m_aSymbols = await Exchange.Market.GetSymbols();
-                if (m_aSymbols == null) return false;
-
-            }
-            m_oWebsocket = new BitmartWebsocketPublic(m_oExchange, m_aSymbols);
+            m_oWebsocket = new BitmartWebsocketPublic(m_oExchange);
 
             bool bResult = await m_oWebsocket.Start();
             if (!bResult) return false;
-            bResult = await m_oWebsocket.SubscribeToMarket(m_aSymbols);
+            // bResult = await m_oWebsocket.SubscribeToMarket(Exchange.SymbolManager.GetAllValues());
             return bResult;
         }
 

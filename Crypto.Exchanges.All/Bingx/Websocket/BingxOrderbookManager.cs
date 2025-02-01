@@ -82,7 +82,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public void Put( string strSymbol, DateTime dDate, BingXOrderBook oParsedBook )
         {
 
-            IFuturesSymbol? oSymbol = m_oWebsocket.FuturesSymbols.FirstOrDefault( p => p.Symbol == strSymbol );
+            IFuturesSymbol? oSymbol = m_oWebsocket.Exchange.SymbolManager.GetSymbol( strSymbol );
             if (oSymbol == null) return;
             
             IOrderbook oBook = new BingxOrderbook(oSymbol, dDate, oParsedBook);

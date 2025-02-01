@@ -27,6 +27,7 @@ namespace Crypto.Exchanges.All.Common
         public BaseOrderbook( IFuturesSymbol oSymbol, DateTime dUpdateDate, DateTime dReceiveDate )
         {
             Symbol = oSymbol;
+            ReceiveDate = DateTime.Now;
             UpdateDate = dUpdateDate;   
             ReceiveDate = dReceiveDate;
         }
@@ -80,6 +81,7 @@ namespace Crypto.Exchanges.All.Common
         public void Update(IOrderbook oNew)
         {
             this.UpdateDate = oNew.UpdateDate;
+            this.ReceiveDate = DateTime.Now;
             this.Asks = oNew.Asks;
             this.Bids = oNew.Bids;
             return;

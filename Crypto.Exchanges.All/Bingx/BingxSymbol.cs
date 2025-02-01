@@ -24,6 +24,8 @@ namespace Crypto.Exchanges.All.Bingx
             FeeTaker = oContract.TakerFeeRate;
             Decimals = oContract.QuantityPrecision;
             Minimum = oContract.MinOrderQuantity;
+            ContractSize = oContract.ContractSize;
+            QuantityDecimals = oContract.QuantityPrecision;
         }
 
     }

@@ -13,7 +13,7 @@ namespace Crypto.Tests.Coinex
         {
             IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
@@ -55,7 +55,7 @@ namespace Crypto.Tests.Coinex
         {
             IFuturesExchange oExchange = await CoinexCommon.CreateExchange();
 
-            IFuturesSymbol[]? aSymbols = await oExchange.Market.GetSymbols();
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 

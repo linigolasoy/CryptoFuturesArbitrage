@@ -23,12 +23,13 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private IFuturesSymbol[] m_aSymbols;
         public int ReceiveCount { get; private set; } = 0;
         public int Count { get => m_aFundingRates.Count; }
-        public BingxFundingRateManager(IFuturesExchange oExchamge, IFuturesSymbol[] aSymbols)
+        public BingxFundingRateManager(IFuturesWebsocketPublic oWebsocket)
         {
-            m_oExchange = oExchamge;
-            m_aSymbols = aSymbols;
+            m_oExchange = oWebsocket.Exchange;
+            m_aSymbols = m_oExchange.SymbolManager.GetAllValues();
         }
 
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;   
 
         /// <summary>
         /// Get all data
@@ -88,6 +89,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                         m_aFundingRates.AddOrUpdate(oShot.Symbol.Symbol, p => oShot, (p, s) => oShot);
                     }
                 }
+                LastUpdate = DateTime.Now;
                 await Task.Delay(2000);
             }
         }

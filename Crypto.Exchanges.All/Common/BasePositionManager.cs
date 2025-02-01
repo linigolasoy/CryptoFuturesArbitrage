@@ -20,6 +20,7 @@ namespace Crypto.Exchanges.All.Common
         public int Count { get => m_aPositions.Count; }
         public IFuturesWebsocketPrivate PrivateSocket { get; }
 
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
         public BasePositionManager(IFuturesWebsocketPrivate oWs)
         { 
             PrivateSocket = oWs;
@@ -69,12 +70,13 @@ namespace Crypto.Exchanges.All.Common
                 ReceiveCount++;
                 m_aPositions.AddOrUpdate(oPos.Symbol.Symbol, p => AddFunction(oPos), (s, p) => UpdateFunction(p,oPos) );
             }
-            
+            LastUpdate = DateTime.Now;
         }
 
         internal void PutData( IFuturesPosition oNew )
         {
             m_aPositions.AddOrUpdate(oNew.Symbol.Symbol, p => AddFunction(oNew), (s, p) => UpdateFunction(p, oNew));
+            LastUpdate = DateTime.Now;
         }
 
         internal void RemoveData( IFuturesPosition oNew )

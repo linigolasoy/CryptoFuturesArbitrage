@@ -9,6 +9,8 @@ namespace Crypto.Exchanges.All.Common
 {
     internal class BaseFuturesSymbol
     {
+
+        private string? m_strToString = null;
         public BaseFuturesSymbol(IFuturesExchange oExchange) 
         { 
             Exchange = oExchange;   
@@ -28,11 +30,18 @@ namespace Crypto.Exchanges.All.Common
 
         public string Quote { get; internal set; } = string.Empty;
         public int Decimals { get; internal set; }
+        public decimal ContractSize { get; internal set; } = 1;
+        public bool UseContractSize { get; internal set; } = false;
+        public int QuantityDecimals { get; internal set; } = 0; 
         public decimal Minimum { get; internal set; }
 
         public override string ToString()
         {
-            return Symbol;
+            if( m_strToString == null)
+            {
+                m_strToString = $"({Exchange.ExchangeType.ToString()}) {Symbol}";
+            }
+            return m_strToString;
         }
     }
 }

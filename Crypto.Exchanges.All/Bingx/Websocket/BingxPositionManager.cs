@@ -20,7 +20,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         { 
         }
 
-        public IFuturesSymbol[] FuturesSymbols { get; internal set; } = Array.Empty<IFuturesSymbol>();
 
 
         public void Put( IEnumerable<BingXFuturesPositionChange> aUpdated )
@@ -28,7 +27,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             List<IFuturesPosition> aPositions = new List<IFuturesPosition>();
             foreach( var oPos in aUpdated)
             {
-                IFuturesSymbol? oSymbol = FuturesSymbols.FirstOrDefault(p=> p.Symbol == oPos.Symbol );
+                IFuturesSymbol? oSymbol = PrivateSocket.Exchange.SymbolManager.GetSymbol( oPos.Symbol );
                 if (oSymbol == null) continue;
                 IFuturesPosition oNew = new BingxPositionLocal(oSymbol, oPos);
                 aPositions.Add(oNew);

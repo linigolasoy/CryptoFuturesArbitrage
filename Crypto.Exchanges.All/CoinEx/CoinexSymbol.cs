@@ -25,6 +25,8 @@ namespace Crypto.Exchanges.All.CoinEx
             FeeTaker = oParsed.MakerFeeRate;    
             Decimals = oParsed.QuantityPrecision;
             Minimum = oParsed.MinOrderQuantity;
+            QuantityDecimals = oParsed.QuantityPrecision;
+            ContractSize = 1;
         }
     }
 }

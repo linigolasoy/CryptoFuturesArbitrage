@@ -17,6 +17,7 @@ namespace Crypto.Exchanges.All.Common
         public int ReceiveCount { get; private set; } = 0;
         public int Count { get => m_aOrders.Count; }
 
+        public DateTime LastUpdate { get; private set; } = DateTime.Now;
         public IFuturesWebsocketPrivate PrivateSocket { get; }
         public BaseOrderManager( IFuturesWebsocketPrivate oWebsocket )
         {
@@ -48,6 +49,7 @@ namespace Crypto.Exchanges.All.Common
         internal void PutData( string nKey, IFuturesOrder oNew )
         {
             ReceiveCount++;
+            LastUpdate = oNew.TimeUpdated;
             m_aOrders.AddOrUpdate(oNew.Id, p => AddFunction(oNew), (s, p) => UpdateFunction(p,oNew) );
         }
 
@@ -57,6 +59,7 @@ namespace Crypto.Exchanges.All.Common
             {
                 ReceiveCount++;
                 m_aOrders.AddOrUpdate(oNew.Id, p => AddFunction(oNew), (s, p) => UpdateFunction(p, oNew));
+                LastUpdate = oNew.TimeUpdated;
 
             }
         }

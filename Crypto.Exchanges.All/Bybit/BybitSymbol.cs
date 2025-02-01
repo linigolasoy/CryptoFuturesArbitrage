@@ -1,4 +1,5 @@
 ﻿using Bybit.Net.Objects.Models.V5;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bybit
 {
-    internal class BybitSymbol : IFuturesSymbol
+    internal class BybitSymbol : BaseFuturesSymbol, IFuturesSymbol
     {
 
         private static List<string> aBases = new List<string>();
-        public BybitSymbol(IFuturesExchange oExchange, BybitLinearInverseSymbol oParsed) 
+        public BybitSymbol(IFuturesExchange oExchange, BybitLinearInverseSymbol oParsed) :
+            base(oExchange)
         { 
-            Exchange = oExchange;
             Symbol = oParsed.Name;
             string strBase = oParsed.BaseAsset;
 
@@ -33,23 +34,5 @@ namespace Crypto.Exchanges.All.Bybit
 
         }
 
-        public IFuturesExchange Exchange { get; }
-        public int LeverageMax { get; }
-
-        public int LeverageMin { get; }
-
-        public decimal FeeMaker { get; }
-
-        public decimal FeeTaker { get; }
-
-        public string Symbol { get; }
-
-        public string Base { get; }
-
-        public string Quote { get; }
-
-        public int Decimals => throw new NotImplementedException();
-
-        public decimal Minimum => throw new NotImplementedException();
     }
 }

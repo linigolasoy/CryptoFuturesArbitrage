@@ -17,17 +17,17 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     {
 
 
-        private IFuturesSymbol[] m_aSymbols;
-        public BitgetOrderbookManager(IFuturesSymbol[] aSymbols) 
-        { 
-            m_aSymbols = aSymbols;
+        private IFuturesSymbolManager m_oSymbolManager;
+        public BitgetOrderbookManager(IFuturesWebsocketPublic oWebsocket) 
+        {
+            m_oSymbolManager = oWebsocket.Exchange.SymbolManager;
         }
 
 
 
         public void Put(string strSymbol, BitgetOrderBookUpdate oUpdate)
         {
-            IFuturesSymbol? oFound = m_aSymbols.FirstOrDefault(p => p.Symbol == strSymbol);
+            IFuturesSymbol? oFound = m_oSymbolManager.GetSymbol(strSymbol);
             if (oFound == null) return;
             IOrderbook oOrderbook = new BitgetOrderbook(oFound,oUpdate);
             this.Update(oOrderbook);

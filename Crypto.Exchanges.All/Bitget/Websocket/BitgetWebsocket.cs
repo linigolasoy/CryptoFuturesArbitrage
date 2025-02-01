@@ -2,6 +2,7 @@
 using Bitget.Net.Enums;
 using Bitget.Net.Objects.Models.V2;
 using CoinEx.Net.Clients;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -21,6 +22,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
     internal class BitgetWebsocket : IFuturesWebsocketPublic
     {
 
+
         private BitgetSocketClient? m_oFundingClient = null;
         private BitgetSocketClient? m_oMarketClient = null;
 
@@ -28,20 +30,15 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
         private BitgetFundingRateManager m_oFundingManager;
         private BitgetOrderbookManager m_oOrderbookManager;
-        public BitgetWebsocket( BitgetFutures oExchange, IFuturesSymbol[] aSymbols ) 
+        public BitgetWebsocket(BitgetFutures oExchange)
         { 
             m_oExchange = oExchange;
-            FuturesSymbols = aSymbols;
-            m_oFundingManager = new BitgetFundingRateManager(aSymbols);
-            m_oOrderbookManager = new BitgetOrderbookManager(aSymbols);
+            m_oFundingManager = new BitgetFundingRateManager(this);
+            m_oOrderbookManager = new BitgetOrderbookManager(this);
         }
         public IFuturesExchange Exchange { get => m_oExchange; }
 
-        public IFuturesSymbol[] FuturesSymbols { get; }
 
-        public IWebsocketManager<IFuturesOrder> FuturesOrderManager => throw new NotImplementedException();
-
-        public IWebsocketManager<IFuturesPosition> FuturesPositionManager => throw new NotImplementedException();
 
         public IOrderbookManager OrderbookManager { get => m_oOrderbookManager; }
 
@@ -51,27 +48,13 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         public async Task<bool> Start()
         {
             await Stop();
-            /*
-            m_oPrivateClient = new BitgetSocketClient();
-            m_oPrivateClient.SetApiCredentials(m_oExchange.ApiCredentials);
-            await m_oPrivateClient.FuturesApiV2.PrepareConnectionsAsync();  
-            try
-            {
-                var oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToBalanceUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnBalance);
-                if (oResult == null || !oResult.Success) return false;
 
-                oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToOrderUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnOrder);
-                if (oResult == null || !oResult.Success) return false;
 
-                oResult = await m_oPrivateClient.FuturesApiV2.SubscribeToPositionUpdatesAsync(BitgetProductTypeV2.UsdtFutures, OnPosition);
-                if (oResult == null || !oResult.Success) return false;
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-            */
-            return true;
+            bool bResult = await SubscribeToMarket(Exchange.SymbolManager.GetAllValues());
+            if (!bResult) return false;
+            bResult = await SubscribeToFundingRates(Exchange.SymbolManager.GetAllValues());
+
+            return bResult;
         }
 
         public async Task Stop()
@@ -92,7 +75,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
                 m_oFundingClient.Dispose();
                 m_oFundingClient = null;
             }
-
+            
             if( m_oMarketClient != null)
             {
                 await m_oMarketClient.UnsubscribeAllAsync();    
@@ -100,6 +83,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
                 m_oMarketClient.Dispose();
                 m_oMarketClient = null;
             }
+            
             return;
         }
 
@@ -115,47 +99,33 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
             return true;
         }
 
+        public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
+        {
+            if (m_oMarketClient != null) return true;
+            m_oMarketClient = new BitgetSocketClient();
+            string[] aSymbolString = aSymbols.Select(s => s.Symbol.ToString()).ToArray();
 
-        private async Task<bool> SubscribeToOrderBook( IFuturesSymbol oSymbol )
+            var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync( BitgetProductTypeV2.UsdtFutures, aSymbolString, 15, OnOrderBook);
+            if (oResult == null || !oResult.Success) return false;
+            return true;
+        }
+
+        /*
+        private async Task<bool> SubscribeToOrderBook( IFuturesSymbol[] aSymbols )
         {
             if (m_oMarketClient == null) return false;
-            var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync(BitgetProductTypeV2.UsdtFutures, oSymbol.Symbol, 15, OnOrderBook);
+            string[] aSymbolString = aSymbols.Select(p => p.Symbol).ToArray();
+            var oResult = await m_oMarketClient.FuturesApiV2.SubscribeToOrderBookUpdatesAsync(BitgetProductTypeV2.UsdtFutures, aSymbolString, 15, OnOrderBook);
             if (oResult == null || !oResult.Success) return false;
             return true;
 
         }
-        public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
-        {
-            if (m_oMarketClient == null)
-            {
-                m_oMarketClient = new BitgetSocketClient();
-            }
-            await m_oMarketClient.UnsubscribeAllAsync();
-            List<Task<bool>> aTasks = new List<Task<bool>>();
 
-            foreach( var symbol in aSymbols) 
-            {
-                if( aTasks.Count >= BitgetFutures.TASK_COUNT )
-                {
-                    await Task.WhenAll( aTasks );
-                    if (aTasks.Any(p => !p.Result)) return false;
-                    aTasks.Clear();
-                }
-                aTasks.Add(SubscribeToOrderBook( symbol )); 
-            }
-            
-            if( aTasks.Count > 0 )
-            {
-                await Task.WhenAll( aTasks );
-                if (aTasks.Any(p => !p.Result)) return false;
-            }
-            return true;
-        }
-
-        private void OnOrderBook( DataEvent<BitgetOrderBookUpdate> oEvent )
+        */
+        private void OnOrderBook(DataEvent<BitgetOrderBookUpdate> oEvent)
         {
-            if( oEvent == null || oEvent.Data == null ) return; 
-            if( oEvent.Symbol == null ) return; 
+            if (oEvent == null || oEvent.Data == null) return;
+            if (oEvent.Symbol == null) return;
             m_oOrderbookManager.Put(oEvent.Symbol, oEvent.Data);
         }
 

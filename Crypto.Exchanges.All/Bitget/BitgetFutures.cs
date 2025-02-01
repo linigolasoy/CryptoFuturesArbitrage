@@ -5,6 +5,7 @@ using Bitget.Net.Enums.V2;
 using Bitget.Net.Objects;
 using Crypto.Common;
 using Crypto.Exchanges.All.Bitget.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
@@ -46,12 +47,18 @@ namespace Crypto.Exchanges.All.Bitget
                 options.ApiCredentials = m_oApiCredentials;
             });
             m_oGlobalClient = new ExchangeRestClient();
+
+            Task<IFuturesSymbol[]?> oTask = GetSymbols();
+            oTask.Wait();
+            if (oTask.Result == null) throw new Exception("No symbols");
+            SymbolManager = new FuturesSymbolManager(oTask.Result);
             Trading = new BitgetTrading(this, m_oApiCredentials);
             Account = new BitgetAccount(this, m_oGlobalClient);
             Market = new BitgetMarket(this);
             History = new BitgetHistory(this);  
         }
 
+        public IFuturesSymbolManager SymbolManager { get; }
         public IFuturesMarket Market { get; }
         public IFuturesHistory History { get; }
         public IFuturesTrading Trading { get; }
@@ -69,12 +76,28 @@ namespace Crypto.Exchanges.All.Bitget
         /// <returns></returns>
         public async Task<IFuturesWebsocketPublic?> CreateWebsocket()
         {
-            IFuturesSymbol[]? aSymbols = await Market.GetSymbols();
-            if (aSymbols == null) return null;
-            return new BitgetWebsocket(this, aSymbols); 
+            return new BitgetWebsocket(this); 
         }
 
 
+        /// <summary>
+        /// Get symbol list
+        /// </summary>
+        /// <returns></returns>
+        private async Task<IFuturesSymbol[]?> GetSymbols()
+        {
+            var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.ExchangeData.GetContractsAsync(BitgetProductTypeV2.UsdtFutures);
+            if (oResult == null || oResult.Data == null) return null;
+            if (!oResult.Success) return null;
+            if (oResult.Data.Count() <= 0) return null;
+
+            List<IFuturesSymbol> aResult = new List<IFuturesSymbol>();
+            foreach (var oParsed in oResult.Data)
+            {
+                aResult.Add(new BitgetSymbol(this, oParsed));
+            }
+            return aResult.ToArray();
+        }
 
 
     }

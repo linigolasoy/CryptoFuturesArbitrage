@@ -30,7 +30,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
             foreach( var oParsed in aOrders )
             {
-                IFuturesSymbol? oSymbol = this.PrivateSocket.FuturesSymbols.FirstOrDefault(p=> p.Symbol == oParsed.Symbol);
+                IFuturesSymbol? oSymbol = this.PrivateSocket.Exchange.SymbolManager.GetSymbol( oParsed.Symbol);
                 if (oSymbol == null) continue;
                 IFuturesOrder oNew = new BitgetOrder(oSymbol, oParsed);
                 aList.Add(oNew);    

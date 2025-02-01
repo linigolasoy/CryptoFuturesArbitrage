@@ -24,7 +24,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
 
         public void Put(CoinExFuturesOrderUpdate oOrder)
         {
-            IFuturesSymbol? oSymbol = PrivateSocket.FuturesSymbols.FirstOrDefault(p=> p.Symbol == oOrder.Order.Symbol);
+            IFuturesSymbol? oSymbol = PrivateSocket.Exchange.SymbolManager.GetSymbol(oOrder.Order.Symbol);
             if (oSymbol == null) return;
             bool bBuy = false;
             if( oOrder.Order.Side == OrderSide.Buy ) bBuy = true;
