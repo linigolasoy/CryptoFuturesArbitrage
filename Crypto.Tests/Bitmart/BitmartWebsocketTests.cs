@@ -51,6 +51,23 @@ namespace Crypto.Tests.Bitmart
             Assert.IsNotNull(aData);
             Assert.IsTrue(aData.Length >= aSymbols.Length - 2);
 
+
+            decimal nDelay = 0;
+            decimal nMaxDelay = 0;
+            decimal nMinDelay = 9E10M;
+            IOrderbook? oMaxData = null;
+
+            foreach (var oData in aData)
+            {
+                decimal nActDelay = (decimal)(oData.ReceiveDate - oData.UpdateDate).TotalMilliseconds;
+                if (nActDelay > nMaxDelay) { nMaxDelay = nActDelay; oMaxData = oData; }
+                if (nActDelay < nMinDelay) { nMinDelay = nActDelay; }
+                nDelay += nActDelay;
+            }
+            nDelay /= (decimal)aData.Length;
+
+            decimal nDelayGlobal = (decimal)(DateTime.Now - oExchange.Market.Websocket.OrderbookManager.LastUpdate).TotalMilliseconds;
+
             IOrderbook? oBtc = aData.FirstOrDefault(p => p.Symbol.Base == "BTC" && p.Symbol.Quote == "USDT");
             Assert.IsNotNull(oBtc);
 

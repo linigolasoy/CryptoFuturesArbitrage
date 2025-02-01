@@ -25,11 +25,11 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
 
 
 
-        public void Put(string strSymbol, BitgetOrderBookUpdate oUpdate)
+        public void Put(string strSymbol, DateTime dTimestamp, BitgetOrderBookUpdate oUpdate)
         {
             IFuturesSymbol? oFound = m_oSymbolManager.GetSymbol(strSymbol);
             if (oFound == null) return;
-            IOrderbook oOrderbook = new BitgetOrderbook(oFound,oUpdate);
+            IOrderbook oOrderbook = new BitgetOrderbook(oFound, dTimestamp, oUpdate);
             this.Update(oOrderbook);
             return;
         }

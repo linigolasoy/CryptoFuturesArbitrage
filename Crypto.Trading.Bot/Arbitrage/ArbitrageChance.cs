@@ -9,7 +9,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 {
     internal class ArbitrageChance : IArbitrageChance
     {
-
+        private const decimal MAXIMUM_ORDERBOOK_DELAY = 500;
         public ArbitrageChance( IOrderbook oBookBuy, IOrderbook oBookSell ) 
         {
             BuyPosition = new ArbitragePosition(this, oBookBuy);
@@ -33,6 +33,13 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public decimal Percent { get; private set; } = 0;
 
+
+        private decimal CalculateDelay( IOrderbookPrice oPriceBuy, IOrderbookPrice oPriceSell )
+        {
+            double nDelayBuy = (oPriceBuy.Orderbook.ReceiveDate - oPriceBuy.Orderbook.UpdateDate).TotalMilliseconds;
+            double nDelaySell = (oPriceSell.Orderbook.ReceiveDate - oPriceSell.Orderbook.UpdateDate).TotalMilliseconds;
+            return (decimal) Math.Max(nDelayBuy, nDelaySell);
+        }
         public bool CalculateArbitrage(decimal nMoney)
         {
             DateTime dNow = DateTime.Now;
@@ -41,9 +48,8 @@ namespace Crypto.Trading.Bot.Arbitrage
                 IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(true, null, nMoney);
                 IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(false, null, nMoney);
                 if (oPriceBuy == null || oPriceSell == null) return false;
-                double nMilliseconds = 2000;
-                if ((dNow - oPriceBuy.Orderbook.UpdateDate).TotalMilliseconds > nMilliseconds) return false;
-                if ((dNow - oPriceSell.Orderbook.UpdateDate).TotalMilliseconds > nMilliseconds) return false;
+                decimal nDelay = CalculateDelay(oPriceBuy, oPriceSell);
+
                 if (oPriceBuy.Orderbook.Asks.Length < 5) return false;
                 if (oPriceSell.Orderbook.Bids.Length < 5) return false;
                 decimal nBuyPrice = Math.Max(oPriceBuy.Price, oPriceBuy.Orderbook.Asks[2].Price);
@@ -82,8 +88,8 @@ namespace Crypto.Trading.Bot.Arbitrage
                 decimal nProfitBuy = (nBuyPrice - this.BuyOpenPrice) * Quantity;
                 decimal nProfitSell = (this.SellOpenPrice - nSellPrice) * Quantity;
                 Profit = nProfitBuy + nProfitSell;
-                BuyClosePrice = oPriceBuy.Price;
-                SellClosePrice = oPriceSell.Price;
+                BuyClosePrice = nBuyPrice;
+                SellClosePrice = nSellPrice;
             }
             catch( Exception ex ) { return false; }
             return true;

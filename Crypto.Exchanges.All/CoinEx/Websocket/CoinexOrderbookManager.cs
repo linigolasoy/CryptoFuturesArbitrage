@@ -23,11 +23,11 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         }
 
 
-        public void Put(CoinExOrderBook oParsed)
+        public void Put(DateTime dTimestamp, CoinExOrderBook oParsed)
         {
             IFuturesSymbol? oFound = m_oSymbolManager.GetSymbol(oParsed.Symbol);
             if (oFound == null) return;
-            CoinexOrderbook oBook = new CoinexOrderbook(oFound, oParsed);
+            CoinexOrderbook oBook = new CoinexOrderbook(oFound, dTimestamp, oParsed);
             this.Update(oBook);
 
             return;

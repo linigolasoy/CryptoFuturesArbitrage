@@ -249,11 +249,11 @@ namespace Crypto.Trading.Bot.Arbitrage
             // Buy
             List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
 
-            aTasks.Add(oChance.BuyPosition.Symbol.Exchange.Trading.CreateMarketOrder(oChance.BuyPosition.Symbol, true, oChance.Quantity));
-            aTasks.Add(oChance.SellPosition.Symbol.Exchange.Trading.CreateMarketOrder(oChance.SellPosition.Symbol, false, oChance.Quantity));
+            aTasks.Add(oChance.BuyPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.BuyPosition.Symbol, true, oChance.Quantity, oChance.BuyOpenPrice));
+            aTasks.Add(oChance.SellPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.SellPosition.Symbol, false, oChance.Quantity, oChance.SellOpenPrice));
             await Task.WhenAll(aTasks); 
 
-            Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} Sell {oChance.SellPosition.Symbol.ToString()} Percent {oChance.Percent}");
+            Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} at {oChance.BuyOpenPrice} Sell {oChance.SellPosition.Symbol.ToString()} at {oChance.SellOpenPrice} Percent {oChance.Percent}");
             oChance.ChanceStatus = ChanceStatus.Position;
 
             return oChance;
@@ -309,8 +309,9 @@ namespace Crypto.Trading.Bot.Arbitrage
                 IFuturesBalance? oFound = aBalances.FirstOrDefault(p => p.Currency == "USDT");
                 if( oFound == null ) continue;
                 if( oBuildBalance.Length > 0 ) { oBuildBalance.Append(", "); }
-                oBuildBalance.Append($" {oExchange.ExchangeType.ToString()} : {oFound.Equity}");
-                nResult += oFound.Equity;
+                decimal nBalance = Math.Round(oFound.Equity, 2);
+                oBuildBalance.Append($" {oExchange.ExchangeType.ToString()} : {nBalance}");
+                nResult += nBalance;
             }
 
             DateTime dNow = DateTime.Now;
@@ -354,7 +355,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             StringBuilder oBuild = new StringBuilder();
             foreach( var oType in aDelays.Keys )
             {
-                if( oBuild.Length <= 0) oBuild.Append(", ");
+                if( oBuild.Length > 0) oBuild.Append(", ");
                 oBuild.Append($"{oType.ToString()} ({aDelays[oType] / 1000M})");
             }
 
@@ -381,7 +382,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                     IArbitrageChance? oChance = FindChance(aChances);
                     if (oChance != null)
                     {
-                        // m_oChance = await ActOnChance(oChance, Setup.Leverage * Setup.Amount);
+                        m_oChance = await ActOnChance(oChance, Setup.Leverage * Setup.Amount);
                         if( m_oChance == null )
                         {
                             if( oChance.Percent > nBestPercent )

@@ -126,7 +126,7 @@ namespace Crypto.Exchanges.All.Bitget.Websocket
         {
             if (oEvent == null || oEvent.Data == null) return;
             if (oEvent.Symbol == null) return;
-            m_oOrderbookManager.Put(oEvent.Symbol, oEvent.Data);
+            m_oOrderbookManager.Put(oEvent.Symbol, oEvent.Timestamp, oEvent.Data);
         }
 
         private void OnTicker(DataEvent<BitgetFuturesTickerUpdate> oEvent)

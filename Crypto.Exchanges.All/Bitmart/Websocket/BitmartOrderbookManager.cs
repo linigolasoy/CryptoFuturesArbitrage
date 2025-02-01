@@ -25,7 +25,7 @@ namespace Crypto.Exchanges.All.Bitmart.Websocket
             if (oUpdate == null || oUpdate.Data == null) return;
             IFuturesSymbol? oSymbol = m_oWebsocket.Exchange.SymbolManager.GetSymbol(oUpdate.Data.Symbol);
             if (oSymbol == null) return;
-            IOrderbook oOrderbook = new BitmartOrderbook(oSymbol, oUpdate.Data);
+            IOrderbook oOrderbook = new BitmartOrderbook(oSymbol, oUpdate.Timestamp, oUpdate.Data);
             this.Update(oOrderbook);    
         }
     }

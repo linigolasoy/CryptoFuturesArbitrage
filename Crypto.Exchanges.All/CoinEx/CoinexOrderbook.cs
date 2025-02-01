@@ -14,8 +14,8 @@ namespace Crypto.Exchanges.All.CoinEx
     internal class CoinexOrderbook: BaseOrderbook, IOrderbook
     {
 
-        public CoinexOrderbook( IFuturesSymbol oSymbol, CoinExOrderBook oParsed) :
-            base(oSymbol, oParsed.Data.UpdateTime.ToLocalTime(), DateTime.Now)
+        public CoinexOrderbook( IFuturesSymbol oSymbol, DateTime dTimestamp, CoinExOrderBook oParsed) :
+            base(oSymbol, dTimestamp.ToLocalTime(), DateTime.Now)
         { 
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oParsed.Data.Asks.OrderBy(p => p.Price))

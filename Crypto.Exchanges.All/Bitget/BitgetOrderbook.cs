@@ -19,8 +19,8 @@ namespace Crypto.Exchanges.All.Bitget
     internal class BitgetOrderbook : BaseOrderbook, IOrderbook
     {
 
-        public BitgetOrderbook(IFuturesSymbol oSymbol, BitgetOrderBookUpdate oUpdate):
-            base(oSymbol, oUpdate.Timestamp.ToLocalTime(), DateTime.Now)
+        public BitgetOrderbook(IFuturesSymbol oSymbol, DateTime dTimestamp, BitgetOrderBookUpdate oUpdate):
+            base(oSymbol, dTimestamp.ToLocalTime(), DateTime.Now)
         { 
 
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();

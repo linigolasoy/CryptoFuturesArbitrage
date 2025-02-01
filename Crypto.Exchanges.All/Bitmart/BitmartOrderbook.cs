@@ -11,8 +11,8 @@ namespace Crypto.Exchanges.All.Bitmart
 {
     internal class BitmartOrderbook : BaseOrderbook, IOrderbook
     {
-        public BitmartOrderbook(IFuturesSymbol oSymbol, BitMartFuturesFullOrderBookUpdate oUpdate) :
-            base(oSymbol, oUpdate.Timestamp.ToLocalTime(), DateTime.Now)
+        public BitmartOrderbook(IFuturesSymbol oSymbol, DateTime dTimestamp, BitMartFuturesFullOrderBookUpdate oUpdate) :
+            base(oSymbol, dTimestamp.ToLocalTime(), DateTime.Now)
         {
             List<IOrderbookPrice> aAsks = new List<IOrderbookPrice>();
             foreach (var item in oUpdate.Asks.OrderBy(p => p.Price))
