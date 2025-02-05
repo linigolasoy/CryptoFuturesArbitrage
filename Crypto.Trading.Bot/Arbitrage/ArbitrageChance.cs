@@ -7,31 +7,49 @@ using System.Threading.Tasks;
 
 namespace Crypto.Trading.Bot.Arbitrage
 {
+
+    internal class ArbitrageMoney : IArbitrageMoney
+    {
+        public ArbitrageMoney( IArbitrageChance oChance ) 
+        { 
+            Chance = oChance;
+        }
+        public IArbitrageChance Chance { get; }
+
+        public decimal Profit { get; set; } = 0;
+
+        public decimal Quantity { get; set; } = 0;
+
+        public decimal BuyOpenPrice { get; set; } = 0;
+        public decimal SellOpenPrice { get; set; } = 0;
+
+        public decimal BuyClosePrice { get; set; } = 0;
+
+        public decimal SellClosePrice { get; set; } = 0;
+
+        public decimal Percent { get; internal set; } = 0;
+    }
+
     internal class ArbitrageChance : IArbitrageChance
     {
         private const decimal MAXIMUM_ORDERBOOK_DELAY = 500;
-        public ArbitrageChance( IOrderbook oBookBuy, IOrderbook oBookSell ) 
+        public ArbitrageChance( IOrderbook[] aOrderbooks ) /* oBookBuy, IOrderbook oBookSell ) */
         {
-            BuyPosition = new ArbitragePosition(this, oBookBuy);
-            SellPosition = new ArbitragePosition(this, oBookSell);
-        }    
+            // BuyPosition = new ArbitragePosition(this, oBookBuy);
+            // SellPosition = new ArbitragePosition(this, oBookSell);
+            Currency = aOrderbooks[0].Symbol.Base;
+            Money = new ArbitrageMoney(this);
+            Orderbooks = aOrderbooks;   
+        }
+
+        public string Currency { get; }
         public ChanceStatus ChanceStatus { get; set ; } = ChanceStatus.None;    
+        public IOrderbook[] Orderbooks { get; }
+        public IArbitragePosition? BuyPosition { get; private set; }
 
-        public IArbitragePosition BuyPosition { get; private set; }
+        public IArbitragePosition? SellPosition { get; private set; }
 
-        public IArbitragePosition SellPosition { get; private set; }
-
-        public decimal Profit { get; private set; } = 0;
-
-        public decimal Quantity { get; private set; } = 0;
-
-        public decimal BuyOpenPrice { get; set; } = 0;
-        public decimal BuyClosePrice { get; private set; } = 0;
-
-        public decimal SellOpenPrice { get; set; } = 0;
-        public decimal SellClosePrice { get; private set; } = 0;
-
-        public decimal Percent { get; private set; } = 0;
+        public IArbitrageMoney Money { get; private set; }  
 
 
         private decimal CalculateDelay( IOrderbookPrice oPriceBuy, IOrderbookPrice oPriceSell )
@@ -42,9 +60,57 @@ namespace Crypto.Trading.Bot.Arbitrage
         }
         public bool CalculateArbitrage(decimal nMoney)
         {
+            BuyPosition = null;
+            SellPosition = null;
+
             DateTime dNow = DateTime.Now;
             try
             {
+                IOrderbookPrice? oBestBuy = null;
+                IOrderbookPrice? oBestSell = null;
+
+                foreach (IOrderbook oBook in Orderbooks)
+                {
+                    IOrderbookPrice? oPriceBuy = oBook.GetBestPrice(true, null, nMoney);
+                    IOrderbookPrice? oPriceSell = oBook.GetBestPrice(false, null, nMoney);
+                    if (oPriceBuy == null || oPriceSell == null) continue;
+
+                    if (oBestBuy == null)
+                    {
+                        oBestBuy = oPriceBuy;
+                    }
+                    else if (oPriceBuy.Price < oBestBuy.Price )
+                    {
+                        oBestBuy = oPriceBuy;
+                    }
+                    if (oBestSell == null)
+                    {
+                        oBestSell = oPriceSell;
+                    }
+                    else if (oPriceSell.Price > oBestSell.Price)
+                    {
+                        oBestSell = oPriceSell;
+                    }
+                }
+
+                if (oBestBuy == null || oBestSell == null) return false;
+                if( oBestBuy.Orderbook.Symbol.Exchange.ExchangeType == oBestSell.Orderbook.Symbol.Exchange.ExchangeType ) return false;
+                if( oBestBuy.Price >= oBestSell.Price ) return false;
+                BuyPosition = new ArbitragePosition(this, oBestBuy.Orderbook);
+                SellPosition = new ArbitragePosition(this, oBestSell.Orderbook);
+
+                int nPrecision = (BuyPosition.Symbol.QuantityDecimals < SellPosition.Symbol.QuantityDecimals ? BuyPosition.Symbol.QuantityDecimals : SellPosition.Symbol.QuantityDecimals);
+                decimal nMaxPrice = Math.Max(oBestBuy.Price, oBestSell.Price);
+                decimal nQuantity = Math.Round(nMoney / nMaxPrice, nPrecision);
+                ArbitrageMoney oMoney = new ArbitrageMoney(this);
+                oMoney.Quantity = nQuantity;
+                oMoney.BuyOpenPrice = oBestBuy.Price;
+                oMoney.SellOpenPrice = oBestSell.Price;
+                oMoney.Percent = Math.Round((oMoney.SellOpenPrice - oMoney.BuyOpenPrice) * 100.0M / oMoney.SellOpenPrice, 3);
+
+                Money = oMoney;
+
+                /*
                 IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(true, null, nMoney);
                 IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(false, null, nMoney);
                 if (oPriceBuy == null || oPriceSell == null) return false;
@@ -54,15 +120,9 @@ namespace Crypto.Trading.Bot.Arbitrage
                 if (oPriceSell.Orderbook.Bids.Length < 5) return false;
                 decimal nBuyPrice = Math.Max(oPriceBuy.Price, oPriceBuy.Orderbook.Asks[2].Price);
                 decimal nSellPrice = Math.Min(oPriceSell.Price, oPriceSell.Orderbook.Bids[2].Price);
-                int nPrecision = (BuyPosition.Symbol.QuantityDecimals < SellPosition.Symbol.QuantityDecimals ? BuyPosition.Symbol.QuantityDecimals : SellPosition.Symbol.QuantityDecimals);
-                decimal nMaxPrice = Math.Max(oPriceBuy.Price, oPriceSell.Price);
-                decimal nQuantity = Math.Round(nMoney / nMaxPrice, nPrecision);
-                Quantity = nQuantity;
-                BuyOpenPrice = nBuyPrice;
-                SellOpenPrice = nSellPrice;
-                Percent = Math.Round((SellOpenPrice - BuyOpenPrice) * 100.0M / SellOpenPrice, 3);
+                */
             }
-            catch( Exception ex )
+            catch ( Exception ex )
             {
                 return false;
             }
@@ -74,22 +134,23 @@ namespace Crypto.Trading.Bot.Arbitrage
         {
             try
             {
-                IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(false, Quantity, null);
-                IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(true, Quantity, null);
+                if (Money == null || BuyPosition == null || SellPosition == null ) return false;
+                IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(false, Money.Quantity, null);
+                IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(true, Money.Quantity, null);
                 if (oPriceBuy == null || oPriceSell == null) return false;
                 if (BuyPosition.Position == null || SellPosition.Position == null) return false;
-                if (oPriceBuy.Orderbook.Bids.Length < 5) return false;
-                if (oPriceSell.Orderbook.Asks.Length < 5) return false;
+                // if (oPriceBuy.Orderbook.Bids.Length < 5) return false;
+                // if (oPriceSell.Orderbook.Asks.Length < 5) return false;
 
 
-                decimal nBuyPrice = Math.Min(oPriceBuy.Price, oPriceBuy.Orderbook.Bids[2].Price);
-                decimal nSellPrice = Math.Max(oPriceSell.Price, oPriceSell.Orderbook.Asks[2].Price);
+                decimal nBuyPrice = oPriceBuy.Price; // Math.Min(oPriceBuy.Price, oPriceBuy.Orderbook.Bids[2].Price);
+                decimal nSellPrice = oPriceSell.Price; //  Math.Max(oPriceSell.Price, oPriceSell.Orderbook.Asks[2].Price);
 
-                decimal nProfitBuy = (nBuyPrice - this.BuyOpenPrice) * Quantity;
-                decimal nProfitSell = (this.SellOpenPrice - nSellPrice) * Quantity;
-                Profit = nProfitBuy + nProfitSell;
-                BuyClosePrice = nBuyPrice;
-                SellClosePrice = nSellPrice;
+                decimal nProfitBuy = (nBuyPrice - this.Money.BuyOpenPrice) * Money.Quantity;
+                decimal nProfitSell = (this.Money.SellOpenPrice - nSellPrice) * Money.Quantity;
+                Money.Profit = nProfitBuy + nProfitSell;
+                Money.BuyClosePrice = nBuyPrice;
+                Money.SellClosePrice = nSellPrice;
             }
             catch( Exception ex ) { return false; }
             return true;
@@ -100,17 +161,9 @@ namespace Crypto.Trading.Bot.Arbitrage
         public void Reset()
         {
             this.ChanceStatus =  ChanceStatus.None;
-            this.BuyClosePrice = 0;
-            this.SellClosePrice = 0;
-            this.Profit = 0;
-            this.Quantity = 0;
-            this.BuyOpenPrice = 0;
-            this.BuyClosePrice = 0;
-            this.SellOpenPrice = 0;
-            this.SellClosePrice = 0;
-            this.Percent = 0;
-            this.BuyPosition.Position = null;
-            this.SellPosition.Position = null;
+            this.Money = new ArbitrageMoney(this);  
+            this.BuyPosition = null;
+            this.SellPosition = null;
         }
     }
 }

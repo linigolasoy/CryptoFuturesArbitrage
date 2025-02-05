@@ -2,12 +2,16 @@
 using Bitget.Net.Enums;
 using Bitget.Net.Enums.V2;
 using Bitget.Net.Objects;
+using Bitget.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
+using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
+using CryptoExchange.Net.Objects;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -68,11 +72,13 @@ namespace Crypto.Exchanges.All.Bitget
         /// <param name="nQuantity"></param>
         /// <param name="nPrice"></param>
         /// <returns></returns>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
         {
-            OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
-            TradeSide eTradeSide = TradeSide.Open;
-            var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
+            try
+            {
+                OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
+                TradeSide eTradeSide = TradeSide.Open;
+                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
                     BitgetProductTypeV2.UsdtFutures,
                     oSymbol.Symbol,
                     USDT,
@@ -85,17 +91,26 @@ namespace Crypto.Exchanges.All.Bitget
                     ,
                     eTradeSide
                 );
-            if( oResult == null || !oResult.Success ) return null;
-            if( oResult.Data == null ) return null; 
-            IFuturesOrder oOrder = new BitgetOrder(oSymbol, oResult.Data, bLong, bLong, FuturesOrderType.Limit, nQuantity, nPrice);  
-            return oOrder;  
+                if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                if (!oResult.Success) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
+
+                IFuturesOrder oOrder = new BitgetOrder(oSymbol, oResult.Data, bLong, bLong, FuturesOrderType.Limit, nQuantity, nPrice);
+                return new TradingResult<IFuturesOrder?>(oOrder);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<IFuturesOrder?>(ex);
+            }
         }
 
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
-            OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
-            TradeSide eTradeSide = TradeSide.Open;
-            var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
+            try
+            {
+                OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
+                TradeSide eTradeSide = TradeSide.Open;
+                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
                     BitgetProductTypeV2.UsdtFutures,
                     oSymbol.Symbol,
                     USDT,
@@ -108,55 +123,68 @@ namespace Crypto.Exchanges.All.Bitget
                     ,
                     eTradeSide
                 );
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
-            IFuturesOrder oOrder = new BitgetOrder(oSymbol, oResult.Data, bLong, bLong, FuturesOrderType.Market, nQuantity, null);
-            return oOrder;
+                if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                if (!oResult.Success) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
+                IFuturesOrder oOrder = new BitgetOrder(oSymbol, oResult.Data, bLong, bLong, FuturesOrderType.Market, nQuantity, null);
+                return new TradingResult<IFuturesOrder?>(oOrder);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<IFuturesOrder?>(ex);
+            }
         }
 
-        public async Task<bool> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
+        public async Task<ITradingResult<bool>> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
         {
-            OrderSide eSide = (oPositon.Direction == FuturesPositionDirection.Long ? OrderSide.Buy : OrderSide.Sell);
-            TradeSide eTradeSide = TradeSide.Close;
-            if ( nPrice == null )
+            try
             {
-                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
-                        BitgetProductTypeV2.UsdtFutures,
-                        oPositon.Symbol.Symbol,
-                        USDT,
-                        eSide,
-                        OrderType.Market,
-                        MarginMode.CrossMargin,
-                        oPositon.Quantity,
-                        null,
-                        null
-                        ,
-                        eTradeSide
-                    );
-                if (oResult == null || !oResult.Success) return false;
-                if (oResult.Data == null) return false;
-                return true;
+                OrderSide eSide = (oPositon.Direction == FuturesPositionDirection.Long ? OrderSide.Buy : OrderSide.Sell);
+                TradeSide eTradeSide = TradeSide.Close;
+                WebCallResult<BitgetOrderId>? oResult = null;
+                if (nPrice == null)
+                {
+                    oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
+                            BitgetProductTypeV2.UsdtFutures,
+                            oPositon.Symbol.Symbol,
+                            USDT,
+                            eSide,
+                            OrderType.Market,
+                            MarginMode.CrossMargin,
+                            oPositon.Quantity,
+                            null,
+                            null
+                            ,
+                            eTradeSide
+                        );
 
+                }
+                else
+                {
+                    oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
+                            BitgetProductTypeV2.UsdtFutures,
+                            oPositon.Symbol.Symbol,
+                            USDT,
+                            eSide,
+                            OrderType.Limit,
+                            MarginMode.CrossMargin,
+                            oPositon.Quantity,
+                            nPrice.Value,
+                            null
+                            ,
+                            eTradeSide
+                        );
+
+                }
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
+
+                return new TradingResult<bool>(true);
             }
-            else
+            catch (Exception ex)
             {
-                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.PlaceOrderAsync(
-                        BitgetProductTypeV2.UsdtFutures,
-                        oPositon.Symbol.Symbol,
-                        USDT,
-                        eSide,
-                        OrderType.Limit,
-                        MarginMode.CrossMargin,
-                        oPositon.Quantity,
-                        nPrice.Value,
-                        null
-                        ,
-                        eTradeSide
-                    );
-                if (oResult == null || !oResult.Success) return false;
-                if (oResult.Data == null) return false;
-                return true;
-
+                return new TradingResult<bool>(ex);
             }
         }
 
@@ -169,7 +197,6 @@ namespace Crypto.Exchanges.All.Bitget
         public async Task<IFuturesLeverage?> GetLeverage(IFuturesSymbol oSymbol)
         {
             IFuturesLeverage? oResult = null;
-
             if (m_aLeverages.TryGetValue(oSymbol.Symbol, out oResult))
             {
                 return oResult;
@@ -226,30 +253,38 @@ namespace Crypto.Exchanges.All.Bitget
             return aResult.ToArray();
         }
 
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
+        public async Task<ITradingResult<bool>> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
         {
-            var oResultLong = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
-                BitgetProductTypeV2.UsdtFutures,
-                oSymbol.Symbol,
-                USDT,
-                nLeverage,
-                PositionSide.Long
-                );
-            var oResultShort = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
-                BitgetProductTypeV2.UsdtFutures,
-                oSymbol.Symbol,
-                USDT,
-                nLeverage,
-                PositionSide.Long
-                );
 
-            if (oResultLong == null || oResultShort == null) return false;
-            if (!oResultLong.Success || !oResultShort.Success) return false;
-            IFuturesLeverage? oFound = await GetLeverage(oSymbol);
-            if (oFound == null) return false;
-            ((BitgetLeverage)oFound).ShortLeverage = nLeverage;
-            ((BitgetLeverage)oFound).LongLeverage = nLeverage;  
-            return true;
+            try
+            { 
+                var oResultMargin = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetMarginModeAsync(BitgetProductTypeV2.UsdtFutures, oSymbol.Symbol, USDT, MarginMode.CrossMargin);
+                if (oResultMargin == null) return new TradingResult<bool>("Result returned null");
+                if (!oResultMargin.Success) return new TradingResult<bool>(oResultMargin.Error!.ToString());
+                if (oResultMargin.Data == null) return new TradingResult<bool>("Result returned data null");
+
+
+                var oResultLeverage = await m_oGlobalClient.Bitget.FuturesApiV2.Account.SetLeverageAsync(
+                    BitgetProductTypeV2.UsdtFutures,
+                    oSymbol.Symbol,
+                    USDT,
+                    nLeverage
+                    );
+
+                if (oResultLeverage == null) return new TradingResult<bool>("Result returned null");
+                if (!oResultLeverage.Success) return new TradingResult<bool>(oResultLeverage.Error!.ToString());
+                if (oResultLeverage.Data == null) return new TradingResult<bool>("Result returned data null");
+
+                IFuturesLeverage? oFound = await GetLeverage(oSymbol);
+                if (oFound == null) return new TradingResult<bool>("Leverage not found");
+                ((BitgetLeverage)oFound).ShortLeverage = nLeverage;
+                ((BitgetLeverage)oFound).LongLeverage = nLeverage;  
+                return new TradingResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
 
         /// <summary>
@@ -257,11 +292,21 @@ namespace Crypto.Exchanges.All.Bitget
         /// </summary>
         /// <param name="oOrder"></param>
         /// <returns></returns>
-        public async Task<bool> CancelOrder(IFuturesOrder oOrder)
+        public async Task<ITradingResult<bool>> CancelOrder(IFuturesOrder oOrder)
         {
-            var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.CancelOrderAsync(BitgetProductTypeV2.UsdtFutures, oOrder.Symbol.Symbol, oOrder.Id.ToString());
-            if( oResult == null || !oResult.Success) return false;
-            return true;
+            try
+            {
+                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.Trading.CancelOrderAsync(BitgetProductTypeV2.UsdtFutures, oOrder.Symbol.Symbol, oOrder.Id.ToString());
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
+
+                return new TradingResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
     }
 }

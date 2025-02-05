@@ -12,6 +12,9 @@ using CryptoExchange.Net.Objects;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
+using Crypto.Interface;
+using Crypto.Exchanges.All.Common;
+using CoinEx.Net.Objects.Models.V2;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
@@ -52,89 +55,113 @@ namespace Crypto.Exchanges.All.CoinEx
         /// <param name="nQuantity"></param>
         /// <param name="nPrice"></param>
         /// <returns></returns>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
         {
             OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
             int nRetries = 0;
             while (nRetries++ <= RETRIES)
             {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
-                    oSymbol.Symbol,
-                    eSide,
-                    OrderTypeV2.Limit,
-                    nQuantity,
-                    nPrice
-                );
-
-                if (oResult == null) return null;
-                if (oResult.Success)
+                try
                 {
-                    if (oResult.Data == null) return null;
-                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
+                    var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                        oSymbol.Symbol,
+                        eSide,
+                        OrderTypeV2.Limit,
+                        nQuantity,
+                        nPrice
+                    );
 
-                    return oOrder;
+                    if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                    if (oResult.Success)
+                    {
+                        if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
+                        IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
+
+                        return new TradingResult<IFuturesOrder?>(oOrder);
+                    }
+                    if (!HasToRetry(oResult.Error)) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                    await Task.Delay(500);
+                }
+                catch (Exception e)
+                {
+                    return new TradingResult<IFuturesOrder?>(e);
                 }
                 //|| !oResult.Success) return null;
-                if (!HasToRetry(oResult.Error)) return null;
-                await Task.Delay(500);
             }
-            return null;
+            return new TradingResult<IFuturesOrder?>("No result with retries limit");
         }
 
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
             OrderSide eSide = (bLong ? OrderSide.Buy : OrderSide.Sell);
             int nRetries = 0;
             while (nRetries++ <= RETRIES)
             {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
-                    oSymbol.Symbol,
-                    eSide,
-                    OrderTypeV2.Market,
-                    nQuantity
-                );
-
-                if (oResult == null) return null;
-                if (oResult.Success)
+                try
                 {
-                    if (oResult.Data == null) return null;
-                    IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
+                    var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                        oSymbol.Symbol,
+                        eSide,
+                        OrderTypeV2.Market,
+                        nQuantity
+                    );
 
-                    return oOrder;
-                }
+                    if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                    if (oResult.Success)
+                    {
+                        if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
+                        IFuturesOrder oOrder = new CoinexOrder(oSymbol, bLong, bLong, oResult.Data, OrderUpdateType.Put);
+
+                        return new TradingResult<IFuturesOrder?>(oOrder);
+                    }
                 //|| !oResult.Success) return null;
-                if (!HasToRetry(oResult.Error)) return null;
+                    if (!HasToRetry(oResult.Error)) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                }
+                catch (Exception e)
+                {
+                    return new TradingResult<IFuturesOrder?>(e);
+                }
             }
             return null;
         }
 
-        public async Task<bool> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
+        public async Task<ITradingResult<bool>> ClosePosition(IFuturesPosition oPositon, decimal? nPrice = null)
         {
+
             OrderSide eSide = (oPositon.Direction == FuturesPositionDirection.Long ? OrderSide.Sell : OrderSide.Buy);
-            if ( nPrice == null )
+            WebCallResult<CoinExFuturesOrder>? oResult = null;
+            try
             {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
-                    oPositon.Symbol.Symbol,
-                    eSide,
-                    OrderTypeV2.Market,
-                    oPositon.Quantity
-                );
-                if (oResult == null || !oResult.Success) return false;
-                return true;
+                if (nPrice == null)
+                {
+                    oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                        oPositon.Symbol.Symbol,
+                        eSide,
+                        OrderTypeV2.Market,
+                        oPositon.Quantity
+                    );
 
+                }
+                else
+                {
+                    oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                        oPositon.Symbol.Symbol,
+                        eSide,
+                        OrderTypeV2.Limit,
+                        oPositon.Quantity,
+                        nPrice.Value
+                    );
+                }
+
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
+
+                return new TradingResult<bool>(true);
             }
-            else
+            catch (Exception ex)
             {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
-                    oPositon.Symbol.Symbol,
-                    eSide,
-                    OrderTypeV2.Limit,
-                    oPositon.Quantity,
-                    nPrice.Value
-                );
-                if (oResult == null || !oResult.Success ) return false;
-                return true;
-
+                return new TradingResult<bool>(ex);
             }
         }
 
@@ -218,30 +245,47 @@ namespace Crypto.Exchanges.All.CoinEx
         /// <param name="oSymbol"></param>
         /// <param name="nLeverage"></param>
         /// <returns></returns>
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
+        public async Task<ITradingResult<bool>> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
         {
             IFuturesLeverage? oLeverage = await GetLeverage(oSymbol);
-            if( oLeverage == null ) return false;
+            if( oLeverage == null ) return new TradingResult<bool>("Leverage not found");
             int nRetries = 0;
             while( nRetries ++ <= RETRIES )
             {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, MarginMode.Cross, nLeverage);
-                if (oResult == null) return false;
-                if (oResult.Success) break;
-                if( !HasToRetry(oResult.Error )) return false;  
+                try
+                {
+                    var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, MarginMode.Cross, nLeverage);
+                    if (oResult == null) return new TradingResult<bool>("Result null"); ;
+                    if (oResult.Success) break;
+                    if (!HasToRetry(oResult.Error)) return new TradingResult<bool>(oResult.Error!.ToString());
+                }
+                catch (Exception e)
+                {
+                    return new TradingResult<bool>(e);
+                }
                 await Task.Delay(500);
 
             }
             ((CoinexLeverage)oLeverage).LongLeverage = nLeverage;
             ((CoinexLeverage)oLeverage).ShortLeverage = nLeverage;
             m_aLeverages.AddOrUpdate(oSymbol.Symbol, p => oLeverage, (s, p) => oLeverage);
-            return true;
+            return new TradingResult<bool>(true);
         }
-        public async Task<bool> CancelOrder(IFuturesOrder oOrder)
+        public async Task<ITradingResult<bool>> CancelOrder(IFuturesOrder oOrder)
         {
-            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, long.Parse(oOrder.Id));
-            if( oResult == null || !oResult.Success ) return false;
-            return true;
+            try
+            {
+                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, long.Parse(oOrder.Id));
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
+
+                return new TradingResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
     }
 }

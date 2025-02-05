@@ -1,4 +1,5 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
@@ -57,16 +58,17 @@ namespace Crypto.Tests.Bingx
             Assert.IsNotNull(oSymbol);
 
             
-            bool bResult = await oExchange.Trading.SetLeverage(oSymbol, 5);
-            Assert.IsTrue(bResult);
+            ITradingResult<bool> oResult = await oExchange.Trading.SetLeverage(oSymbol, 5);
+            Assert.IsTrue(oResult.Success);
 
             IFuturesLeverage? oNewLeverage = await oExchange.Trading.GetLeverage(oSymbol);
             Assert.IsNotNull(oNewLeverage);
             Assert.IsTrue( oNewLeverage.LongLeverage == 5);
             Assert.IsTrue( oNewLeverage.ShortLeverage == 5);
             decimal nPrice = 0.8M;
-            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);    
-            Assert.IsNotNull(oOrder);
+            ITradingResult <IFuturesOrder ?>oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);    
+            Assert.IsTrue(oOrder.Success);
+            Assert.IsNotNull(oOrder.Result);
             await Task.Delay(3000);
             IFuturesOrder[] aOrdersWs = oExchange.Account.OrderManager.GetData();
             Assert.IsNotNull(aOrdersWs);
@@ -83,14 +85,16 @@ namespace Crypto.Tests.Bingx
             IFuturesOrder? oFound = aOrders.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
             Assert.IsNotNull(oFound);
 
-            bool bCanceled = await oExchange.Trading.CancelOrder(oFound);
-            Assert.IsTrue(bCanceled);
-
+            ITradingResult<bool> oCanceled = await oExchange.Trading.CancelOrder(oFound);
+            Assert.IsTrue(oCanceled.Success);
+            Assert.IsTrue(oCanceled.Result);
+            await Task.Delay(1000);
             Assert.IsTrue(oOrderWs.OrderStatus == FuturesOrderStatus.Canceled);
 
             decimal nQuantity = 5;
-            IFuturesOrder? oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
-            Assert.IsNotNull(oMarketOpen);
+            ITradingResult<IFuturesOrder?> oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
+            Assert.IsTrue(oMarketOpen.Success); 
+            Assert.IsNotNull(oMarketOpen.Result);
             await Task.Delay(1000);
             IFuturesPosition[] aRest = oExchange.Account.PositionManager.GetData();
             Assert.IsNotNull(aRest);
@@ -98,8 +102,9 @@ namespace Crypto.Tests.Bingx
             Assert.IsNotNull(oPosition);
             Assert.IsTrue(oPosition.Quantity == nQuantity); 
 
-            IFuturesOrder? oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
-            Assert.IsNotNull(oMarketOpen2);
+            ITradingResult<IFuturesOrder?> oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
+            Assert.IsTrue(oMarketOpen2.Success);
+            Assert.IsNotNull(oMarketOpen2.Result);
             await Task.Delay(1000);
             Assert.IsTrue(oPosition.Quantity == nQuantity * 2M);
 
@@ -108,8 +113,9 @@ namespace Crypto.Tests.Bingx
             Assert.IsNotNull(aPositions);
             Assert.IsTrue(aPositions.Any());
 
-            bool bClose = await oExchange.Trading.ClosePosition(oPosition); 
-            Assert.IsTrue(bClose);
+            ITradingResult<bool> oClose = await oExchange.Trading.ClosePosition(oPosition); 
+            Assert.IsTrue(oClose.Success);
+            Assert.IsTrue(oClose.Result);
             await Task.Delay(5000);
             Assert.IsTrue(oPosition.Closed);    
 

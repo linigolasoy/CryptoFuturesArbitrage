@@ -19,10 +19,22 @@ namespace Crypto.Common
         public string ApiSecret { get; set; } = string.Empty;
     }
 
+    internal class SetupMoneyParsed
+    {
+        [JsonProperty("Leverage")]
+        public int Leverage { get; set; } = 1;
+        [JsonProperty("Amount")]
+        public decimal Amount { get; set; } = 0;
+        [JsonProperty("Threshold")]
+        public decimal Threshold { get; set; } = 1;
+    }
+
     internal class SetupParsed
     {
         [JsonProperty("ApiKeys")]
         public List<ApiKeyParsed>? ApiKeys { get; set; } = null;
+        [JsonProperty("Money")]
+        public SetupMoneyParsed? Money { get; set; } = null;
     }
 
 
@@ -41,17 +53,23 @@ namespace Crypto.Common
     internal class CryptoSetup : ICryptoSetup
     {
 
-        internal CryptoSetup(IApiKey[] aApiKeys )
+        internal CryptoSetup(IApiKey[] aApiKeys, SetupMoneyParsed? oMoney )
         {
             ApiKeys = aApiKeys; 
+            if( oMoney != null )
+            {
+                Leverage = oMoney.Leverage;
+                Amount = oMoney.Amount;
+                PercentMinimum = oMoney.Threshold;
+            }
         }
         public IApiKey[] ApiKeys { get; }
 
 
         public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures, ExchangeType.BitmartFutures}; }
-        public decimal Amount { get => 20; }
-        public int Leverage { get => 10; }
-        public decimal PercentMinimum { get => 0.3M; }
+        public decimal Amount { get; private set; } = 0;
+        public int Leverage { get; private set; } = 0;
+        public decimal PercentMinimum { get; private set; } = 1;
         public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
 
         public static ICryptoSetup? LoadFromFile( string strFile )
@@ -70,7 +88,8 @@ namespace Crypto.Common
                 }
             }
             if( aFound.Count <= 0 ) return null;    
-            return new CryptoSetup(aFound.ToArray());
+
+            return new CryptoSetup(aFound.ToArray(), oSetupParsed.Money);
         }
     }
 }

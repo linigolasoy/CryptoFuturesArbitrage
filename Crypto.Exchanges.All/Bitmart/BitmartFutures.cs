@@ -8,14 +8,7 @@ using Crypto.Interface.Futures.History;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using CryptoClients.Net;
-using CryptoClients.Net.Enums;
 using CryptoClients.Net.Interfaces;
-using CryptoExchange.Net.Authentication;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bitmart
 {

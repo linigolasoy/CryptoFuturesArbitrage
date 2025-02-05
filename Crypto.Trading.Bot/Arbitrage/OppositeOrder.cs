@@ -1,4 +1,5 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
@@ -127,7 +128,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             if (this.Profit < 0) return oResult;
             oResult.ProfitOrLoss = this.Profit; 
             if( LongData.Position == null || ShortData.Position == null ) { return oResult; }   
-            List<Task<bool>> aTasks = new List<Task<bool>>();
+            List<Task<ITradingResult<bool>>> aTasks = new List<Task<ITradingResult<bool>>>();
             aTasks.Add(LongData.Symbol.Exchange.Trading.ClosePosition(LongData.Position));
             aTasks.Add(ShortData.Symbol.Exchange.Trading.ClosePosition(ShortData.Position));
 
@@ -164,13 +165,13 @@ namespace Crypto.Trading.Bot.Arbitrage
             // Set leverages
             bool bResult = await SetLeverages();
             if (!bResult) return false;
-            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
+            List<Task<ITradingResult<IFuturesOrder?>>> aTasks = new List<Task<ITradingResult<IFuturesOrder?>>>();
             aTasks.Add(LongData.Symbol.Exchange.Trading.CreateLimitOrder(LongData.Symbol, true, nQuantity, oPriceLong.Price));
             aTasks.Add(ShortData.Symbol.Exchange.Trading.CreateLimitOrder(ShortData.Symbol, false, nQuantity, oPriceShort.Price));
 
 
             await Task.WhenAll(aTasks);
-            if (aTasks.Any(p => p.Result == null)) return false;
+            if (aTasks.Any(p => !p.Result.Success)) return false;
 
             return true;
         }
@@ -183,10 +184,10 @@ namespace Crypto.Trading.Bot.Arbitrage
         public async Task<bool> SetLeverages()
         {
             if (m_bLeverageSet) return true;
-            bool bResult = await LongData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
-            if (!bResult) return false;
-            bResult = await ShortData.Symbol.Exchange.Trading.SetLeverage(ShortData.Symbol, Leverage);
-            if (!bResult) return false;
+            ITradingResult<bool> oResult = await LongData.Symbol.Exchange.Trading.SetLeverage(LongData.Symbol, Leverage);
+            if (!oResult.Success) return false;
+            oResult = await ShortData.Symbol.Exchange.Trading.SetLeverage(ShortData.Symbol, Leverage);
+            if (!oResult.Success) return false;
             m_bLeverageSet = true;  
             return true;
         }
@@ -267,13 +268,13 @@ namespace Crypto.Trading.Bot.Arbitrage
             //bool bResult = await SetLeverages();
             // if (!bResult) return false;
 
-            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
+            List<Task<ITradingResult<IFuturesOrder?>>> aTasks = new List<Task<ITradingResult<IFuturesOrder?>>>();
             aTasks.Add(LongData.Symbol.Exchange.Trading.CreateMarketOrder(LongData.Symbol, true, nQuantity));
             aTasks.Add(ShortData.Symbol.Exchange.Trading.CreateMarketOrder(ShortData.Symbol, false, nQuantity));
 
 
             await Task.WhenAll(aTasks);
-            if (aTasks.Any(p => p.Result == null)) return false;
+            if (aTasks.Any(p => !p.Result.Success)) return false;
             return true;
             // return await UpdatePositions(nQuantity);
             /*

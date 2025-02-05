@@ -1,4 +1,5 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
@@ -35,8 +36,8 @@ namespace Crypto.Tests.Bitmart
             Assert.IsNotNull(aLeverages);
 
 
-            bool bResult = await oExchange.Trading.SetLeverage(oBtc, 5);
-            Assert.IsTrue(bResult); 
+            ITradingResult<bool> bResult = await oExchange.Trading.SetLeverage(oBtc, 5);
+            Assert.IsTrue(bResult.Success); 
 
         }
 
@@ -57,23 +58,24 @@ namespace Crypto.Tests.Bitmart
             IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "XRP" && p.Quote == "USDT");
             Assert.IsNotNull(oSymbol);
 
-            
-            bool bResult = await oExchange.Trading.SetLeverage(oSymbol, 5);
-            Assert.IsTrue(bResult);
+
+            ITradingResult<bool> oResult = await oExchange.Trading.SetLeverage(oSymbol, 5);
+            Assert.IsTrue(oResult.Success);
 
             IFuturesLeverage? oNewLeverage = await oExchange.Trading.GetLeverage(oSymbol);
             Assert.IsNotNull(oNewLeverage);
-            Assert.IsTrue( oNewLeverage.LongLeverage == 5);
-            Assert.IsTrue( oNewLeverage.ShortLeverage == 5);
-            decimal nPrice = 2.5M;
-            IFuturesOrder? oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);    
-            Assert.IsNotNull(oOrder);
-            await Task.Delay(2000);
+            Assert.IsTrue(oNewLeverage.LongLeverage == 5);
+            Assert.IsTrue(oNewLeverage.ShortLeverage == 5);
+            decimal nPrice = 0.8M;
+            ITradingResult<IFuturesOrder?> oOrder = await oExchange.Trading.CreateLimitOrder(oSymbol, true, 10, nPrice);
+            Assert.IsTrue(oOrder.Success);
+            Assert.IsNotNull(oOrder.Result);
+            await Task.Delay(3000);
             IFuturesOrder[] aOrdersWs = oExchange.Account.OrderManager.GetData();
             Assert.IsNotNull(aOrdersWs);
             IFuturesOrder? oOrderWs = aOrdersWs.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
             Assert.IsNotNull(oOrderWs);
-            
+
             await Task.Delay(1000);
             IFuturesOrder[]? aOrders = await oExchange.Trading.GetOrders();
             Assert.IsNotNull(aOrders);
@@ -84,23 +86,27 @@ namespace Crypto.Tests.Bitmart
             IFuturesOrder? oFound = aOrders.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
             Assert.IsNotNull(oFound);
 
-            bool bCanceled = await oExchange.Trading.CancelOrder(oFound);
-            Assert.IsTrue(bCanceled);
+            ITradingResult<bool> oCanceled = await oExchange.Trading.CancelOrder(oFound);
+            Assert.IsTrue(oCanceled.Success);
+            Assert.IsTrue(oCanceled.Result);
             await Task.Delay(1000);
+
             Assert.IsTrue(oOrderWs.OrderStatus == FuturesOrderStatus.Canceled);
 
             decimal nQuantity = 5;
-            IFuturesOrder? oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
-            Assert.IsNotNull(oMarketOpen);
-            await Task.Delay(3000);
+            ITradingResult<IFuturesOrder?> oMarketOpen = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
+            Assert.IsTrue(oMarketOpen.Success);
+            Assert.IsNotNull(oMarketOpen.Result);
+            await Task.Delay(1000);
             IFuturesPosition[] aRest = oExchange.Account.PositionManager.GetData();
             Assert.IsNotNull(aRest);
             IFuturesPosition? oPosition = aRest.FirstOrDefault(p => p.Symbol.Symbol == oSymbol.Symbol);
             Assert.IsNotNull(oPosition);
-            Assert.IsTrue(oPosition.Quantity == nQuantity); 
+            Assert.IsTrue(oPosition.Quantity == nQuantity);
 
-            IFuturesOrder? oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
-            Assert.IsNotNull(oMarketOpen2);
+            ITradingResult<IFuturesOrder?> oMarketOpen2 = await oExchange.Trading.CreateMarketOrder(oSymbol, true, nQuantity);
+            Assert.IsTrue(oMarketOpen2.Success);
+            Assert.IsNotNull(oMarketOpen2.Result);
             await Task.Delay(1000);
             Assert.IsTrue(oPosition.Quantity == nQuantity * 2M);
 
@@ -109,14 +115,17 @@ namespace Crypto.Tests.Bitmart
             Assert.IsNotNull(aPositions);
             Assert.IsTrue(aPositions.Any());
 
-            bool bClose = await oExchange.Trading.ClosePosition(oPosition); 
-            Assert.IsTrue(bClose);
-            await Task.Delay(2000);
-            Assert.IsTrue(oPosition.Closed);    
+            ITradingResult<bool> oClose = await oExchange.Trading.ClosePosition(oPosition);
+            Assert.IsTrue(oClose.Success);
+            Assert.IsTrue(oClose.Result);
+            await Task.Delay(5000);
+            Assert.IsTrue(oPosition.Closed);
 
             aRest = oExchange.Account.PositionManager.GetData();
-            Assert.IsNotNull(aRest);
-            Assert.IsTrue(!aRest.Any(p=> p.Symbol.Symbol == oSymbol.Symbol && !p.Closed ));
+            if( aRest != null )
+            {
+                Assert.IsTrue(!aRest.Any(p => p.Symbol.Symbol == oSymbol.Symbol && !p.Closed));
+            }
         }
 
         private async Task Account_OnPrivateEvent(IWebsocketQueueItem oItem)

@@ -1,11 +1,7 @@
 ﻿using Crypto.Interface.Futures;
 using Crypto.Interface;
 using Crypto.Trading.Bot.Common;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Crypto.Interface.Futures.Market;
 using CryptoExchange.Net.CommonObjects;
 using Crypto.Interface.Futures.Websockets;
@@ -39,6 +35,8 @@ namespace Crypto.Trading.Bot.Arbitrage
         private DateTime m_dLastBalance = DateTime.Now;
         private DateTime m_dLastPerformance = DateTime.Now;
 
+        private const string USDT = "USDT";
+
         /// <summary>
         /// Start bot
         /// </summary>
@@ -66,6 +64,8 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         private async Task ProcessPosition(IFuturesPosition oPosition)
         {
+            return; 
+            /*
             try
             {
 
@@ -121,7 +121,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             {
                 Logger.Error($" Error processing queue position on {oPosition.Symbol.ToString()}", e);
             }
-
+            */
         }
 
         private async Task OnPrivateEvent(IWebsocketQueueItem oItem)
@@ -166,13 +166,14 @@ namespace Crypto.Trading.Bot.Arbitrage
             foreach (var oChance in aChances)
             {
                 if( !oChance.CalculateArbitrage(nMoney) ) continue;
+                if( oChance.Money == null ) continue;   
                 if( oBest == null )
                 {
-                    if( oChance.Percent > 0 ) oBest = oChance;
+                    if( oChance.Money.Percent > 0 ) oBest = oChance;
                 }
                 else
                 {
-                    if (oChance.Percent > oBest.Percent)
+                    if (oBest.Money != null && oChance.Money.Percent > oBest.Money.Percent)
                     {
                         oBest = oChance;
                         // Logger.Info($"Best {oBest.Percent}");
@@ -194,35 +195,54 @@ namespace Crypto.Trading.Bot.Arbitrage
             var aOrderbooks = SocketManager.GetOrderbooks();
             decimal nMoney = Setup.Leverage * Setup.Amount;
 
-            foreach (var eTypeBuy in aOrderbooks.Keys)
+            Dictionary<string, List<IOrderbook>> oDictCurrencies = new Dictionary<string, List<IOrderbook>>();
+
+            foreach (var eType in aOrderbooks.Keys )
             {
-                foreach (var eTypeSell in aOrderbooks.Keys)
+                IOrderbook[] aBooks = aOrderbooks[eType];   
+                foreach ( var oBook in aBooks)
                 {
-                    if (eTypeBuy == eTypeSell) continue;
-                    foreach (var oBookBuy in aOrderbooks[eTypeBuy])
+                    if (oBook.Symbol.Quote != USDT) continue;
+                    if (!oDictCurrencies.ContainsKey(oBook.Symbol.Base))
                     {
-                        IOrderbookPrice? oPriceBuy = oBookBuy.GetBestPrice(true, null, nMoney);
-                        if (oPriceBuy == null) continue;
-                        IOrderbook? oBookSell = aOrderbooks[eTypeSell].FirstOrDefault(p => p.Symbol.Base == oBookBuy.Symbol.Base && p.Symbol.Quote == oBookBuy.Symbol.Quote);
-                        if (oBookSell == null) continue;
-                        IOrderbookPrice? oPriceSell = oBookSell.GetBestPrice(false, null, nMoney);
-                        if (oPriceSell == null) continue;
-                        
-
-                        // if (oPriceBuy.Price > oPriceSell.Price) continue;
-                        decimal nMinimum = Math.Min(oPriceSell.Price, oPriceBuy.Price); 
-                        decimal nPercent = Math.Round(Math.Abs(oPriceSell.Price - oPriceBuy.Price) * 100M / nMinimum, 3);
-                        if (nPercent > 10.0M) continue;
-                        IArbitrageChance oChance = new ArbitrageChance(oPriceBuy.Orderbook, oPriceSell.Orderbook);
-                        aResult.Add(oChance);   
+                        oDictCurrencies[oBook.Symbol.Base] = new List<IOrderbook>();    
                     }
-
+                    oDictCurrencies[oBook.Symbol.Base].Add(oBook);  
                 }
+
             }
 
-            return aResult.ToArray();   
+            // Now we create chances
+            foreach( string strKey in  oDictCurrencies.Keys )
+            {
+                IOrderbook[] aBooks = oDictCurrencies[strKey].ToArray();
+                if (aBooks.Length < 2) continue;
+                decimal nPriceMin = aBooks.Where(p=> p.Asks.Length > 0 ).Select(p=> p.Asks[0].Price).Min();
+                decimal nPriceMax = aBooks.Where(p => p.Asks.Length > 0).Select(p => p.Asks[0].Price).Max();
+                decimal nDiff = (nPriceMax - nPriceMin) * 100.0M / nPriceMin;
+                if (nDiff >= 10M) continue;
+                aResult.Add(new ArbitrageChance(aBooks));
+            }
+            return aResult.ToArray();
         }
 
+
+        private async Task<bool> SetLeverages( IArbitrageChance oChance )
+        {
+            if (oChance.Money == null || oChance.BuyPosition == null || oChance.SellPosition == null) return false;
+            Logger.Info($"{oChance.Money.Percent} % Setting leverage for {oChance.BuyPosition.Symbol.ToString()} / {oChance.SellPosition.Symbol.ToString()}");
+            List<Task<ITradingResult<bool>>> aTasksLeverage = new List<Task<ITradingResult<bool>>>();
+
+            aTasksLeverage.Add(oChance.BuyPosition.Symbol.Exchange.Trading.SetLeverage(oChance.BuyPosition.Symbol, Setup.Leverage));
+            aTasksLeverage.Add(oChance.SellPosition.Symbol.Exchange.Trading.SetLeverage(oChance.SellPosition.Symbol, Setup.Leverage));
+            await Task.WhenAll(aTasksLeverage);
+            if (aTasksLeverage.Any(p => !p.Result.Success))
+            {
+                Logger.Error("Leverage failed!!!");
+                return false;
+            }
+            return true;    
+        }
 
         /// <summary>
         /// Act on chance
@@ -231,29 +251,28 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         private async Task<IArbitrageChance?> ActOnChance(IArbitrageChance oChance, decimal nMoney)
         {
-            if( !oChance.CalculateArbitrage(nMoney)) return null;
-            if (oChance.Percent < 0.3M) return null;
+            if ( !oChance.CalculateArbitrage(nMoney)) return null;
+            if( oChance.Money == null || oChance.BuyPosition == null || oChance.SellPosition == null ) return null;    
+            if (oChance.Money.Percent < 0.3M) return null;
 
             if( oChance.ChanceStatus == ChanceStatus.None)
             {
-                List<Task<bool>> aTasksLeverage = new List<Task<bool>>();
-
-                aTasksLeverage.Add(oChance.BuyPosition.Symbol.Exchange.Trading.SetLeverage(oChance.BuyPosition.Symbol, Setup.Leverage));
-                aTasksLeverage.Add(oChance.SellPosition.Symbol.Exchange.Trading.SetLeverage(oChance.SellPosition.Symbol, Setup.Leverage));
-                await Task.WhenAll(aTasksLeverage); 
-                if( aTasksLeverage.Any(p=> !p.Result)) return null;
+                bool bLeverageSet = await SetLeverages(oChance);
+                if( !bLeverageSet ) return null;    
                 oChance.ChanceStatus = ChanceStatus.Leverage;
-                return null;
+                if (!oChance.CalculateArbitrage(nMoney)) return null;
+                if (oChance.Money.Percent < 0.3M) return null;
             }
             if (oChance.ChanceStatus != ChanceStatus.Leverage) return null;
+            Logger.Info($"{oChance.Money.Percent} % Leverage ok for {oChance.BuyPosition.Symbol.ToString()} / {oChance.SellPosition.Symbol.ToString()}");
             // Buy
-            List<Task<IFuturesOrder?>> aTasks = new List<Task<IFuturesOrder?>>();
+            List<Task<ITradingResult<IFuturesOrder?>>> aTasks = new List<Task<ITradingResult<IFuturesOrder?>>>();
 
-            aTasks.Add(oChance.BuyPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.BuyPosition.Symbol, true, oChance.Quantity, oChance.BuyOpenPrice));
-            aTasks.Add(oChance.SellPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.SellPosition.Symbol, false, oChance.Quantity, oChance.SellOpenPrice));
+            aTasks.Add(oChance.BuyPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.BuyPosition.Symbol, true, oChance.Money.Quantity, oChance.Money.BuyOpenPrice));
+            aTasks.Add(oChance.SellPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.SellPosition.Symbol, false, oChance.Money.Quantity, oChance.Money.SellOpenPrice));
             await Task.WhenAll(aTasks); 
 
-            Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} at {oChance.BuyOpenPrice} Sell {oChance.SellPosition.Symbol.ToString()} at {oChance.SellOpenPrice} Percent {oChance.Percent}");
+            Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} at {oChance.Money.BuyOpenPrice} Sell {oChance.SellPosition.Symbol.ToString()} at {oChance.Money.SellOpenPrice} Percent {oChance.Money.Percent}");
             oChance.ChanceStatus = ChanceStatus.Position;
 
             return oChance;
@@ -267,6 +286,8 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         private async Task ActOnPosition( IArbitrageChance oChance )
         {
+            throw new NotImplementedException();
+            /*
             if (oChance.ChanceStatus != ChanceStatus.Position) return;
             oChance.CalculateProfit();
 
@@ -285,11 +306,12 @@ namespace Crypto.Trading.Bot.Arbitrage
             if( oChance.BuyPosition.Position == null || oChance.SellPosition.Position == null ) return;
 
             List<Task<bool>> aTasksClose = new List<Task<bool>>();
-            aTasksClose.Add(oChance.BuyPosition.Symbol.Exchange.Trading.ClosePosition(oChance.BuyPosition.Position /*, oChance.BuyClosePrice*/));
-            aTasksClose.Add(oChance.SellPosition.Symbol.Exchange.Trading.ClosePosition(oChance.SellPosition.Position /*, oChance.SellClosePrice*/));
+            aTasksClose.Add(oChance.BuyPosition.Symbol.Exchange.Trading.ClosePosition(oChance.BuyPosition.Position ));
+            aTasksClose.Add(oChance.SellPosition.Symbol.Exchange.Trading.ClosePosition(oChance.SellPosition.Position ));
             await Task.WhenAll(aTasksClose);
             Logger.Info($"   Profit reached. Closing on profit {oChance.Profit} ({nPercent} %)");
             oChance.ChanceStatus = ChanceStatus.OrderClose;
+            */
         }
 
         /// <summary>
@@ -374,6 +396,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             Logger.Info($" START BALANCE : {nStartBalance}");
             // IArbitrageChance? oActive = null;
             decimal nBestPercent = -100.0M;
+            decimal nMoney = Setup.Leverage * Setup.Amount;
             decimal? nBestProfit = null;    
             while ( !m_oTokenSource.IsCancellationRequested )
             {
@@ -382,12 +405,12 @@ namespace Crypto.Trading.Bot.Arbitrage
                     IArbitrageChance? oChance = FindChance(aChances);
                     if (oChance != null)
                     {
-                        m_oChance = await ActOnChance(oChance, Setup.Leverage * Setup.Amount);
+                        m_oChance = await ActOnChance(oChance, nMoney);
                         if( m_oChance == null )
                         {
-                            if( oChance.Percent > nBestPercent )
+                            if( oChance.Money != null && oChance.Money.Percent > nBestPercent )
                             {
-                                nBestPercent = oChance.Percent;
+                                nBestPercent = oChance.Money.Percent;
                                 Logger.Info($"Best percent found {nBestPercent} %");
                             }
                         }
@@ -405,16 +428,19 @@ namespace Crypto.Trading.Bot.Arbitrage
                     }
                     else if( m_oChance.CalculateProfit() )
                     {
-                        if( nBestProfit == null )
+                        if( m_oChance.Money != null )
                         {
-                            nBestProfit = m_oChance.Profit;
+                            if (nBestProfit == null)
+                            {
+                                nBestProfit = m_oChance.Money.Profit;
+                            }
+                            else if (nBestProfit.Value < m_oChance.Money.Profit)
+                            {
+                                nBestProfit = m_oChance.Money.Profit;
+                                Logger.Info($" Best profit {nBestProfit}");
+                            }
+                            await ActOnPosition(m_oChance);
                         }
-                        else if( nBestProfit.Value < m_oChance.Profit )
-                        {
-                            nBestProfit = m_oChance.Profit;
-                            Logger.Info($" Best profit {nBestProfit}");
-                        }
-                        await ActOnPosition(m_oChance);
                     }
                 }
                 GetAndLogBalances(nStartBalance);

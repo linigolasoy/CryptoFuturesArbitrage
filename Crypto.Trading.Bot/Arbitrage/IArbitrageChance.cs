@@ -31,24 +31,34 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesPosition? Position { get; set; }
     }
 
+    internal interface IArbitrageMoney
+    {
+        public IArbitrageChance Chance { get; }
+        public decimal Profit { get; set; }
+
+        public decimal Quantity { get; }
+        public decimal BuyOpenPrice { get; set; }
+        public decimal SellOpenPrice { get; set; }
+
+        public decimal BuyClosePrice { get; set; }
+        public decimal SellClosePrice { get; set; }
+
+        public decimal Percent { get; }
+    }
+
 
     internal interface IArbitrageChance
     {
         public ChanceStatus ChanceStatus { get; set; }
 
-        public IArbitragePosition BuyPosition { get; }
-        public IArbitragePosition SellPosition { get; }
+        public string Currency { get; }
 
-        public decimal Profit { get; }
+        public IOrderbook[] Orderbooks { get; }
 
-        public decimal Quantity { get; }    
-        public decimal BuyOpenPrice { get; set; }
-        public decimal SellOpenPrice { get; set; }
+        public IArbitragePosition? BuyPosition { get; }
+        public IArbitragePosition? SellPosition { get; }
 
-        public decimal BuyClosePrice { get; }
-        public decimal SellClosePrice { get; }
-
-        public decimal Percent { get; }
+        public IArbitrageMoney? Money { get; }  
         public bool CalculateArbitrage(decimal nMoney);
         public bool CalculateProfit();
 

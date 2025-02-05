@@ -1,4 +1,6 @@
-﻿using Crypto.Interface.Futures;
+﻿using Crypto.Exchanges.All.Common;
+using Crypto.Interface;
+using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
@@ -36,45 +38,47 @@ namespace Crypto.Exchanges.All.Bitmart
         /// <param name="oOrder"></param>
         /// <returns></returns>
         /// <exception cref="NotImplementedException"></exception>
-        public async Task<bool> CancelOrder(IFuturesOrder oOrder)
+        public async Task<ITradingResult<bool>> CancelOrder(IFuturesOrder oOrder)
         {
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, oOrder.Id);
-            if( oResult == null || !oResult.Success ) return false;
-            return true;
+            try
+            {
+                var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.CancelOrderAsync(oOrder.Symbol.Symbol, oOrder.Id);
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+
+                return new TradingResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
 
-        public async Task<bool> ClosePosition(IFuturesPosition oPosition, decimal? nPrice = null)
+        public async Task<ITradingResult<bool>> ClosePosition(IFuturesPosition oPosition, decimal? nPrice = null)
         {
-            decimal nContractSize = ((BitmartSymbol)oPosition.Symbol).ContractSize;
-            int nNewQuantity = (int)(oPosition.Quantity / nContractSize);
-            if (nNewQuantity <= 0) return false;
-            var eSide = (oPosition.Direction == FuturesPositionDirection.Long ? BitMart.Net.Enums.FuturesSide.SellCloseLong : BitMart.Net.Enums.FuturesSide.BuyCloseShort);
-            if( nPrice == null )
+            try
             {
+                decimal nContractSize = ((BitmartSymbol)oPosition.Symbol).ContractSize;
+                int nNewQuantity = (int)(oPosition.Quantity / nContractSize);
+                if (nNewQuantity <= 0) return new TradingResult<bool>("Quantity less than zero");
+                var eSide = (oPosition.Direction == FuturesPositionDirection.Long ? BitMart.Net.Enums.FuturesSide.SellCloseLong : BitMart.Net.Enums.FuturesSide.BuyCloseShort);
                 var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync(
                         oPosition.Symbol.Symbol,
                         eSide,
-                        BitMart.Net.Enums.FuturesOrderType.Market,
-                        nNewQuantity
-                    );
-                if (oResult == null || !oResult.Success) return false;
-                if (oResult.Data == null) return false;
-
-            }
-            else
-            {
-                var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync(
-                        oPosition.Symbol.Symbol,
-                        eSide,
-                        BitMart.Net.Enums.FuturesOrderType.Limit,
+                        ( nPrice == null ? BitMart.Net.Enums.FuturesOrderType.Market : BitMart.Net.Enums.FuturesOrderType.Limit),
                         nNewQuantity,
                         nPrice
                     );
-                if (oResult == null || !oResult.Success) return false;
-                if (oResult.Data == null) return false;
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
 
+                return new TradingResult<bool>(true);
             }
-            return true;
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
 
 
@@ -86,51 +90,67 @@ namespace Crypto.Exchanges.All.Bitmart
         /// <param name="nQuantity"></param>
         /// <param name="nPrice"></param>
         /// <returns></returns>
-        public async Task<IFuturesOrder?> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice)
         {
-            decimal nContractSize = ((BitmartSymbol)oSymbol).ContractSize;
-            int nNewQuantity = (int) (nQuantity / nContractSize);
-            if (nNewQuantity <= 0) return null;
-            var eSide = (bLong ? BitMart.Net.Enums.FuturesSide.BuyOpenLong : BitMart.Net.Enums.FuturesSide.SellOpenShort);
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync( 
+            try
+            {
+                decimal nContractSize = ((BitmartSymbol)oSymbol).ContractSize;
+                int nNewQuantity = (int) (nQuantity / nContractSize);
+                if (nNewQuantity <= 0) return new TradingResult<IFuturesOrder?>("Quantity zero");
+                var eSide = (bLong ? BitMart.Net.Enums.FuturesSide.BuyOpenLong : BitMart.Net.Enums.FuturesSide.SellOpenShort);
+                var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync( 
                     oSymbol.Symbol, 
                     eSide,
                     BitMart.Net.Enums.FuturesOrderType.Limit,
                     nNewQuantity,
                     nPrice
                 );
-            if (oResult == null || !oResult.Success) return null;
-            if( oResult.Data == null ) return null;
+                if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                if (!oResult.Success) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
 
-            BitmartOrder oResultOrder = new BitmartOrder(oSymbol, oResult.Data.OrderId);
-            oResultOrder.Quantity = nQuantity;
-            oResultOrder.PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
-            oResultOrder.Price = nPrice;
-            oResultOrder.OrderType = FuturesOrderType.Limit;
-            return oResultOrder;
+                BitmartOrder oResultOrder = new BitmartOrder(oSymbol, oResult.Data.OrderId);
+                oResultOrder.Quantity = nQuantity;
+                oResultOrder.PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
+                oResultOrder.Price = nPrice;
+                oResultOrder.OrderType = FuturesOrderType.Limit;
+                return new TradingResult<IFuturesOrder?>(oResultOrder);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<IFuturesOrder?>(ex);
+            }
         }
 
-        public async Task<IFuturesOrder?> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
+        public async Task<ITradingResult<IFuturesOrder?>> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity)
         {
-            decimal nContractSize = ((BitmartSymbol)oSymbol).ContractSize;
-            int nNewQuantity = (int)(nQuantity / nContractSize);
-            if (nNewQuantity <= 0) return null;
-            var eSide = (bLong ? BitMart.Net.Enums.FuturesSide.BuyOpenLong : BitMart.Net.Enums.FuturesSide.SellOpenShort);
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync(
+            try
+            {
+                decimal nContractSize = ((BitmartSymbol)oSymbol).ContractSize;
+                int nNewQuantity = (int)(nQuantity / nContractSize);
+                if (nNewQuantity <= 0) return new TradingResult<IFuturesOrder?>("Quantity zero");
+                var eSide = (bLong ? BitMart.Net.Enums.FuturesSide.BuyOpenLong : BitMart.Net.Enums.FuturesSide.SellOpenShort);
+                var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Trading.PlaceOrderAsync(
                     oSymbol.Symbol,
                     eSide,
                     BitMart.Net.Enums.FuturesOrderType.Market,
                     nNewQuantity
                 );
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
+                if (oResult == null) return new TradingResult<IFuturesOrder?>("Result returned null");
+                if (!oResult.Success) return new TradingResult<IFuturesOrder?>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<IFuturesOrder?>("Result returned data null");
 
-            BitmartOrder oResultOrder = new BitmartOrder(oSymbol, oResult.Data.OrderId);
-            oResultOrder.Quantity = nQuantity;
-            oResultOrder.PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
-            oResultOrder.Price = null;
-            oResultOrder.OrderType = FuturesOrderType.Market;
-            return oResultOrder;
+                BitmartOrder oResultOrder = new BitmartOrder(oSymbol, oResult.Data.OrderId);
+                oResultOrder.Quantity = nQuantity;
+                oResultOrder.PositionDirection = (bLong ? FuturesPositionDirection.Long : FuturesPositionDirection.Short);
+                oResultOrder.Price = null;
+                oResultOrder.OrderType = FuturesOrderType.Market;
+                return new TradingResult<IFuturesOrder?>(oResultOrder);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<IFuturesOrder?>(ex);
+            }
         }
 
         public async Task<IFuturesLeverage?> GetLeverage(IFuturesSymbol oSymbol)
@@ -180,18 +200,26 @@ namespace Crypto.Exchanges.All.Bitmart
             return aResult.ToArray(); 
         }
 
-        public async Task<bool> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
+        public async Task<ITradingResult<bool>> SetLeverage(IFuturesSymbol oSymbol, int nLeverage)
         {
-            IFuturesLeverage? oLeverage = await GetLeverage(oSymbol);
-            if( oLeverage == null ) return false;
-            if( oLeverage.ShortLeverage == nLeverage && oLeverage.LongLeverage == nLeverage ) return true;
+            try
+            {
+                IFuturesLeverage? oLeverage = await GetLeverage(oSymbol);
+                if ( oLeverage == null) return new TradingResult<bool>("No Leverage found");
+                if ( oLeverage.ShortLeverage == nLeverage && oLeverage.LongLeverage == nLeverage ) return new TradingResult<bool>(true);
 
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, (decimal)nLeverage, BitMart.Net.Enums.MarginType.CrossMargin);
-            if (oResult == null || !oResult.Success) return false;
-            ((BitmartLeverage)oLeverage).ShortLeverage = nLeverage;
-            ((BitmartLeverage)oLeverage).LongLeverage = nLeverage;
-
-            return true;
+                var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.Account.SetLeverageAsync(oSymbol.Symbol, (decimal)nLeverage, BitMart.Net.Enums.MarginType.CrossMargin);
+                if (oResult == null) return new TradingResult<bool>("Result returned null");
+                if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());
+                if (oResult.Data == null) return new TradingResult<bool>("Result returned data null");
+                ((BitmartLeverage)oLeverage).ShortLeverage = nLeverage;
+                ((BitmartLeverage)oLeverage).LongLeverage = nLeverage;
+                return new TradingResult<bool>(true);
+            }
+            catch (Exception ex)
+            {
+                return new TradingResult<bool>(ex);
+            }
         }
     }
 }
