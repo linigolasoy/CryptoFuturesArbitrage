@@ -122,8 +122,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
         {
             int nTotal = 0;
-            int nMax = 200;
-            int nTasks = BingxFutures.TASK_COUNT / 2;
+            int nMax = 150;
+            int nTasks = 5;
 
             while (nTotal < aSymbols.Length)
             {
@@ -142,7 +142,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                         {
                             return false;
                         }
-                        await Task.Delay(1000);
+                        await Task.Delay(2000);
                         aTasks.Clear();
                     }
                     aTasks.Add(DoSubscribe(oClient, oSymbol));

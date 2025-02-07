@@ -132,26 +132,13 @@ namespace Crypto.Exchanges.All.CoinEx
             WebCallResult<CoinExFuturesOrder>? oResult = null;
             try
             {
-                if (nPrice == null)
-                {
-                    oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
+                oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
                         oPositon.Symbol.Symbol,
                         eSide,
-                        OrderTypeV2.Market,
-                        oPositon.Quantity
-                    );
-
-                }
-                else
-                {
-                    oResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.PlaceOrderAsync(
-                        oPositon.Symbol.Symbol,
-                        eSide,
-                        OrderTypeV2.Limit,
+                        ( nPrice == null ? OrderTypeV2.Market : OrderTypeV2.Limit),
                         oPositon.Quantity,
-                        nPrice.Value
+                        nPrice
                     );
-                }
 
                 if (oResult == null) return new TradingResult<bool>("Result returned null");
                 if (!oResult.Success) return new TradingResult<bool>(oResult.Error!.ToString());

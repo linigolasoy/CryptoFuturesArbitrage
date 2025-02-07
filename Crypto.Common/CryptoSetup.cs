@@ -27,6 +27,8 @@ namespace Crypto.Common
         public decimal Amount { get; set; } = 0;
         [JsonProperty("Threshold")]
         public decimal Threshold { get; set; } = 1;
+        [JsonProperty("CloseOnProfit")]
+        public decimal CloseOnProfit { get; set; } = 0.5M;
     }
 
     internal class SetupParsed
@@ -60,7 +62,8 @@ namespace Crypto.Common
             {
                 Leverage = oMoney.Leverage;
                 Amount = oMoney.Amount;
-                PercentMinimum = oMoney.Threshold;
+                ThresHold = oMoney.Threshold;
+                CloseOnProfit = oMoney.CloseOnProfit;
             }
         }
         public IApiKey[] ApiKeys { get; }
@@ -69,7 +72,8 @@ namespace Crypto.Common
         public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures, ExchangeType.BitmartFutures}; }
         public decimal Amount { get; private set; } = 0;
         public int Leverage { get; private set; } = 0;
-        public decimal PercentMinimum { get; private set; } = 1;
+        public decimal ThresHold { get; private set; } = 1;
+        public decimal CloseOnProfit { get; private set; } = 0.5M;
         public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
 
         public static ICryptoSetup? LoadFromFile( string strFile )

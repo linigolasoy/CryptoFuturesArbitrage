@@ -90,11 +90,19 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             foreach (var oExchange in Exchanges)
             {
                 Logger.Info($"FundingSocketData:    {oExchange.ExchangeType.ToString()}");
-                bool bResult = await oExchange.Market.StartSockets();
-                if (!bResult || oExchange.Market.Websocket == null) return false;
-                aWebsockets.Add(oExchange.Market.Websocket);  
-                bResult = await oExchange.Account.StartSockets();
-                if( !bResult ) return false;
+                try
+                {
+                    bool bResult = await oExchange.Market.StartSockets();
+                    if (!bResult || oExchange.Market.Websocket == null) return false;
+                    aWebsockets.Add(oExchange.Market.Websocket);
+                    bResult = await oExchange.Account.StartSockets();
+                    if (!bResult) return false;
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("Error creating sockets", ex);
+                    return false;
+                }
             }
             Websockets = aWebsockets.ToArray();
             return true;

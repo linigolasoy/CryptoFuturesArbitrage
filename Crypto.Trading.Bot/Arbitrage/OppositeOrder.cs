@@ -28,16 +28,19 @@ namespace Crypto.Trading.Bot.Arbitrage
     {
         private bool m_bLeverageSet = false;
         private const string USDT = "USDT";
-        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage, DateTime dLimitDate) 
+        private ICryptoSetup m_oSetup;
+        public OppositeOrder(IFuturesSymbol oSymbolLong, IFuturesSymbol oSymbolShort, int nLeverage, DateTime dLimitDate, ICryptoSetup oSetup) 
         {
             Leverage = nLeverage;   
             LongData = new ArbitrageOrderData(oSymbolLong);
             ShortData = new ArbitrageOrderData(oSymbolShort);
             LimitDate = dLimitDate;
+            m_oSetup = oSetup;  
         }
 
         public DateTime LimitDate { get; }
         public int Leverage { get; }
+        public bool Closed { get; internal set; } = false;
         public IArbitrageOrderData LongData { get; }
         public IArbitrageOrderData ShortData { get; }
 
@@ -124,8 +127,8 @@ namespace Crypto.Trading.Bot.Arbitrage
         public async Task<ICloseResult> TryCloseMarket()
         {
             Update();
-            OppositeCloseResult oResult = new OppositeCloseResult() { ProfitOrLoss = 0, Success = false };  
-            if (this.Profit < 0) return oResult;
+            OppositeCloseResult oResult = new OppositeCloseResult() { ProfitOrLoss = this.Profit, Success = false };  
+            if (this.Profit < m_oSetup.CloseOnProfit) return oResult;
             oResult.ProfitOrLoss = this.Profit; 
             if( LongData.Position == null || ShortData.Position == null ) { return oResult; }   
             List<Task<ITradingResult<bool>>> aTasks = new List<Task<ITradingResult<bool>>>();
@@ -134,6 +137,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 
             await Task.WhenAll(aTasks); 
             oResult.Success = true;
+            this.Closed = true; 
             return oResult;
         }
 
@@ -300,7 +304,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// </summary>
         /// <param name="aExchanges"></param>
         /// <returns></returns>
-        public static async Task<IOppositeOrder[]?> CreateFromExchanges(IFuturesExchange[] aExchanges)
+        public static async Task<IOppositeOrder[]?> CreateFromExchanges(IFuturesExchange[] aExchanges, ICryptoSetup oSetup)
         {
             // throw new NotImplementedException();
             await Task.Delay(2000);
@@ -326,7 +330,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                         if( oPosition2 == null ) continue;  
                         if( oPosition1.Direction == FuturesPositionDirection.Long )
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10, DateTime.Now);
+                            OppositeOrder oOrder = new OppositeOrder(oPosition1.Symbol, oPosition2.Symbol, 10, DateTime.Now, oSetup);
                             oOrder.LongData.Position = oPosition1;
                             oOrder.LongData.Quantity = oPosition1.Quantity; 
                             oOrder.ShortData.Position = oPosition2;
@@ -335,7 +339,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                         }
                         else
                         {
-                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10, DateTime.Now);
+                            OppositeOrder oOrder = new OppositeOrder(oPosition2.Symbol, oPosition1.Symbol, 10, DateTime.Now, oSetup);
                             oOrder.LongData.Position = oPosition2;
                             oOrder.LongData.Quantity = oPosition2.Quantity;
                             oOrder.ShortData.Position = oPosition1;

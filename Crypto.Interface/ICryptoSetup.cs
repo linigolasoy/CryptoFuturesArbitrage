@@ -16,6 +16,7 @@
         public decimal Amount { get; }  
         public int Leverage {  get; }   
         public string LogPath { get; }  
-        public decimal PercentMinimum { get; }  
+        public decimal ThresHold { get; }  
+        public decimal CloseOnProfit { get; }   
     }
 }

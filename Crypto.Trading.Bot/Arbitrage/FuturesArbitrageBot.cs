@@ -64,12 +64,12 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         private async Task ProcessPosition(IFuturesPosition oPosition)
         {
-            return; 
-            /*
+            if (m_oChance == null) return;
+            if( m_oChance.BuyPosition == null || m_oChance.SellPosition == null) return;
+            if (m_oChance.Money == null) return;
             try
             {
 
-                if (m_oChance == null) return;
                 if( oPosition.AveragePrice <= 0 )
                 {
                     Logger.Info($"Positon Average Prize ZERO on {oPosition.Symbol.ToString()}");
@@ -91,7 +91,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                     }
                     if (oPosition.AveragePrice > 0)
                     {
-                        m_oChance.BuyOpenPrice = oPosition.AveragePrice;
+                        m_oChance.Money.BuyOpenPrice = oPosition.AveragePrice;
                     }
 
                 }
@@ -100,7 +100,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                     if (m_oChance.SellPosition.Position == null)
                     {
                         m_oChance.SellPosition.Position = oPosition;
-                        m_oChance.SellOpenPrice = oPosition.AveragePrice;
+                        m_oChance.Money.SellOpenPrice = oPosition.AveragePrice;
                         Logger.Info($" Position on {oPosition.Symbol.ToString()} Direction {oPosition.Direction.ToString()}");
                     }
                     else if (m_oChance.SellPosition.Position.Closed)
@@ -113,7 +113,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                     }
                     if (oPosition.AveragePrice > 0)
                     {
-                        m_oChance.SellOpenPrice = oPosition.AveragePrice;
+                        m_oChance.Money.SellOpenPrice = oPosition.AveragePrice;
                     }
                 }
             }
@@ -121,7 +121,6 @@ namespace Crypto.Trading.Bot.Arbitrage
             {
                 Logger.Error($" Error processing queue position on {oPosition.Symbol.ToString()}", e);
             }
-            */
         }
 
         private async Task OnPrivateEvent(IWebsocketQueueItem oItem)
@@ -163,7 +162,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             decimal nMoney = Setup.Leverage * Setup.Amount;
             IArbitrageChance? oBest = null;
 
-            foreach (var oChance in aChances)
+            foreach (var oChance in aChances.Where(p=> p.ChanceStatus == ChanceStatus.None || p.ChanceStatus == ChanceStatus.Leverage ) )
             {
                 if( !oChance.CalculateArbitrage(nMoney) ) continue;
                 if( oChance.Money == null ) continue;   
@@ -227,6 +226,19 @@ namespace Crypto.Trading.Bot.Arbitrage
         }
 
 
+        private void LogResults( string strData, string? strErrorMessage, Exception? oException )
+        {
+            if ( oException != null )
+            {
+                Logger.Error(strData, oException);
+            }
+            if( strErrorMessage != null )
+            {
+                Logger.Error($"{strData} : [{strErrorMessage}]");
+            }
+            return;
+        }
+
         private async Task<bool> SetLeverages( IArbitrageChance oChance )
         {
             if (oChance.Money == null || oChance.BuyPosition == null || oChance.SellPosition == null) return false;
@@ -236,9 +248,11 @@ namespace Crypto.Trading.Bot.Arbitrage
             aTasksLeverage.Add(oChance.BuyPosition.Symbol.Exchange.Trading.SetLeverage(oChance.BuyPosition.Symbol, Setup.Leverage));
             aTasksLeverage.Add(oChance.SellPosition.Symbol.Exchange.Trading.SetLeverage(oChance.SellPosition.Symbol, Setup.Leverage));
             await Task.WhenAll(aTasksLeverage);
-            if (aTasksLeverage.Any(p => !p.Result.Success))
+
+            ITradingResult<bool> [] aResultsWrong = aTasksLeverage.Select(p=> p.Result).Where(p=> !p.Success).ToArray();
+            if (aResultsWrong.Any())
             {
-                Logger.Error("Leverage failed!!!");
+                foreach( var oWrong in aResultsWrong ) LogResults("Set Leverage Error ...", oWrong.Message, oWrong.Exception ); 
                 return false;
             }
             return true;    
@@ -270,12 +284,17 @@ namespace Crypto.Trading.Bot.Arbitrage
 
             aTasks.Add(oChance.BuyPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.BuyPosition.Symbol, true, oChance.Money.Quantity, oChance.Money.BuyOpenPrice));
             aTasks.Add(oChance.SellPosition.Symbol.Exchange.Trading.CreateLimitOrder(oChance.SellPosition.Symbol, false, oChance.Money.Quantity, oChance.Money.SellOpenPrice));
-            await Task.WhenAll(aTasks); 
+            await Task.WhenAll(aTasks);
+            IArbitrageChance? oResult = oChance;
+            if(!aTasks[0].Result.Success) { oResult = null; LogResults($"Error creating order {oChance.BuyPosition.Symbol.ToString()}", aTasks[0].Result.Message, aTasks[0].Result.Exception); }
+            if (!aTasks[1].Result.Success) { oResult = null; LogResults($"Error creating order {oChance.SellPosition.Symbol.ToString()}", aTasks[1].Result.Message, aTasks[1].Result.Exception); }
+            if( oResult != null )
+            {
+                Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} at {oChance.Money.BuyOpenPrice} Sell {oChance.SellPosition.Symbol.ToString()} at {oChance.Money.SellOpenPrice} Percent {oChance.Money.Percent}");
+                oChance.ChanceStatus = ChanceStatus.Position;
+            }
 
-            Logger.Info($" Active chance Buy {oChance.BuyPosition.Symbol.ToString()} at {oChance.Money.BuyOpenPrice} Sell {oChance.SellPosition.Symbol.ToString()} at {oChance.Money.SellOpenPrice} Percent {oChance.Money.Percent}");
-            oChance.ChanceStatus = ChanceStatus.Position;
-
-            return oChance;
+            return oResult;
         }
 
 
@@ -286,32 +305,31 @@ namespace Crypto.Trading.Bot.Arbitrage
         /// <returns></returns>
         private async Task ActOnPosition( IArbitrageChance oChance )
         {
-            throw new NotImplementedException();
-            /*
             if (oChance.ChanceStatus != ChanceStatus.Position) return;
+            if( oChance.Money == null ) return;
+            if( oChance.BuyPosition == null || oChance.SellPosition == null ) return;
             oChance.CalculateProfit();
 
-            decimal nPercent = Math.Round( 100.0M * oChance.Profit / ( oChance.Quantity * oChance.BuyOpenPrice ), 3);
-            if (nPercent < oChance.Percent)
+            decimal nPercent = Math.Round( 100.0M * oChance.Money.Profit / ( oChance.Money.Quantity * oChance.Money.BuyOpenPrice ), 3);
+            if (nPercent < oChance.Money.Percent)
             {
                 DateTime dNow = DateTime.Now;
                 if( (dNow - m_dLastInfo).TotalMinutes >= 1 )
                 {
                     m_dLastInfo = dNow;
-                    Logger.Info($"   Actual profit {Math.Round(oChance.Profit,2)} ({nPercent} %)");
+                    Logger.Info($"   Actual profit {Math.Round(oChance.Money.Profit,2)} ({nPercent} %)");
                 }
                 return;
             }
 
             if( oChance.BuyPosition.Position == null || oChance.SellPosition.Position == null ) return;
 
-            List<Task<bool>> aTasksClose = new List<Task<bool>>();
+            List<Task<ITradingResult<bool>>> aTasksClose = new List<Task<ITradingResult<bool>>>();
             aTasksClose.Add(oChance.BuyPosition.Symbol.Exchange.Trading.ClosePosition(oChance.BuyPosition.Position ));
             aTasksClose.Add(oChance.SellPosition.Symbol.Exchange.Trading.ClosePosition(oChance.SellPosition.Position ));
             await Task.WhenAll(aTasksClose);
-            Logger.Info($"   Profit reached. Closing on profit {oChance.Profit} ({nPercent} %)");
+            Logger.Info($"   Profit reached. Closing on profit {oChance.Money.Profit} ({nPercent} %)");
             oChance.ChanceStatus = ChanceStatus.OrderClose;
-            */
         }
 
         /// <summary>

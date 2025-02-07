@@ -69,7 +69,7 @@ namespace Crypto.Tests
                 ICloseResult oResult =  await oOpposite.TryCloseMarket();
             }
             */
-            IOppositeOrder oOrder = ArbitrageFactory.CreateOppositeOrder(oSymbolLong, oSymbolShort, 10, DateTime.Now);
+            IOppositeOrder oOrder = ArbitrageFactory.CreateOppositeOrder(oSymbolLong, oSymbolShort, 10, DateTime.Now, oSetup);
 
             bool bResult = await oOrder.TryOpenLimit(13);
             Assert.IsTrue(bResult);

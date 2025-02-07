@@ -146,118 +146,131 @@ namespace CryptoFuturesArbitrage.Console
 
         }
 
-        private static async Task TryClosePositions(IOppositeOrder[]? aOpposite, ICommonLogger oLogger)
+        private static async Task<decimal> TryClosePositions(IOppositeOrder[]? aOpposite, ICommonLogger oLogger, decimal nLastProfit )
         {
-            if( aOpposite == null || aOpposite.Length <= 0 ) return;
-
+            if( aOpposite == null || aOpposite.Length <= 0 ) return 0;
+            decimal nResult = 0;
             foreach( IOppositeOrder o in aOpposite )
             {
-                decimal nProfit = o.Profit;
+                if( o.Closed ) continue;    
                 ICloseResult oResult = await o.TryCloseMarket();
-
-                if (oResult.ProfitOrLoss != nProfit)
+                decimal nProfit = Math.Round( o.Profit,3);
+                nResult += nProfit;
+                if( nProfit != nLastProfit )
                 {
-                    oLogger.Info($"{o.LongData.Symbol.Base}-{o.ShortData.Symbol.Quote} Profit or Loss {oResult.ProfitOrLoss}");
+                    oLogger.Info($"{o.LongData.Symbol.Base}-{o.ShortData.Symbol.Quote} Profit or Loss {nProfit}");
+                }
+                if (oResult.Success )
+                {
                     if( oResult.ProfitOrLoss > 0 )
                     {
                         oLogger.Info("SUCCESSS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     }
                 }
             }
+            return nResult;
         }
 
         private static async Task DoWebsocketFundingData(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             IFundingSocketData oSocketData = BotFactory.CreateFundingSocket(oSetup, oLogger);
 
-            bool bStarted = await oSocketData.Start();
-            if( !bStarted ) { oLogger.Error("Could not start funding socket data"); return; }
-
-
-            IFundingPair? oLast = null;
-
-            IFundingPair? oTraded;
-            decimal nQuantity = 30;
-            decimal nStartBalance = 0;
-
-            await Task.Delay(5000);
-
-            DateTime dLast = DateTime.Now;
-            if (oSocketData.Websockets == null) return;
-            IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (IFuturesExchange)p.Exchange).ToArray());
-
-            bool bResult = true;
-            while (bResult)
+            try
             {
-                bResult = !NeedsCancel();
-                IFundingDate[]? aDates = await oSocketData.GetFundingDates();
-                if (aDates == null) continue;
+                bool bStarted = await oSocketData.Start();
+                if (!bStarted) { oLogger.Error("Could not start funding socket data"); return; }
 
-                IFundingPair? oBest = null;
-                IFundingDate? oNext = await oSocketData.GetNext(null);
-                while( oNext != null )
+
+                IFundingPair? oLast = null;
+
+                IFundingPair? oTraded;
+                decimal nQuantity = 30;
+                decimal nStartBalance = 0;
+                decimal nLastProfit = -9E10M;
+                await Task.Delay(5000);
+
+                DateTime dLast = DateTime.Now;
+                if (oSocketData.Websockets == null) return;
+                IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (IFuturesExchange)p.Exchange).ToArray(), oSetup);
+
+                bool bResult = true;
+                while (bResult)
                 {
-                    IFundingPair? oPair = oNext.GetBest();
-                    if (oPair != null)
+                    bResult = !NeedsCancel();
+                    IFundingDate[]? aDates = await oSocketData.GetFundingDates();
+                    if (aDates == null) continue;
+
+                    IFundingPair? oBest = null;
+                    IFundingDate? oNext = await oSocketData.GetNext(null);
+                    while (oNext != null)
                     {
-                        if (oBest == null)
+                        IFundingPair? oPair = oNext.GetBest();
+                        if (oPair != null)
                         {
-                            oBest = oPair;  
-                        }
-                        else if( oBest.Percent < oPair.Percent )
-                        {
-                            oBest = oPair;
-                        }
-
-                    }
-                    oNext = await oSocketData.GetNext(oNext.DateTime);
-
-                }
-
-                if (oBest == null) continue;
-                bool bLog = true;
-
-                if( oLast != null )
-                {
-                    if( oLast.Percent == oBest.Percent )
-                    {
-                        if( oLast.BuySymbol.Symbol == oBest.BuySymbol.Symbol && oLast.SellSymbol.Symbol == oBest.SellSymbol.Symbol )
-                        {
-                            if (oLast.BuySymbol.Exchange.ExchangeType == oBest.BuySymbol.Exchange.ExchangeType && oLast.SellSymbol.Exchange.ExchangeType == oBest.SellSymbol.Exchange.ExchangeType)
+                            if (oBest == null)
                             {
-                                bLog = false;   
+                                oBest = oPair;
+                            }
+                            else if (oBest.Percent < oPair.Percent)
+                            {
+                                oBest = oPair;
                             }
 
                         }
+                        oNext = await oSocketData.GetNext(oNext.DateTime);
+
                     }
+
+                    if (oBest == null) continue;
+                    bool bLog = true;
+
+                    if (oLast != null)
+                    {
+                        if (oLast.Percent == oBest.Percent)
+                        {
+                            if (oLast.BuySymbol.Symbol == oBest.BuySymbol.Symbol && oLast.SellSymbol.Symbol == oBest.SellSymbol.Symbol)
+                            {
+                                if (oLast.BuySymbol.Exchange.ExchangeType == oBest.BuySymbol.Exchange.ExchangeType && oLast.SellSymbol.Exchange.ExchangeType == oBest.SellSymbol.Exchange.ExchangeType)
+                                {
+                                    bLog = false;
+                                }
+
+                            }
+                        }
+                    }
+
+                    if (bLog)
+                    {
+                        LogFundingPair(oLogger, oBest);
+                    }
+
+                    if ((DateTime.Now - dLast).TotalMinutes >= 5)
+                    {
+                        dLast = DateTime.Now;
+                        oLogger.Info("...");
+                    }
+
+                    if (aOpposite != null && aOpposite.Length > 0)
+                    {
+                        decimal nActual = await TryClosePositions(aOpposite, oLogger, nLastProfit);
+                        nLastProfit = nActual;
+                    }
+                    else
+                    {
+
+                    }
+                    oLast = oBest;
+
+                    await Task.Delay(1000);
                 }
 
-                if( bLog )
-                {
-                    LogFundingPair(oLogger, oBest);
-                }
 
-                if( (DateTime.Now - dLast).TotalMinutes >= 5 )
-                {
-                    dLast = DateTime.Now;
-                    oLogger.Info("...");
-                }
-
-                if( aOpposite != null && aOpposite.Length >0 )
-                {
-                    await TryClosePositions(aOpposite, oLogger);
-                }
-                else 
-                {
-
-                }
-                oLast = oBest;
-
-                await Task.Delay(1000);
+                await oSocketData.Stop();
             }
-
-
-            await oSocketData.Stop();
+            catch (Exception ex)
+            {
+                oLogger.Error("Error en main function", ex);
+            }
 
             await Task.Delay(2000);
 
@@ -329,8 +342,8 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
-            // await DoWebsocketFundingData(oSetup, oLogger);
-            await DoBot(oSetup, oLogger);
+            await DoWebsocketFundingData(oSetup, oLogger);
+            // await DoBot(oSetup, oLogger);
             // await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) await DoTester(oSetup, oLogger);

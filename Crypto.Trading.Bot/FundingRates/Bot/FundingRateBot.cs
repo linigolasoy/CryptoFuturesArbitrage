@@ -131,7 +131,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         {
             double nMinutes = (oPair.FundingDate.DateTime - DateTime.Now).TotalMinutes;
             if (nMinutes < 0 || nMinutes >= 120) return null;
-            IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage, oPair.FundingDate.DateTime);
+            IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage, oPair.FundingDate.DateTime, this.Setup);
             // Put orderbooks
             if (oPair.BuySymbol.Exchange.Market.Websocket == null) return null;
             IOrderbook? oFoundBuy = oPair.BuySymbol.Exchange.Market.Websocket.OrderbookManager.GetData().FirstOrDefault(p=> p.Symbol.Symbol == oPair.BuySymbol.Symbol);

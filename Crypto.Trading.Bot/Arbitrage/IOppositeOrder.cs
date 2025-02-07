@@ -38,6 +38,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IArbitrageOrderData LongData { get; }    
         public IArbitrageOrderData ShortData { get; }   
 
+        public bool Closed { get; } 
         public decimal Profit { get; }
         public int ProfitUpdates { get; }
         public decimal Fees { get; }
