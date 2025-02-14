@@ -69,7 +69,17 @@ namespace Crypto.Common
         public IApiKey[] ApiKeys { get; }
 
 
-        public ExchangeType[] ExchangeTypes { get => new ExchangeType[] { ExchangeType.CoinExFutures, ExchangeType.BingxFutures, ExchangeType.BitgetFutures, ExchangeType.BitmartFutures}; }
+        public ExchangeType[] ExchangeTypes 
+        { 
+            get => new ExchangeType[] 
+                { 
+                    ExchangeType.CoinExFutures, 
+                    ExchangeType.BingxFutures, 
+                    ExchangeType.BitgetFutures, 
+                    ExchangeType.BitmartFutures
+                    // ,ExchangeType.BitUnixFutures
+                }; 
+        }
         public decimal Amount { get; private set; } = 0;
         public int Leverage { get; private set; } = 0;
         public decimal ThresHold { get; private set; } = 1;

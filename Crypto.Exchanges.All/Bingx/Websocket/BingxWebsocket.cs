@@ -108,6 +108,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             var oResult = await oClient.PerpetualFuturesApi.SubscribeToPartialOrderBookUpdatesAsync(oSymbol.Symbol, 10, 100, OnOrderbookUpdate);
             if (oResult == null || !oResult.Success)
             {
+                if( oResult != null && oResult.Error != null )
+                {
+                    if (oResult.Error.Code == 80015) return true;
+                    return false;
+                }
                 return false;
             }
             return true;
@@ -122,20 +127,29 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         public async Task<bool> SubscribeToMarket(IFuturesSymbol[] aSymbols)
         {
             int nTotal = 0;
-            int nMax = 150;
-            int nTasks = 5;
+            int nMax = 200;
+            int nTasks = 20;
 
             while (nTotal < aSymbols.Length)
             {
                 IFuturesSymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
                 nTotal += aPartial.Length;
                 BingXSocketClient oClient = new BingXSocketClient();
+
+                var oPrepareResult = await oClient.PerpetualFuturesApi.PrepareConnectionsAsync();
+                if( !oPrepareResult.Success ) return false;
+                await Task.Delay(500);
                 MarketSockets oMarketSocket = new MarketSockets(oClient);
 
-                List<Task<bool>> aTasks = new List<Task<bool>>();
-                foreach (var oSymbol in aPartial)
+                // List<Task<bool>> aTasks = new List<Task<bool>>();
+                await Task.Delay(300);
+                foreach (var oSymbol in aPartial) //.Skip(1))
                 {
-                    if( aTasks.Count >= nTasks)
+                    bool bResult = await DoSubscribe(oClient, oSymbol);
+                    if( !bResult ) return false;
+                    await Task.Delay(100);
+                    /*
+                    if ( aTasks.Count >= nTasks)
                     {
                         await Task.WhenAll( aTasks.ToArray() );
                         if( aTasks.Any(p=> !p.Result))
@@ -146,11 +160,14 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                         aTasks.Clear();
                     }
                     aTasks.Add(DoSubscribe(oClient, oSymbol));
+                    */
                     oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
+                    //await Task.Delay(300);
                 }
 
-                if (aTasks.Count > 0) await Task.WhenAll(aTasks.ToArray());
-                aTasks.Clear();
+                // if (aTasks.Count > 0) await Task.WhenAll(aTasks.ToArray());
+                // aTasks.Clear();
+                await Task.Delay(1000);
 
                 m_aMarketSockets.Add(oMarketSocket);
             }

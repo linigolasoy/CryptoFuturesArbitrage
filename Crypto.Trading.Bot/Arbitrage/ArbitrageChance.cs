@@ -1,4 +1,5 @@
-﻿using Crypto.Interface.Futures.Market;
+﻿using Crypto.Interface.Futures.Account;
+using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +34,7 @@ namespace Crypto.Trading.Bot.Arbitrage
     internal class ArbitrageChance : IArbitrageChance
     {
         private const decimal MAXIMUM_ORDERBOOK_DELAY = 500;
+        private const int ORDERBOOK_POS = 1;
         public ArbitrageChance( IOrderbook[] aOrderbooks ) /* oBookBuy, IOrderbook oBookSell ) */
         {
             // BuyPosition = new ArbitragePosition(this, oBookBuy);
@@ -49,9 +51,34 @@ namespace Crypto.Trading.Bot.Arbitrage
 
         public IArbitragePosition? SellPosition { get; private set; }
 
-        public IArbitrageMoney Money { get; private set; }  
+        public IArbitrageMoney Money { get; private set; }
 
 
+        public bool SetPositions(IFuturesPosition oLongPosition, IFuturesPosition oShortPosition)
+        {
+            IOrderbook? oLongBook = Orderbooks.FirstOrDefault(p => p.Symbol.Symbol == oLongPosition.Symbol.Symbol && p.Symbol.Exchange.ExchangeType == oLongPosition.Symbol.Exchange.ExchangeType);
+            if (oLongBook == null) return false;
+
+            IOrderbook? oShortBook = Orderbooks.FirstOrDefault(p => p.Symbol.Symbol == oShortPosition.Symbol.Symbol && p.Symbol.Exchange.ExchangeType == oShortPosition.Symbol.Exchange.ExchangeType);
+            if (oShortBook == null) return false;
+
+            var oPosBuy = new ArbitragePosition(this, oLongBook);
+            oPosBuy.Position = oLongPosition;
+            BuyPosition = oPosBuy;
+
+            var oPosSell = new ArbitragePosition(this, oShortBook);
+            oPosSell.Position = oShortPosition;
+            SellPosition = oPosSell;
+            ChanceStatus = ChanceStatus.Position;
+
+            ArbitrageMoney oMoney = new ArbitrageMoney(this);
+            oMoney.Quantity = oLongPosition.Quantity;
+            oMoney.BuyOpenPrice = oLongPosition.AveragePrice;
+            oMoney.SellOpenPrice = oShortPosition.AveragePrice;
+            oMoney.Percent = Math.Round((oMoney.SellOpenPrice - oMoney.BuyOpenPrice) * 100.0M / oMoney.SellOpenPrice, 3);
+            this.Money = oMoney;    
+            return true;
+        }
         private decimal CalculateDelay( IOrderbookPrice oPriceBuy, IOrderbookPrice oPriceSell )
         {
             double nDelayBuy = (oPriceBuy.Orderbook.ReceiveDate - oPriceBuy.Orderbook.UpdateDate).TotalMilliseconds;
@@ -71,8 +98,8 @@ namespace Crypto.Trading.Bot.Arbitrage
 
                 foreach (IOrderbook oBook in Orderbooks)
                 {
-                    IOrderbookPrice? oPriceBuy = oBook.GetBestPrice(true, null, nMoney);
-                    IOrderbookPrice? oPriceSell = oBook.GetBestPrice(false, null, nMoney);
+                    IOrderbookPrice? oPriceBuy = oBook.GetBestPrice(true, ORDERBOOK_POS, null, nMoney);
+                    IOrderbookPrice? oPriceSell = oBook.GetBestPrice(false, ORDERBOOK_POS, null, nMoney);
                     if (oPriceBuy == null || oPriceSell == null) continue;
 
                     if (oBestBuy == null)
@@ -135,8 +162,8 @@ namespace Crypto.Trading.Bot.Arbitrage
             try
             {
                 if (Money == null || BuyPosition == null || SellPosition == null ) return false;
-                IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(false, Money.Quantity, null);
-                IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(true, Money.Quantity, null);
+                IOrderbookPrice? oPriceBuy = BuyPosition.Orderbook.GetBestPrice(false, ORDERBOOK_POS, Money.Quantity, null);
+                IOrderbookPrice? oPriceSell = SellPosition.Orderbook.GetBestPrice(true, ORDERBOOK_POS, Money.Quantity, null);
                 if (oPriceBuy == null || oPriceSell == null) return false;
                 if (BuyPosition.Position == null || SellPosition.Position == null) return false;
                 // if (oPriceBuy.Orderbook.Bids.Length < 5) return false;

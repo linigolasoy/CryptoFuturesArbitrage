@@ -1,7 +1,7 @@
 ﻿using Crypto.Exchanges.All.Bingx;
 using Crypto.Exchanges.All.Bitget;
 using Crypto.Exchanges.All.Bitmart;
-using Crypto.Exchanges.All.Bybit;
+using Crypto.Exchanges.All.BitUnix;
 using Crypto.Exchanges.All.CoinEx;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
@@ -28,6 +28,9 @@ namespace Crypto.Exchanges.All
                     break;
                 case ExchangeType.BitmartFutures:
                     oResult = new BitmartFutures(oSetup);
+                    break;
+                case ExchangeType.BitUnixFutures:
+                    oResult = new BitunixFutures(oSetup);
                     break;
                 // case ExchangeType.ByBitFutures:
                 //     return new BybitFutures(oSetup);

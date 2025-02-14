@@ -70,7 +70,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public Task<bool> SetLeverages();
         public Task<bool> TryOpenLimit(decimal nMoney);
         public Task<bool> TryOpenMarket(decimal nMoney);
-        public Task<ICloseResult> TryCloseLimit();
-        public Task<ICloseResult> TryCloseMarket();
+        public Task<ICloseResult> TryCloseLimit(bool bForce);
+        public Task<ICloseResult> TryCloseMarket(bool bForce);
     }
 }

@@ -49,7 +49,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public int ProfitUpdates { get; private set; } = 0;
         public decimal Fees { get; private set; } = 0;
 
-        public async Task<ICloseResult> TryCloseLimit()
+        public async Task<ICloseResult> TryCloseLimit(bool bForce)
         {
             throw new NotImplementedException();
         }
@@ -82,8 +82,8 @@ namespace Crypto.Trading.Bot.Arbitrage
             { 
                 if( LongData.Orderbook != null && ShortData.Orderbook != null)
                 {
-                    IOrderbookPrice? oPriceLong = LongData.Orderbook.GetBestPrice(false, LongData.Quantity, null);
-                    IOrderbookPrice? oPriceShort = ShortData.Orderbook.GetBestPrice(true, ShortData.Quantity, null);
+                    IOrderbookPrice? oPriceLong = LongData.Orderbook.GetBestPrice(false, 0, LongData.Quantity, null);
+                    IOrderbookPrice? oPriceShort = ShortData.Orderbook.GetBestPrice(true, 0, ShortData.Quantity, null);
                     if( oPriceLong != null &&  oPriceShort != null )
                     {
                         decimal nProfitLong = (oPriceLong.Price - LongData.Position.AveragePrice) * LongData.Position.Quantity;
@@ -124,11 +124,11 @@ namespace Crypto.Trading.Bot.Arbitrage
         }
 
 
-        public async Task<ICloseResult> TryCloseMarket()
+        public async Task<ICloseResult> TryCloseMarket(bool bForce)
         {
             Update();
             OppositeCloseResult oResult = new OppositeCloseResult() { ProfitOrLoss = this.Profit, Success = false };  
-            if (this.Profit < m_oSetup.CloseOnProfit) return oResult;
+            if ( !bForce && this.Profit < m_oSetup.CloseOnProfit) return oResult;
             oResult.ProfitOrLoss = this.Profit; 
             if( LongData.Position == null || ShortData.Position == null ) { return oResult; }   
             List<Task<ITradingResult<bool>>> aTasks = new List<Task<ITradingResult<bool>>>();
@@ -149,9 +149,9 @@ namespace Crypto.Trading.Bot.Arbitrage
         public async Task<bool> TryOpenLimit(decimal nMoney)
         {
             IOrderbookPrice? oPriceLong = null;
-            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
+            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, 0, null, nMoney);
             IOrderbookPrice? oPriceShort = null;
-            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, 0, null, nMoney);
 
             if (oPriceLong == null || oPriceShort == null) return false;
 
@@ -252,9 +252,9 @@ namespace Crypto.Trading.Bot.Arbitrage
             // if (nDifference < 0) return false;
 
             IOrderbookPrice? oPriceLong = null;
-            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, null, nMoney);
+            if (LongData.Orderbook != null) oPriceLong = LongData.Orderbook.GetBestPrice(true, 0, null, nMoney);
             IOrderbookPrice? oPriceShort = null;
-            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, null, nMoney);
+            if (ShortData.Orderbook != null) oPriceShort = ShortData.Orderbook.GetBestPrice(false, 0, null, nMoney);
 
             if( oPriceLong == null || oPriceShort == null ) return false;
 

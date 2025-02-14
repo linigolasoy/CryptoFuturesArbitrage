@@ -47,7 +47,7 @@ namespace Crypto.Exchanges.All.Common
         /// <param name="nQuantity"></param>
         /// <param name="nMoney"></param>
         /// <returns></returns>
-        private IOrderbookPrice? GetBestPriceArray(IOrderbookPrice[] aPrices, decimal? nQuantity = null, decimal? nMoney = null)
+        private IOrderbookPrice? GetBestPriceArray(IOrderbookPrice[] aPrices, int nMinPosition, decimal? nQuantity = null, decimal? nMoney = null)
         {
             decimal nQuantityActual = 0;
             decimal nPriceActual = 0;
@@ -73,10 +73,10 @@ namespace Crypto.Exchanges.All.Common
             }
             return null;
         }
-        public IOrderbookPrice? GetBestPrice(bool bAsk, decimal? nQuantity = null, decimal? nMoney = null)
+        public IOrderbookPrice? GetBestPrice(bool bAsk, int nMinPosition, decimal? nQuantity = null, decimal? nMoney = null)
         {
-            if( bAsk ) return GetBestPriceArray(Asks, nQuantity, nMoney);
-            return GetBestPriceArray(Bids, nQuantity, nMoney);
+            if( bAsk ) return GetBestPriceArray(Asks, nMinPosition, nQuantity, nMoney);
+            return GetBestPriceArray(Bids, nMinPosition, nQuantity, nMoney);
         }
         public void Update(IOrderbook oNew)
         {

@@ -61,7 +61,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IArbitrageMoney? Money { get; }  
         public bool CalculateArbitrage(decimal nMoney);
         public bool CalculateProfit();
-
+        public bool SetPositions( IFuturesPosition oLongPosition, IFuturesPosition oShortPosition );    
         public void Reset();
     }
 }

@@ -16,7 +16,7 @@ namespace Crypto.Exchanges.All.CoinEx
         public CoinexBalance( CoinExFuturesBalance oBalance) 
         {
             Currency = oBalance.Asset;
-            Equity = oBalance.Available;
+            Equity = oBalance.Available + oBalance.Margin + oBalance.UnrealizedPnl;
             MarginAvaliable = oBalance.Available;
             MarginUsed = oBalance.Margin;
             ProfitUnrealized = oBalance.UnrealizedPnl;

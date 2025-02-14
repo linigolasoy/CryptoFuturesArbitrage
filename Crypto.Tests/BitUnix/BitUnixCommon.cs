@@ -8,15 +8,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Tests.Bingx
+namespace Crypto.Tests.BitUnix
 {
-    internal class PoloniexCommon
+    internal class BitUnixCommon
     {
         public static async Task<IFuturesExchange> CreateExchange()
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BingxFutures, oSetup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitUnixFutures, oSetup);
             return oExchange;   
         }
     }

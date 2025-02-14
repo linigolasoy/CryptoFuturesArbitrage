@@ -30,7 +30,7 @@ namespace Crypto.Interface.Futures.Market
         public IOrderbookPrice[] Asks { get; }
         public IOrderbookPrice[] Bids { get; }
 
-        public IOrderbookPrice? GetBestPrice(bool bAsk, decimal? nQuantity = null, decimal? nMoney = null);
+        public IOrderbookPrice? GetBestPrice(bool bAsk, int nMinPosition, decimal? nQuantity = null, decimal? nMoney = null);
 
     }
 }

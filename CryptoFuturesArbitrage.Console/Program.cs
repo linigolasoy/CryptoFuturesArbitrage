@@ -19,19 +19,27 @@ namespace CryptoFuturesArbitrage.Console
         private static bool TEST = false;
 
 
+        private enum eAction
+        {
+            None,
+            Cancel,
+            Close
+        }
 
         /// <summary>
         /// Return if user hit <F> key to end
         /// </summary>
         /// <returns></returns>
-        private static bool NeedsCancel()
+        private static eAction NeedsAction()
         {
+            eAction eResult = eAction.None; 
             if (System.Console.KeyAvailable)
             {
                 ConsoleKeyInfo oKeyInfo = System.Console.ReadKey();
-                if (oKeyInfo.KeyChar == 'F' || oKeyInfo.KeyChar == 'f') return true;
+                if (oKeyInfo.KeyChar == 'F' || oKeyInfo.KeyChar == 'f') eResult = eAction.Cancel;
+                if (oKeyInfo.KeyChar == 'C' || oKeyInfo.KeyChar == 'c') eResult = eAction.Close;
             }
-            return false;
+            return eResult;
 
         }
 
@@ -51,10 +59,10 @@ namespace CryptoFuturesArbitrage.Console
 
                 oLogger.Info("Enter main program");
                 await oBot.Start();
-                bool bResult = true;
-                while (bResult)
+                eAction eResult = eAction.None;
+                while (eResult != eAction.Cancel)
                 {
-                    bResult = !NeedsCancel();    
+                    eResult = NeedsAction();    
                     await Task.Delay(500);
                 }
 
@@ -146,14 +154,14 @@ namespace CryptoFuturesArbitrage.Console
 
         }
 
-        private static async Task<decimal> TryClosePositions(IOppositeOrder[]? aOpposite, ICommonLogger oLogger, decimal nLastProfit )
+        private static async Task<decimal> TryClosePositions(IOppositeOrder[]? aOpposite, ICommonLogger oLogger, decimal nLastProfit, bool bForce )
         {
             if( aOpposite == null || aOpposite.Length <= 0 ) return 0;
             decimal nResult = 0;
             foreach( IOppositeOrder o in aOpposite )
             {
                 if( o.Closed ) continue;    
-                ICloseResult oResult = await o.TryCloseMarket();
+                ICloseResult oResult = await o.TryCloseMarket(bForce);
                 decimal nProfit = Math.Round( o.Profit,3);
                 nResult += nProfit;
                 if( nProfit != nLastProfit )
@@ -193,13 +201,18 @@ namespace CryptoFuturesArbitrage.Console
                 if (oSocketData.Websockets == null) return;
                 IOppositeOrder[]? aOpposite = await ArbitrageFactory.CreateOppositeOrderFromExchanges(oSocketData.Websockets.Select(p => (IFuturesExchange)p.Exchange).ToArray(), oSetup);
 
-                bool bResult = true;
-                while (bResult)
+                eAction eResult = eAction.None;
+                while (eResult != eAction.Cancel)
                 {
-                    bResult = !NeedsCancel();
+                    eResult = NeedsAction();
                     IFundingDate[]? aDates = await oSocketData.GetFundingDates();
                     if (aDates == null) continue;
-
+                    if( eResult == eAction.Close )
+                    {
+                        await TryClosePositions(aOpposite, oLogger, nLastProfit, true);
+                        await Task.Delay(200);
+                        continue;
+                    }
                     IFundingPair? oBest = null;
                     IFundingDate? oNext = await oSocketData.GetNext(null);
                     while (oNext != null)
@@ -252,7 +265,7 @@ namespace CryptoFuturesArbitrage.Console
 
                     if (aOpposite != null && aOpposite.Length > 0)
                     {
-                        decimal nActual = await TryClosePositions(aOpposite, oLogger, nLastProfit);
+                        decimal nActual = await TryClosePositions(aOpposite, oLogger, nLastProfit, false);
                         nLastProfit = nActual;
                     }
                     else
@@ -301,11 +314,11 @@ namespace CryptoFuturesArbitrage.Console
                         if (eTypeBuy == eTypeSell) continue;
                         foreach (var oBookBuy in aOrderbooks[eTypeBuy])
                         {
-                            IOrderbookPrice? oPriceBuy = oBookBuy.GetBestPrice(true, null, nMoney);
+                            IOrderbookPrice? oPriceBuy = oBookBuy.GetBestPrice(true, 0, null, nMoney);
                             if (oPriceBuy == null) continue;
                             IOrderbook? oBookSell = aOrderbooks[eTypeSell].FirstOrDefault(p => p.Symbol.Base == oBookBuy.Symbol.Base && p.Symbol.Quote == oBookBuy.Symbol.Quote);
                             if (oBookSell == null) continue;
-                            IOrderbookPrice? oPriceSell = oBookSell.GetBestPrice(false, null, nMoney);
+                            IOrderbookPrice? oPriceSell = oBookSell.GetBestPrice(false, 0, null, nMoney);
                             if (oPriceSell == null) continue;
                             if (oPriceBuy.Price > oPriceSell.Price) continue;
 
@@ -342,8 +355,8 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
-            await DoWebsocketFundingData(oSetup, oLogger);
-            // await DoBot(oSetup, oLogger);
+            // await DoWebsocketFundingData(oSetup, oLogger);
+            await DoBot(oSetup, oLogger);
             // await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) await DoTester(oSetup, oLogger);

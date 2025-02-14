@@ -148,8 +148,8 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
 
         private decimal CalculateSpreadPercent( IOppositeOrder oOrder, decimal nMoney)
         {
-            IOrderbookPrice? oPriceLong = oOrder.LongData.Orderbook!.GetBestPrice(true, null, nMoney);
-            IOrderbookPrice? oPriceShort = oOrder!.ShortData.Orderbook!.GetBestPrice(false, null, nMoney);
+            IOrderbookPrice? oPriceLong = oOrder.LongData.Orderbook!.GetBestPrice(true, 0, null, nMoney);
+            IOrderbookPrice? oPriceShort = oOrder!.ShortData.Orderbook!.GetBestPrice(false, 0, null, nMoney);
 
             if (oPriceLong == null || oPriceShort == null) return 9E10M;
 

@@ -13,7 +13,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxFundingAccountSocket()
         {
-            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
 
             oExchange.Account.OnPrivateEvent += MyOnPrivateEvent;
             await Task.Delay(1000);
@@ -34,7 +34,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxAllSymbolsSocket()
         {
-            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
 
             await Task.Delay(1000);
             IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();

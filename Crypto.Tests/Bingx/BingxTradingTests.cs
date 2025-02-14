@@ -17,7 +17,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxLeverageTests()
         {
-            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
 
             IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
@@ -43,7 +43,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxBasicOrderTests()
         {
-            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
 
             await Task.Delay(1000);
             oExchange.Account.OnPrivateEvent += Account_OnPrivateEvent;
@@ -132,7 +132,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxAccountTests()
         {
-            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
 
             IFuturesBalance[]? aBalances = await oExchange.Account.GetBalances();
             Assert.IsNotNull(aBalances);

@@ -8,15 +8,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Crypto.Tests.Bingx
+namespace Crypto.Tests.BitUnix
 {
     [TestClass]
-    public class BingxBasicTests
+    public class BitUnixBasicTests
     {
         [TestMethod]
-        public async Task BingxFundingRatesTests()
+        public async Task BitunixFundingRatesTests()
         {
-            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitUnixCommon.CreateExchange();
 
             IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);
@@ -57,9 +57,9 @@ namespace Crypto.Tests.Bingx
         }
 
         [TestMethod]
-        public async Task BingxBarsTests()
+        public async Task BitunixBarsTests()
         {
-            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
+            IFuturesExchange oExchange = await BitUnixCommon.CreateExchange();
 
             IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbols);

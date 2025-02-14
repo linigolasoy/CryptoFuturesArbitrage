@@ -154,6 +154,21 @@ namespace Crypto.Trading.Bot.Arbitrage
 
 
         /// <summary>
+        /// Get balance
+        /// </summary>
+        /// <param name="oChance"></param>
+        /// <returns></returns>
+        private bool IsValidChance(IArbitrageChance oChance )
+        {
+            if (oChance.BuyPosition == null || oChance.SellPosition == null) return false;
+            IFuturesBalance? oBuyBalance = oChance.BuyPosition.Symbol.Exchange.Account.BalanceManager.GetData(USDT);
+            IFuturesBalance? oSellBalance = oChance.SellPosition.Symbol.Exchange.Account.BalanceManager.GetData(USDT);
+            if( oSellBalance == null || oBuyBalance == null ) return false; 
+            if( oBuyBalance.Equity < Setup.Amount ) return false;
+            if ( oSellBalance.Equity < Setup.Amount) return false;
+            return true;
+        }
+        /// <summary>
         /// Find chance
         /// </summary>
         /// <returns></returns>
@@ -166,6 +181,7 @@ namespace Crypto.Trading.Bot.Arbitrage
             {
                 if( !oChance.CalculateArbitrage(nMoney) ) continue;
                 if( oChance.Money == null ) continue;   
+                if( !IsValidChance(oChance)) continue;
                 if( oBest == null )
                 {
                     if( oChance.Money.Percent > 0 ) oBest = oChance;
@@ -325,10 +341,12 @@ namespace Crypto.Trading.Bot.Arbitrage
             if( oChance.BuyPosition.Position == null || oChance.SellPosition.Position == null ) return;
 
             List<Task<ITradingResult<bool>>> aTasksClose = new List<Task<ITradingResult<bool>>>();
-            aTasksClose.Add(oChance.BuyPosition.Symbol.Exchange.Trading.ClosePosition(oChance.BuyPosition.Position ));
-            aTasksClose.Add(oChance.SellPosition.Symbol.Exchange.Trading.ClosePosition(oChance.SellPosition.Position ));
+            aTasksClose.Add(oChance.BuyPosition.Symbol.Exchange.Trading.ClosePosition(oChance.BuyPosition.Position, oChance.Money.BuyClosePrice ));
+            aTasksClose.Add(oChance.SellPosition.Symbol.Exchange.Trading.ClosePosition(oChance.SellPosition.Position, oChance.Money.SellClosePrice));
             await Task.WhenAll(aTasksClose);
             Logger.Info($"   Profit reached. Closing on profit {oChance.Money.Profit} ({nPercent} %)");
+            Logger.Info($"      Buy  Prices : Open {oChance.Money.BuyOpenPrice} Close {oChance.Money.BuyClosePrice}");
+            Logger.Info($"      Sell Prices : Open {oChance.Money.SellOpenPrice} Close {oChance.Money.SellClosePrice}");
             oChance.ChanceStatus = ChanceStatus.OrderClose;
         }
 
@@ -401,6 +419,45 @@ namespace Crypto.Trading.Bot.Arbitrage
 
             Logger.Info($" DELAYS : {oBuild.ToString()}");
         }
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="aChances"></param>
+        /// <returns></returns>
+        private async Task<IArbitrageChance?> GetChanceFromPositions(IArbitrageChance[] aChances)
+        {
+            List<IFuturesPosition> aPositions = new List<IFuturesPosition>();   
+            foreach( var oExchange in this.SocketManager.Exchanges )
+            {
+                var aPos = await oExchange.Account.GetPositions();
+                if( aPos == null || aPos.Length <= 0 ) continue;
+                if (!aPos.Any(p => !p.Closed)) continue;
+                aPositions.AddRange(aPos.Where(p=>  !p.Closed));    
+            }
+
+            foreach(IFuturesPosition oPosLong in aPositions.Where(p=> p.Direction == FuturesPositionDirection.Long ) )
+            {
+                IFuturesPosition? oPosShort = 
+                        aPositions.FirstOrDefault(p=> p.Direction ==FuturesPositionDirection.Short && 
+                                            p.Symbol.Base == oPosLong.Symbol.Base && 
+                                            p.Symbol.Quote == oPosLong.Symbol.Quote &&
+                                            p.Quantity == oPosLong.Quantity);
+
+                if( oPosShort == null ) continue;   
+
+                IArbitrageChance? oChance = aChances.Where(p=> p.Currency == oPosLong.Symbol.Base).FirstOrDefault();
+                if( oChance == null ) continue;
+                bool bResult = oChance.SetPositions(oPosLong, oPosShort);
+                if (bResult)
+                {
+                    Logger.Info($"Found position Long on {oChance.BuyPosition!.Symbol.ToString()} and Short on {oChance.SellPosition!.Symbol.ToString()}");
+                    return oChance;
+                }
+            }
+            return null;
+        }
         /// <summary>
         /// Main loop
         /// </summary>
@@ -409,7 +466,9 @@ namespace Crypto.Trading.Bot.Arbitrage
         {
             await Task.Delay(5000);
             IArbitrageChance[] aChances = CreateChances();
-            await Task.Delay(2000);
+            await Task.Delay(1000);
+            m_oChance = await GetChanceFromPositions(aChances); 
+
             decimal nStartBalance = GetAndLogBalances(null);
             Logger.Info($" START BALANCE : {nStartBalance}");
             // IArbitrageChance? oActive = null;
@@ -442,6 +501,7 @@ namespace Crypto.Trading.Bot.Arbitrage
                         nBestPercent = -100.0M;
                         m_oChance = null;
                         Logger.Info("Closed chance....About to find another...");
+                        await Task.Delay(10000);
 
                     }
                     else if( m_oChance.CalculateProfit() )
