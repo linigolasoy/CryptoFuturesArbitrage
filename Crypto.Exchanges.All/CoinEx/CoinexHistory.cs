@@ -1,16 +1,14 @@
-﻿using CoinEx.Net.Objects.Models.V2;
+﻿using CoinEx.Net.Enums;
+using CoinEx.Net.Objects.Models.V2;
 using Crypto.Common;
+using Crypto.Exchanges.All.Common;
+using Crypto.Exchanges.All.Common.Storage;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.History;
 using Crypto.Interface.Futures.Market;
 using CryptoClients.Net;
 using CryptoClients.Net.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
@@ -18,23 +16,75 @@ namespace Crypto.Exchanges.All.CoinEx
     {
         private CoinexFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
-
+        private IFuturesBarFeeder m_oBarFeeder;
         public CoinexHistory(CoinexFutures oExchange)
         {
             m_oExchange = oExchange;
             m_oGlobalClient = new ExchangeRestClient();
+            m_oBarFeeder = new BaseBarFeeder(m_oExchange);
+            m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
+        }
+
+        private KlineInterval? TimeframeToCoinex( Timeframe eFrame )
+        {
+            switch (eFrame)
+            {
+                case Timeframe.M1:
+                    return KlineInterval.OneMinute;
+                case Timeframe.M5:
+                    return KlineInterval.FiveMinutes;
+                case Timeframe.M15:
+                    return KlineInterval.FifteenMinutes;
+                case Timeframe.M30:
+                    return KlineInterval.ThirtyMinutes;
+                case Timeframe.H1:
+                    return KlineInterval.OneHour;
+                case Timeframe.H4:
+                    return KlineInterval.FourHours;
+                case Timeframe.D1:
+                    return KlineInterval.OneDay;
+                default:
+                    return null;
+            }
+
+        }
+        private async Task<IFuturesBar[]?> OnGetBarsDay(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dDate)
+        {
+            KlineInterval? eInterval = TimeframeToCoinex(eTimeframe);
+            if (eInterval == null) return null;
+
+            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetKlinesAsync(
+                    oSymbol.Symbol,
+                    eInterval.Value,
+                    1000);
+            //. .GetKlinesAsync(oSymbol.Symbol, eInterval.Value, dFrom, dToActual, 1000);
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null || oResult.Data.Count() <= 0) return null;
+
+            List<IFuturesBar> aResult = new List<IFuturesBar>();
+               
+            foreach (var oData in oResult.Data)
+            {
+                    IFuturesBar oBar = new CoinexBar(oSymbol, eTimeframe, oData);
+                    if (!aResult.Any(p => p.DateTime == oBar.DateTime))
+                    {
+                        aResult.Add(oBar);
+                    }
+            }
+
+            return aResult.Where(p => p.DateTime.Date == dDate.Date).ToArray();
         }
 
         public IFuturesExchange Exchange { get => m_oExchange; }
 
         public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
         {
-            throw new NotImplementedException();
+            return await GetBars( new IFuturesSymbol[] {oSymbol}, eTimeframe, dFrom, dTo);  
         }
 
         public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol[] aSymbols, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)
         {
-            throw new NotImplementedException();
+            return await m_oBarFeeder.GetBars(aSymbols, eTimeframe, dFrom, dTo);
         }
 
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)

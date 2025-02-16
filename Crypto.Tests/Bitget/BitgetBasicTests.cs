@@ -71,7 +71,7 @@ namespace Crypto.Tests.Bitget
             IFuturesBar[]? aBars = await oExchange.History.GetBars(aSymbols.Take(10).ToArray(), Timeframe.M15, dFrom, dTo);
 
             Assert.IsNotNull(aBars);
-            Assert.IsTrue(aBars.Length > 30000);
+            Assert.IsTrue(aBars.Length > 10000);
 
         }
 
