@@ -13,6 +13,7 @@ namespace Crypto.Trading.Bot.Arbitrage
 {
     internal class FuturesArbitrageBot: ITradingBot
     {
+        private const double ORDERBOOK_DIFF = 200;
         public FuturesArbitrageBot(ICryptoSetup oSetup, ICommonLogger oLogger)
         {
             Setup = oSetup;
@@ -294,6 +295,13 @@ namespace Crypto.Trading.Bot.Arbitrage
                 if (oChance.Money.Percent < 0.3M) return null;
             }
             if (oChance.ChanceStatus != ChanceStatus.Leverage) return null;
+
+            DateTime dNow = DateTime.Now;
+            var nTimeDiffBuy  = (dNow - oChance.BuyPosition.Orderbook.UpdateDate).TotalMilliseconds;
+            var nTimeDiffSell = (dNow - oChance.SellPosition.Orderbook.UpdateDate).TotalMilliseconds;
+
+            if( nTimeDiffBuy > ORDERBOOK_DIFF ) return null;
+            if (nTimeDiffSell > ORDERBOOK_DIFF) return null;
             Logger.Info($"{oChance.Money.Percent} % Leverage ok for {oChance.BuyPosition.Symbol.ToString()} / {oChance.SellPosition.Symbol.ToString()}");
             // Buy
             List<Task<ITradingResult<IFuturesOrder?>>> aTasks = new List<Task<ITradingResult<IFuturesOrder?>>>();

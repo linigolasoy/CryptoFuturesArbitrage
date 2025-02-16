@@ -13,6 +13,25 @@ namespace Crypto.Tests.Bingx
     [TestClass]
     public class BingxBasicTests
     {
+
+
+        [TestMethod]
+        public async Task BingxBarsTests()
+        {
+            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
+
+            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
+            Assert.IsNotNull(aSymbols);
+            Assert.IsTrue(aSymbols.Length > 100);
+
+            DateTime dFrom = DateTime.Today.AddMonths(-2);
+            DateTime dTo = DateTime.Today.AddDays(-1);
+            IFuturesBar[]? aBars = await oExchange.History.GetBars(aSymbols.Take(10).ToArray(), Timeframe.M15, dFrom, dTo);
+
+            Assert.IsNotNull(aBars);
+            Assert.IsTrue(aBars.Length > 30000);
+        }
+
         [TestMethod]
         public async Task BingxFundingRatesTests()
         {
@@ -56,28 +75,6 @@ namespace Crypto.Tests.Bingx
 
         }
 
-        [TestMethod]
-        public async Task BingxBarsTests()
-        {
-            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
-
-            IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
-            Assert.IsNotNull(aSymbols);
-            Assert.IsTrue(aSymbols.Length > 100);
-
-            IFuturesSymbol? oSymbol = aSymbols.FirstOrDefault(p => p.Base == "BTC");
-            Assert.IsNotNull(oSymbol);
-
-            IFuturesBar[]? aBars = await oExchange.History.GetBars(oSymbol, Timeframe.H1, DateTime.Today.AddDays(-120), DateTime.Today);
-            Assert.IsNotNull(aBars);
-            Assert.IsTrue(aBars.Length > 24);
-            Assert.IsTrue(aBars[aBars.Length - 1].DateTime.Date == DateTime.Today);
-
-            IFuturesBar[]? aBarsMulti = await oExchange.History.GetBars(aSymbols.Take(30).ToArray(), Timeframe.H1, DateTime.Today.AddDays(-2), DateTime.Today);
-            Assert.IsNotNull(aBarsMulti);
-            Assert.IsTrue(aBarsMulti.Length > 100);
-
-        }
 
     }
 }

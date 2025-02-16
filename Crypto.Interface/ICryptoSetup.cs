@@ -15,7 +15,8 @@
         public ExchangeType[] ExchangeTypes { get; }
         public decimal Amount { get; }  
         public int Leverage {  get; }   
-        public string LogPath { get; }  
+        public string LogPath { get; }
+        public string HistoryPath { get; }
         public decimal ThresHold { get; }  
         public decimal CloseOnProfit { get; }   
     }

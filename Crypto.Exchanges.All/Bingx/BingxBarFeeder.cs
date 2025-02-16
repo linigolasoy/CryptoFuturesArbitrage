@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bingx
 {
+    /*
     internal class BingxBarFeeder : IFuturesBarFeeder
     {
 
@@ -111,4 +112,5 @@ namespace Crypto.Exchanges.All.Bingx
             return aResult.ToArray();
         }
     }
+    */
 }

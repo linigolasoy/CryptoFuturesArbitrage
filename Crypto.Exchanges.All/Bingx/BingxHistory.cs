@@ -1,5 +1,8 @@
-﻿using BingX.Net.Objects.Models;
+﻿using BingX.Net.Enums;
+using BingX.Net.Objects.Models;
 using Crypto.Common;
+using Crypto.Exchanges.All.Common;
+using Crypto.Exchanges.All.Common.Storage;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.History;
@@ -16,12 +19,69 @@ namespace Crypto.Exchanges.All.Bingx
     {
 
         private BingxFutures m_oExchange;
-        private BingxBarFeeder m_oBarFeeder;
+        private IFuturesBarFeeder m_oBarFeeder;
         public BingxHistory(BingxFutures oExchange) 
         {
             m_oExchange = oExchange;
-            m_oBarFeeder = new BingxBarFeeder(m_oExchange);
+            m_oBarFeeder = new BaseBarFeeder(m_oExchange);
+            m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
         }
+
+        private KlineInterval? TimeframeToBingX(Timeframe eFrame)
+        {
+            switch (eFrame)
+            {
+                case Timeframe.M1:
+                    return KlineInterval.OneMinute;
+                case Timeframe.M5:
+                    return KlineInterval.FiveMinutes;
+                case Timeframe.M15:
+                    return KlineInterval.FifteenMinutes;
+                case Timeframe.M30:
+                    return KlineInterval.ThirtyMinutes;
+                case Timeframe.H1:
+                    return KlineInterval.OneHour;
+                case Timeframe.H4:
+                    return KlineInterval.FourHours;
+                case Timeframe.D1:
+                    return KlineInterval.OneDay;
+                default:
+                    return null;
+            }
+        }
+
+        private async Task<IFuturesBar[]?> OnGetBarsDay(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dDate)
+        {
+            KlineInterval? eInterval = TimeframeToBingX(eTimeframe);
+            if (eInterval == null) return null;
+            int nDays = CommonFactory.DaysFromTimeframe(eTimeframe);
+
+            DateTime dFrom = dDate.Date.AddHours(-5);
+            DateTime dTo = dDate.Date.AddDays(1).AddHours(5);
+            List<IFuturesBar> aResult = new List<IFuturesBar>();
+            while (dDate.Date <= dTo.Date)
+            {
+                DateTime dToActual = dFrom.Date.AddDays(nDays).AddSeconds(-1);
+                if (dToActual > dTo) dToActual = dTo.Date.AddDays(1).AddSeconds(-1);
+
+                var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetKlinesAsync(oSymbol.Symbol, eInterval.Value, dFrom, dToActual, 1000);
+                if (oResult == null || !oResult.Success) break;
+                if (oResult.Data == null || oResult.Data.Count() <= 0) break;
+
+                foreach (BingXFuturesKline oData in oResult.Data)
+                {
+                    IFuturesBar oBar = new BingxBar(oSymbol, eTimeframe, oData);
+                    if( !aResult.Any(p=> p.DateTime == oBar.DateTime) )
+                    {
+                        aResult.Add(oBar);
+                    }
+                }
+                dFrom= dToActual.Date.AddDays(1).Date;
+            }
+
+            return aResult.Where(p=> p.DateTime.Date == dDate.Date).ToArray();
+        }
+
         public IFuturesExchange Exchange { get => m_oExchange; }
 
         public async Task<IFuturesBar[]?> GetBars(IFuturesSymbol oSymbol, Timeframe eTimeframe, DateTime dFrom, DateTime dTo)

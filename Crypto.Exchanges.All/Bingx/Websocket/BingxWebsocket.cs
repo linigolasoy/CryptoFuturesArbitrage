@@ -129,7 +129,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             int nTotal = 0;
             int nMax = 200;
             int nTasks = 20;
+            int nErrors = 0;
 
+            int nMaxErrors = (20 * aSymbols.Length) / 100;
             while (nTotal < aSymbols.Length)
             {
                 IFuturesSymbol[] aPartial = aSymbols.Skip(nTotal).Take(nMax).ToArray();
@@ -146,7 +148,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                 foreach (var oSymbol in aPartial) //.Skip(1))
                 {
                     bool bResult = await DoSubscribe(oClient, oSymbol);
-                    if( !bResult ) return false;
+                    if (!bResult)
+                    {
+                        nErrors ++;
+                        if( nErrors > nMaxErrors ) return false;
+                    }
                     await Task.Delay(100);
                     /*
                     if ( aTasks.Count >= nTasks)
@@ -161,7 +167,7 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
                     }
                     aTasks.Add(DoSubscribe(oClient, oSymbol));
                     */
-                    oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
+                    if( bResult ) oMarketSocket.Symbols.Add((IFuturesSymbol)oSymbol);
                     //await Task.Delay(300);
                 }
 

@@ -37,6 +37,12 @@ namespace Crypto.Common
         public List<ApiKeyParsed>? ApiKeys { get; set; } = null;
         [JsonProperty("Money")]
         public SetupMoneyParsed? Money { get; set; } = null;
+
+        [JsonProperty("LogPath")]
+        public string LogPath { get; set; } = string.Empty;
+        [JsonProperty("HistoryPath")]
+        public string HistoryPath { get; set; } = String.Empty;
+
     }
 
 
@@ -55,16 +61,18 @@ namespace Crypto.Common
     internal class CryptoSetup : ICryptoSetup
     {
 
-        internal CryptoSetup(IApiKey[] aApiKeys, SetupMoneyParsed? oMoney )
+        internal CryptoSetup(IApiKey[] aApiKeys, SetupParsed oParsed )
         {
             ApiKeys = aApiKeys; 
-            if( oMoney != null )
+            if( oParsed.Money != null )
             {
-                Leverage = oMoney.Leverage;
-                Amount = oMoney.Amount;
-                ThresHold = oMoney.Threshold;
-                CloseOnProfit = oMoney.CloseOnProfit;
+                Leverage = oParsed.Money.Leverage;
+                Amount = oParsed.Money.Amount;
+                ThresHold = oParsed.Money.Threshold;
+                CloseOnProfit = oParsed.Money.CloseOnProfit;
             }
+            if( oParsed.LogPath != null ) LogPath = oParsed.LogPath;
+            if( oParsed.HistoryPath != null ) HistoryPath = oParsed.HistoryPath;
         }
         public IApiKey[] ApiKeys { get; }
 
@@ -84,7 +92,8 @@ namespace Crypto.Common
         public int Leverage { get; private set; } = 0;
         public decimal ThresHold { get; private set; } = 1;
         public decimal CloseOnProfit { get; private set; } = 0.5M;
-        public string LogPath { get => "D:/Data/CryptoFutures/Log"; }
+        public string LogPath { get; private set; } = string.Empty;
+        public string HistoryPath { get; private set; } = string.Empty;
 
         public static ICryptoSetup? LoadFromFile( string strFile )
         {
@@ -103,7 +112,7 @@ namespace Crypto.Common
             }
             if( aFound.Count <= 0 ) return null;    
 
-            return new CryptoSetup(aFound.ToArray(), oSetupParsed.Money);
+            return new CryptoSetup(aFound.ToArray(), oSetupParsed);
         }
     }
 }
