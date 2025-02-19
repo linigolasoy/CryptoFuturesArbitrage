@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Exchanges.All.Bingx.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -45,6 +46,27 @@ namespace Crypto.Exchanges.All.Bingx
             m_oWebsocket = null;
             return true;
         }
+
+
+        /// <summary>
+        /// Get tickets
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IFuturesTicker[]?> GetTickers()
+        {
+            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetLastTradePricesAsync();
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+            List<IFuturesTicker> aResult = new List<IFuturesTicker>();  
+            foreach( var oData in oResult.Data )
+            {
+                IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
+                if (oSymbol == null) continue;
+                aResult.Add(new BaseTicker(oSymbol, oData.Price, oData.Timestamp.ToLocalTime()));
+            }
+            return aResult.ToArray();   
+        }
+
 
         /// <summary>
         /// Funding rates single symbol

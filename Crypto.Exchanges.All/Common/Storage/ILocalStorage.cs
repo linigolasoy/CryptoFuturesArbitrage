@@ -18,6 +18,7 @@ namespace Crypto.Exchanges.All.Common.Storage
 
         public void SetBars(IFuturesBar[] aBars);
 
-        public IFundingRate[]? GetFundingRates(string strSymbol, DateTime dDate);
+        public IFundingRate[]? GetFundingRates(string strSymbol);
+        public void SetFundingRates(string strSymbol, IFundingRate[] aRates);
     }
 }

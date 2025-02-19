@@ -21,14 +21,12 @@ namespace Crypto.Exchanges.All.Common.Storage
 
         public IFuturesExchange Exchange { get; }
 
-
         /// <summary>
-        /// Creates local folders
+        /// Create symbol folder
         /// </summary>
         /// <param name="strSymbol"></param>
-        /// <param name="dDate"></param>
         /// <returns></returns>
-        private string? CreateLocalFolders(string strSymbol, DateTime dDate)
+        private string? CreateSymbolFolder( string strSymbol )
         {
             string strBasePath = $"{Exchange.Setup.HistoryPath}/{Exchange.ExchangeType.ToString()}";
             try
@@ -42,6 +40,27 @@ namespace Crypto.Exchanges.All.Common.Storage
                 {
                     Directory.CreateDirectory(strBasePath);
                 }
+
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
+            return strBasePath;
+
+        }
+        /// <summary>
+        /// Creates local folders
+        /// </summary>
+        /// <param name="strSymbol"></param>
+        /// <param name="dDate"></param>
+        /// <returns></returns>
+        private string? CreateLocalFolders(string strSymbol, DateTime dDate)
+        {
+            string? strBasePath = CreateSymbolFolder(strSymbol);
+            if (strBasePath == null) return null;
+            try
+            {
                 string strDate = dDate.Date.ToString("yyyyMM");
                 strBasePath = $"{strBasePath}/{strDate}";
                 if (!Directory.Exists(strBasePath))
@@ -58,7 +77,7 @@ namespace Crypto.Exchanges.All.Common.Storage
 
         }
 
-        private string? GetLocalPath(string strSymbol, DateTime dDate, Timeframe eFrame )
+        private string? GetLocalBarPath(string strSymbol, DateTime dDate, Timeframe eFrame )
         {
             string? strPath = CreateLocalFolders(strSymbol, dDate);
             if (strPath == null) return null;
@@ -66,9 +85,19 @@ namespace Crypto.Exchanges.All.Common.Storage
             strPath = $"{strPath}/{strFileName}";
             return strPath;
         }
+
+        private string? GetLocalFundingPath(string strSymbol)
+        {
+            string? strPath = CreateSymbolFolder(strSymbol);
+            if (strPath == null) return null;
+            string strFileName = $"FundingRates_{strSymbol}.json";
+            strPath = $"{strPath}/{strFileName}";
+            return strPath;
+        }
+
         public IFuturesBar[]? GetBars(IFuturesSymbol oSymbol, Timeframe eFrame, DateTime dDate)
         {
-            string? strPath = GetLocalPath(oSymbol.Symbol, dDate, eFrame);
+            string? strPath = GetLocalBarPath(oSymbol.Symbol, dDate, eFrame);
             if (!File.Exists(strPath)) return null;
 
             List<BarJson>? aBarsJson = JsonConvert.DeserializeObject<List<BarJson>>(File.ReadAllText(strPath));
@@ -116,7 +145,7 @@ namespace Crypto.Exchanges.All.Common.Storage
         /// <param name="aBars"></param>
         private void SaveBars(IFuturesSymbol oSymbol, DateTime dDate, Timeframe eFrame, IFuturesBar[] aBars)
         {
-            string? strPath = GetLocalPath(oSymbol.Symbol, dDate, eFrame);
+            string? strPath = GetLocalBarPath(oSymbol.Symbol, dDate, eFrame);
             if (strPath == null) return;
             List<BarJson> aToSave = new List<BarJson>();
 
@@ -138,9 +167,46 @@ namespace Crypto.Exchanges.All.Common.Storage
             File.WriteAllText(strPath, strToSave);  
         }
 
-        public IFundingRate[]? GetFundingRates(string strSymbol, DateTime dDate)
+        public IFundingRate[]? GetFundingRates(string strSymbol)
         {
-            throw new NotImplementedException();
+            string? strPath = GetLocalFundingPath(strSymbol);
+            if( strPath == null) return null;   
+            if( !File.Exists(strPath) ) return null;
+            string? strText = File.ReadAllText(strPath);
+            if( strText == null ) return null;  
+            List<FundingJson>? aLoaded = JsonConvert.DeserializeObject<List<FundingJson>>(strText);
+            if( aLoaded == null ) return null;
+            List<IFundingRate> aResult = new List<IFundingRate>();
+            IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(strSymbol);
+            if( oSymbol == null ) return null;  
+
+            foreach ( var oLoaded in aLoaded )
+            {
+                aResult.Add(new FundingStorage(oSymbol, oLoaded));
+            }
+            return aResult.ToArray();
+        }
+
+        public void SetFundingRates(string strSymbol, IFundingRate[] aRates)
+        {
+            string? strPath = GetLocalFundingPath(strSymbol);
+            if (strPath == null) return;
+            List<FundingJson> aToSave = new List<FundingJson>();
+
+            foreach(var oRate in aRates)
+            {
+                FundingJson oNew = new FundingJson()
+                {
+                    Symbol = strSymbol,
+                    DateTime = oRate.SettleDate,
+                    Rate = oRate.Rate
+                };
+                aToSave.Add(oNew);
+
+            }
+            string strToSave = JsonConvert.SerializeObject(aToSave, Formatting.Indented);
+            File.WriteAllText(strPath, strToSave);
+
         }
     }
 }

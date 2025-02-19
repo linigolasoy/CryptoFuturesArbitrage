@@ -23,6 +23,11 @@ namespace Crypto.Tests.Bitget
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
+
+            IFuturesTicker[]? aTickers = await oExchange.Market.GetTickers();
+            Assert.IsNotNull(aTickers);
+            Assert.IsTrue(aTickers.Length > 100);
+
             // IFuturesSymbol[] aFirst = aSymbols.Take(60).ToArray();
 
             IFuturesSymbol? oToFind = aSymbols.FirstOrDefault(p => p.Base == "XRP");

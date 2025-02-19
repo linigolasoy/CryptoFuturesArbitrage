@@ -17,12 +17,40 @@ namespace Crypto.Exchanges.All.Bitmart
         private BitmartFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
         private IFuturesBarFeeder m_oBarFeeder;
+        private IFundingRateFeeder m_oFundingFeeder;
+
         public BitmartHistory(BitmartFutures oExchange) 
         {
             m_oExchange = oExchange;
             m_oGlobalClient = oExchange.GlobalClient;
             m_oBarFeeder = new BaseBarFeeder(m_oExchange);
             m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
+            m_oFundingFeeder = new BaseFundingFeeder(m_oExchange);
+            m_oFundingFeeder.OnGetFunding += OnGetFunding;
+        }
+
+        /// <summary>
+        /// Get funding rates from web
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="dFrom"></param>
+        /// <returns></returns>
+        private async Task<IFundingRate[]?> OnGetFunding(IFuturesSymbol oSymbol, DateTime dFrom)
+        {
+            int nLimit = 100;
+
+            List<IFundingRate> aResult = new List<IFundingRate>();
+            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, nLimit);
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+
+            foreach (BitMartFundingRateHistory oData in oResult.Data)
+            {
+                aResult.Add(new BitmartFundingRateLocal(oSymbol, oData));
+            }
+            if (aResult.Count <= 0) return null;
+
+            return aResult.ToArray();
         }
 
 
@@ -99,39 +127,19 @@ namespace Crypto.Exchanges.All.Bitmart
 
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
-            int nLimit = 100;
-
-            List<IFundingRate> aResult = new List<IFundingRate>();
-            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, nLimit);
-            if (oResult == null || !oResult.Success) return null;
-            if (oResult.Data == null) return null;
-
-            foreach (BitMartFundingRateHistory oData in oResult.Data)
-            {
-                aResult.Add(new BitmartFundingRateLocal(oSymbol, oData));
-            }
-            if (aResult.Count <= 0) return null;
-
-            return aResult.ToArray();
+            return await GetFundingRatesHistory( new IFuturesSymbol[] { oSymbol }, dFrom);  
         }
 
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
-            ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(BitmartFutures.TASK_COUNT);
             List<IFundingRate> aResult = new List<IFundingRate>();
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
+                IFundingRate[]? aPartial = await m_oFundingFeeder.GetFundingRatesHistory(oSymbol, dFrom);
+                if (aPartial != null) aResult.AddRange(aPartial);
             }
 
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
             return aResult.ToArray();
         }
     }

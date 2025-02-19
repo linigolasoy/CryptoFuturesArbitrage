@@ -24,12 +24,21 @@ namespace Crypto.Tests.Bingx
             Assert.IsNotNull(aSymbols);
             Assert.IsTrue(aSymbols.Length > 100);
 
+
+            IFuturesTicker[]? aTickers = await oExchange.Market.GetTickers();
+            Assert.IsNotNull(aTickers);
+            Assert.IsTrue(aTickers.Length > 100);
+
+
+
             DateTime dFrom = DateTime.Today.AddMonths(-2);
             DateTime dTo = DateTime.Today.AddDays(-1);
             IFuturesBar[]? aBars = await oExchange.History.GetBars(aSymbols.Take(10).ToArray(), Timeframe.M15, dFrom, dTo);
 
             Assert.IsNotNull(aBars);
             Assert.IsTrue(aBars.Length > 30000);
+
+
         }
 
         [TestMethod]

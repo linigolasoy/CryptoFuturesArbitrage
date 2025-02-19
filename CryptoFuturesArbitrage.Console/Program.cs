@@ -4,6 +4,7 @@ using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Trading.Bot;
 using Crypto.Trading.Bot.Arbitrage;
+using Crypto.Trading.Bot.BackTest;
 using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates;
 using Crypto.Trading.Bot.FundingRates.Model;
@@ -53,8 +54,8 @@ namespace CryptoFuturesArbitrage.Console
         {
             try
             {
-                ITradingBot oBot = BotFactory.CreateFuturesArbitrageBot(oSetup, oLogger);
-                // ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
+                // ITradingBot oBot = BotFactory.CreateFuturesArbitrageBot(oSetup, oLogger);
+                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
                 // ITradingBot oBot = new OppositeOrderTester(oSetup, oLogger);
 
                 oLogger.Info("Enter main program");
@@ -91,7 +92,22 @@ namespace CryptoFuturesArbitrage.Console
             DateTime dFrom = DateTime.Today.AddMonths(-1);
             DateTime dTo = DateTime.Today;
 
-            throw new NotImplementedException();    
+
+            IBackTester oTester = TesterFactory.CreateFundingRateTester(oSetup, oLogger, dFrom, dTo);
+
+            bool bOk = await oTester.Start();
+            if (!bOk) return;
+
+            while( !oTester.Ended )
+            {
+                IBackTestResult? oResult = await oTester.Step();    
+                if( oResult != null )
+                {
+
+                }
+
+            }
+            await oTester.Stop();
             /*
             IFundingTestData oTestData = TesterFactory.CreateFundingTestData(oSetup, oLogger, dFrom, dTo);
 
@@ -356,10 +372,11 @@ namespace CryptoFuturesArbitrage.Console
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
             // await DoWebsocketFundingData(oSetup, oLogger);
-            await DoBot(oSetup, oLogger);
+            // await DoBot(oSetup, oLogger);
+            await DoTester(oSetup, oLogger);
             // await DoSocketManager(oSetup, oLogger);
             /*
-            if (TEST) await DoTester(oSetup, oLogger);
+            if (TEST) 
             else
             {
                 // await DoWebsocketFundingData(oSetup, oLogger);

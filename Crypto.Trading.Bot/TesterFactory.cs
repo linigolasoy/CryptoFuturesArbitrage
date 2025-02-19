@@ -1,5 +1,7 @@
 ﻿using Crypto.Interface;
+using Crypto.Trading.Bot.BackTest;
 using Crypto.Trading.Bot.FundingRates;
+using Crypto.Trading.Bot.FundingRates.BackTest;
 using Crypto.Trading.Bot.FundingRates.Model;
 using System;
 using System.Collections.Generic;
@@ -19,5 +21,9 @@ namespace Crypto.Trading.Bot
         }
         */
         
+        public static IBackTester CreateFundingRateTester(ICryptoSetup oSetup, ICommonLogger oLogger, DateTime dFrom, DateTime dTo)
+        {
+            return new FundingRatesTester(oSetup, oLogger, dFrom, dTo);
+        }
     }
 }

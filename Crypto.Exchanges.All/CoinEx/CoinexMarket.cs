@@ -1,5 +1,6 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
 using Crypto.Exchanges.All.CoinEx.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -61,6 +62,29 @@ namespace Crypto.Exchanges.All.CoinEx
             m_oWebsocket = null;
             return true;
         }
+
+
+        /// <summary>
+        /// Get tickets
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IFuturesTicker[]?> GetTickers()
+        {
+            var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetTickersAsync();
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+            List<IFuturesTicker> aResult = new List<IFuturesTicker>();
+            DateTime dNow = DateTime.Now;   
+            foreach (var oData in oResult.Data)
+            {
+                IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
+                if (oSymbol == null) continue;
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, dNow));
+            }
+            return aResult.ToArray();
+        }
+
+
 
         /// <summary>
         /// Get funding rates of specific symbol

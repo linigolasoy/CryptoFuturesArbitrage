@@ -1,7 +1,6 @@
 ﻿using Bitget.Net.Enums;
 using Bitget.Net.Enums.V2;
 using Crypto.Common;
-using Crypto.Exchanges.All.Bingx;
 using Crypto.Exchanges.All.Common;
 using Crypto.Exchanges.All.Common.Storage;
 using Crypto.Interface;
@@ -18,13 +17,54 @@ namespace Crypto.Exchanges.All.Bitget
         private BitgetFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
         private IFuturesBarFeeder m_oBarFeeder;
+        private IFundingRateFeeder m_oFundingFeeder;
+
         public BitgetHistory(BitgetFutures oExchange)
         {
             m_oExchange = oExchange;
             m_oGlobalClient = new ExchangeRestClient();
             m_oBarFeeder = new BaseBarFeeder(m_oExchange);
             m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
+            m_oFundingFeeder = new BaseFundingFeeder(m_oExchange);
+            m_oFundingFeeder.OnGetFunding += OnGetFunding;
 
+        }
+        /// <summary>
+        /// Get funding rates from web
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="dFrom"></param>
+        /// <returns></returns>
+        private async Task<IFundingRate[]?> OnGetFunding(IFuturesSymbol oSymbol, DateTime dFrom)
+        {
+            int nPage = 1;
+            int nPageSize = 100;
+            DateTime dLimit = dFrom.Date;
+            List<IFundingRate> aResult = new List<IFundingRate>();
+
+            bool bLimit = false;
+            while (!bLimit)
+            {
+                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.ExchangeData.GetHistoricalFundingRateAsync(BitgetProductTypeV2.UsdtFutures, oSymbol.Symbol, nPageSize, nPage);
+                if (oResult == null || oResult.Data == null) break;
+                if (!oResult.Success) break;
+                if (oResult.Data.Count() <= 0) break;
+
+                foreach (var oData in oResult.Data)
+                {
+                    if (oData.FundingTime == null) continue;
+                    aResult.Add(new BitgetFuturesFundingRate(oSymbol, oData));
+                    if (oData.FundingTime.Value.Date <= dLimit)
+                    {
+                        bLimit = true;
+                        break;
+                    }
+                }
+                nPage++;
+            }
+
+
+            return aResult.ToArray();
         }
 
 
@@ -113,34 +153,7 @@ namespace Crypto.Exchanges.All.Bitget
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
-            int nPage = 1;
-            int nPageSize = 100;
-            DateTime dLimit = dFrom.Date;
-            List<IFundingRate> aResult = new List<IFundingRate>();
-
-            bool bLimit = false;
-            while (!bLimit)
-            {
-                var oResult = await m_oGlobalClient.Bitget.FuturesApiV2.ExchangeData.GetHistoricalFundingRateAsync(BitgetProductTypeV2.UsdtFutures, oSymbol.Symbol, nPageSize, nPage);
-                if (oResult == null || oResult.Data == null) break;
-                if (!oResult.Success) break;
-                if (oResult.Data.Count() <= 0) break;
-
-                foreach (var oData in oResult.Data)
-                {
-                    if (oData.FundingTime == null) continue;
-                    aResult.Add(new BitgetFuturesFundingRate(oSymbol, oData));
-                    if (oData.FundingTime.Value.Date <= dLimit)
-                    {
-                        bLimit = true;
-                        break;
-                    }
-                }
-                nPage++;
-            }
-
-
-            return aResult.ToArray();
+            return await GetFundingRatesHistory( new IFuturesSymbol[] {oSymbol}, dFrom);
         }
 
         /// <summary>
@@ -150,21 +163,14 @@ namespace Crypto.Exchanges.All.Bitget
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
-            ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(BitgetFutures.TASK_COUNT);
             List<IFundingRate> aResult = new List<IFundingRate>();
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
+                IFundingRate[]? aPartial = await m_oFundingFeeder.GetFundingRatesHistory(oSymbol, dFrom);
+                if( aPartial != null ) aResult.AddRange(aPartial);
             }
 
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
             return aResult.ToArray();
         }
     }

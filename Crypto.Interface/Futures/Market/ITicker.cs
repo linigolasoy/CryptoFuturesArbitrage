@@ -6,15 +6,10 @@ using System.Threading.Tasks;
 
 namespace Crypto.Interface.Futures.Market
 {
-    /*
-    public interface ITicker
+    public interface IFuturesTicker
     {
         public ISymbol Symbol { get; }
         public decimal Price { get; }
-        public decimal Ask { get; }
-        public decimal Bid { get; }
-        public decimal FundingRate { get; }
         public DateTime DateTime { get; }   
     }
-    */
 }

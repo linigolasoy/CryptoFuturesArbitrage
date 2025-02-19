@@ -15,6 +15,8 @@ namespace Crypto.Interface.Futures.Market
         public Task<IFundingRateSnapShot?> GetFundingRates(IFuturesSymbol oSymbol);
         public Task<IFundingRateSnapShot[]?> GetFundingRates(IFuturesSymbol[] aSymbols);
 
+        public Task<IFuturesTicker[]?> GetTickers();
+
         public IFuturesWebsocketPublic? Websocket { get; }
         public Task<bool> StartSockets();
         public Task<bool> EndSockets();

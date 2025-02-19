@@ -1,5 +1,6 @@
 ﻿using Crypto.Common;
 using Crypto.Exchanges.All.Bitmart.Websocket;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Websockets;
@@ -32,6 +33,28 @@ namespace Crypto.Exchanges.All.Bitmart
             if( oResult.Data.NextFundingTime == null ) return null; 
             return new BitmartFundingRateSnapshot(oSymbol, oResult.Data);
         }
+
+
+        /// <summary>
+        /// Get tickets
+        /// </summary>
+        /// <returns></returns>
+        public async Task<IFuturesTicker[]?> GetTickers()
+        {
+            var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetContractsAsync();
+            if (oResult == null || !oResult.Success) return null;
+            if (oResult.Data == null) return null;
+            List<IFuturesTicker> aResult = new List<IFuturesTicker>();
+            DateTime dNow = DateTime.Now;   
+            foreach (var oData in oResult.Data)
+            {
+                IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
+                if (oSymbol == null) continue;
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice!.Value, dNow));
+            }
+            return aResult.ToArray();
+        }
+
 
         /// <summary>
         /// Get all funding rates

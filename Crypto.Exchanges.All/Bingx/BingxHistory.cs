@@ -20,11 +20,53 @@ namespace Crypto.Exchanges.All.Bingx
 
         private BingxFutures m_oExchange;
         private IFuturesBarFeeder m_oBarFeeder;
+        private IFundingRateFeeder m_oFundingFeeder;
         public BingxHistory(BingxFutures oExchange) 
         {
             m_oExchange = oExchange;
             m_oBarFeeder = new BaseBarFeeder(m_oExchange);
             m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
+            m_oFundingFeeder = new BaseFundingFeeder(m_oExchange);
+            m_oFundingFeeder.OnGetFunding += OnGetFunding;
+        }
+
+        /// <summary>
+        /// Get funding rates from web
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="dFrom"></param>
+        /// <returns></returns>
+        private async Task<IFundingRate[]?> OnGetFunding(IFuturesSymbol oSymbol, DateTime dFrom)
+        {
+            DateTime dFromActual = dFrom.Date;
+            DateTime dToActual = DateTime.Now;
+
+            int nLimit = 1000;
+
+            List<IFundingRate> aResult = new List<IFundingRate>();
+            while (true)
+            {
+                var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, dFromActual, dToActual, nLimit);
+                if (oResult == null || !oResult.Success) break;
+                if (oResult.Data == null) break;
+
+                List<IFundingRate> aPartial = new List<IFundingRate>();
+
+                foreach (BingXFundingRateHistory oData in oResult.Data)
+                {
+                    aPartial.Add(new BingxFundingRate(oSymbol, oData));
+                }
+
+                if (aPartial.Count <= 0) break;
+                DateTime dMinimum = aPartial.Select(p => p.SettleDate).Min();
+                dToActual = dMinimum.AddHours(-1);
+                aResult.AddRange(aPartial);
+                if (dMinimum.Date <= dFromActual.Date) break;
+                if (aPartial.Count < nLimit) break;
+
+            }
+
+            return aResult.ToArray();
         }
 
         private KlineInterval? TimeframeToBingX(Timeframe eFrame)
@@ -101,6 +143,8 @@ namespace Crypto.Exchanges.All.Bingx
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
+            return await m_oFundingFeeder.GetFundingRatesHistory(oSymbol, dFrom);   
+            /*
             DateTime dFromActual = dFrom.Date;
             DateTime dToActual = DateTime.Now;
 
@@ -130,6 +174,7 @@ namespace Crypto.Exchanges.All.Bingx
             }
 
             return aResult.ToArray();
+            */
         }
 
         /// <summary>
@@ -139,7 +184,8 @@ namespace Crypto.Exchanges.All.Bingx
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
-
+            return await m_oFundingFeeder.GetFundingRatesHistory(aSymbols, dFrom);    
+            /*
             ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(BingxFutures.TASK_COUNT);
             List<IFundingRate> aResult = new List<IFundingRate>();
 
@@ -156,6 +202,7 @@ namespace Crypto.Exchanges.All.Bingx
                 aResult.AddRange(oResult);
             }
             return aResult.ToArray();
+            */
         }
     }
 }

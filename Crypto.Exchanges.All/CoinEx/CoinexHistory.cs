@@ -17,12 +17,52 @@ namespace Crypto.Exchanges.All.CoinEx
         private CoinexFutures m_oExchange;
         private IExchangeRestClient m_oGlobalClient;
         private IFuturesBarFeeder m_oBarFeeder;
+        private IFundingRateFeeder m_oFundingFeeder;
+
         public CoinexHistory(CoinexFutures oExchange)
         {
             m_oExchange = oExchange;
             m_oGlobalClient = new ExchangeRestClient();
             m_oBarFeeder = new BaseBarFeeder(m_oExchange);
             m_oBarFeeder.OnGetBarsDay += OnGetBarsDay;
+            m_oFundingFeeder = new BaseFundingFeeder(m_oExchange);
+            m_oFundingFeeder.OnGetFunding += OnGetFunding;
+        }
+
+        /// <summary>
+        /// Get funding rates from web
+        /// </summary>
+        /// <param name="oSymbol"></param>
+        /// <param name="dFrom"></param>
+        /// <returns></returns>
+        private async Task<IFundingRate[]?> OnGetFunding(IFuturesSymbol oSymbol, DateTime dFrom)
+        {
+            DateTime dFromActual = dFrom.Date;
+            DateTime dToActual = DateTime.Now;
+
+            int nLimit = 1000;
+            int nPage = 1;
+            List<IFundingRate> aResult = new List<IFundingRate>();
+            while (true)
+            {
+                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, dFromActual, dToActual, nPage, nLimit);
+                if (oResult == null || !oResult.Success) break;
+                if (oResult.Data == null) break;
+
+                if (oResult.Data.Items != null && oResult.Data.Items.Count() > 0)
+                {
+                    foreach (CoinExFundingRateHistory oData in oResult.Data.Items)
+                    {
+                        if (oData.FundingTime == null) continue;
+                        aResult.Add(new CoinexFundingRate(oSymbol, oData));
+                    }
+                }
+
+                if (!oResult.Data.HasNext) break;
+                nPage++;
+
+            }
+            return aResult.ToArray();
         }
 
         private KlineInterval? TimeframeToCoinex( Timeframe eFrame )
@@ -89,33 +129,7 @@ namespace Crypto.Exchanges.All.CoinEx
 
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol oSymbol, DateTime dFrom)
         {
-
-            DateTime dFromActual = dFrom.Date;
-            DateTime dToActual = DateTime.Now;
-
-            int nLimit = 1000;
-            int nPage = 1;
-            List<IFundingRate> aResult = new List<IFundingRate>();
-            while (true)
-            {
-                var oResult = await m_oGlobalClient.CoinEx.FuturesApi.ExchangeData.GetFundingRateHistoryAsync(oSymbol.Symbol, dFromActual, dToActual, nPage, nLimit);
-                if (oResult == null || !oResult.Success) break;
-                if (oResult.Data == null) break;
-
-                if (oResult.Data.Items != null && oResult.Data.Items.Count() > 0)
-                {
-                    foreach (CoinExFundingRateHistory oData in oResult.Data.Items)
-                    {
-                        if (oData.FundingTime == null) continue;
-                        aResult.Add(new CoinexFundingRate(oSymbol, oData));
-                    }
-                }
-
-                if (!oResult.Data.HasNext) break;
-                nPage++;
-
-            }
-            return aResult.ToArray();
+            return await GetFundingRatesHistory( new IFuturesSymbol[] { oSymbol }, dFrom);
         }
 
         /// <summary>
@@ -125,21 +139,15 @@ namespace Crypto.Exchanges.All.CoinEx
         /// <returns></returns>
         public async Task<IFundingRate[]?> GetFundingRatesHistory(IFuturesSymbol[] aSymbols, DateTime dFrom)
         {
-            ITaskManager<IFundingRate[]?> oTaskManager = CommonFactory.CreateTaskManager<IFundingRate[]?>(CoinexFutures.TASK_COUNT);
+            
             List<IFundingRate> aResult = new List<IFundingRate>();
 
             foreach (IFuturesSymbol oSymbol in aSymbols)
             {
-                await oTaskManager.Add(GetFundingRatesHistory(oSymbol, dFrom));
+                IFundingRate[]? aPartial = await m_oFundingFeeder.GetFundingRatesHistory(oSymbol, dFrom);
+                if( aPartial != null) aResult.AddRange(aPartial);   
             }
 
-            var aTaskResults = await oTaskManager.GetResults();
-            if (aTaskResults == null) return null;
-            foreach (var oResult in aTaskResults)
-            {
-                if (oResult == null || oResult.Length <= 0) continue;
-                aResult.AddRange(oResult);
-            }
             return aResult.ToArray();
         }
 
