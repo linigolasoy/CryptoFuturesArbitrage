@@ -16,7 +16,7 @@ namespace Crypto.Exchanges.All.Common
             Price = nPrice;
             DateTime = dDate;   
         }
-        public ISymbol Symbol { get; }
+        public IFuturesSymbol Symbol { get; }
 
         public decimal Price { get; }
 

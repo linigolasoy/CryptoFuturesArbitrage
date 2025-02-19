@@ -8,7 +8,7 @@ namespace Crypto.Interface.Futures.Market
 {
     public interface IFuturesTicker
     {
-        public ISymbol Symbol { get; }
+        public IFuturesSymbol Symbol { get; }
         public decimal Price { get; }
         public DateTime DateTime { get; }   
     }

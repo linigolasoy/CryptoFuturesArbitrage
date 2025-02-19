@@ -10,9 +10,16 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
     internal class FundingRateDate
     {
 
-        public FundingRateDate( DateTime dDate, IFundingRate[] aFundingRates ) 
-        { 
-            throw new NotImplementedException();    
+        public FundingRateDate( DateTime dDate, Dictionary<string, List<IFundingRate>> aRates ) 
+        {
+            DateTime = dDate;
+            List<FundingRateData> aData = new List<FundingRateData>();  
+            foreach( var oData in aRates )
+            {
+                aData.Add(new FundingRateData(this, oData.Key, oData.Value.ToArray()));
+            }
+            Data = aData.ToArray();
+
         }
         public DateTime DateTime { get; }
 

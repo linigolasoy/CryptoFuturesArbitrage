@@ -10,12 +10,14 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
 {
     internal class FundingRateData
     {
-        public FundingRateData(FundingRateDate oFundingDate, IFundingRate[] aRates) 
+        public FundingRateData(FundingRateDate oFundingDate, string strCurrency, IFundingRate[] aRates) 
         { 
             FundingDate = oFundingDate;
             FundingRates = aRates;
+            Currency = strCurrency;
         }
         public FundingRateDate FundingDate { get; }
+        public string Currency { get; }
 
         public IFundingRate[] FundingRates { get; }
 
