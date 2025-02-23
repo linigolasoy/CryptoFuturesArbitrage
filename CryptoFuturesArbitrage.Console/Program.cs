@@ -8,6 +8,7 @@ using Crypto.Trading.Bot.BackTest;
 using Crypto.Trading.Bot.Common;
 using Crypto.Trading.Bot.FundingRates;
 using Crypto.Trading.Bot.FundingRates.Model;
+using Serilog.Core;
 using System.Text;
 
 namespace CryptoFuturesArbitrage.Console
@@ -80,6 +81,8 @@ namespace CryptoFuturesArbitrage.Console
         }
 
 
+
+
         /// <summary>
         /// Create strategy tester
         /// </summary>
@@ -98,14 +101,20 @@ namespace CryptoFuturesArbitrage.Console
             bool bOk = await oTester.Start();
             if (!bOk) return;
 
+            List<IBackTestResult> aResults = new List<IBackTestResult>();
+
             while( !oTester.Ended )
             {
-                IBackTestResult? oResult = await oTester.Step();    
-                if( oResult != null )
+                IBackTestResult? oResult = await oTester.Step();
+                if (oResult != null)
                 {
+                    aResults.Add(oResult);
 
+                    decimal nTotalProfit = aResults.Select(p => p.Profit).Sum();
+                    decimal nPercentWon = Math.Round((100 * aResults.Where(p=> p.Profit > 0).Count()) / (decimal)aResults.Count,2); 
+                    oLogger.Info($"  {oResult.StartDate.ToShortDateString()} {oResult.StartDate.ToShortTimeString()} ({nPercentWon}%) ({oResult.Profit}) ==> {nTotalProfit}");
                 }
-
+                else break;
             }
             await oTester.Stop();
             /*
@@ -372,8 +381,8 @@ namespace CryptoFuturesArbitrage.Console
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
             // await DoWebsocketFundingData(oSetup, oLogger);
-            // await DoBot(oSetup, oLogger);
-            await DoTester(oSetup, oLogger);
+            await DoBot(oSetup, oLogger);
+            // await DoTester(oSetup, oLogger);
             // await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) 

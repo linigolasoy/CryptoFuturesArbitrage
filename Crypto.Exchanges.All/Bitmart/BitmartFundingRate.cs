@@ -1,4 +1,5 @@
 ﻿using BitMart.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures.Market;
 using System;
 using System.Collections.Generic;
@@ -8,40 +9,17 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bitmart
 {
-    internal class BitmartFundingRateLocal : IFundingRate
+    internal class BitmartFundingRateLocal : BaseFundingRate, IFundingRate
     {
 
-        public BitmartFundingRateLocal(IFuturesSymbol oSymbol, BitMartFundingRateUpdate oRate)
+        public BitmartFundingRateLocal(IFuturesSymbol oSymbol, BitMartFundingRateUpdate oRate):
+            base(oSymbol, oRate.ExpectedFundingRate, oRate.NextFundingTime!.Value.ToLocalTime())
         {
-            Symbol = oSymbol;
-            Rate = oRate.ExpectedFundingRate;
-            SettleDate = oRate.NextFundingTime!.Value.ToLocalTime();
         }
 
-        public BitmartFundingRateLocal(IFuturesSymbol oSymbol, BitMartFundingRateHistory oRate)
+        public BitmartFundingRateLocal(IFuturesSymbol oSymbol, BitMartFundingRateHistory oRate) :
+            base(oSymbol, oRate.FundingRate, oRate.FundingTime.ToLocalTime())
         {
-            Symbol = oSymbol;
-            Rate = oRate.FundingRate;
-            SettleDate = oRate.FundingTime.ToLocalTime();   
-        }
-        public IFuturesSymbol Symbol { get; }
-
-        public decimal Rate { get; private set; }
-
-        public DateTime SettleDate { get; private set; }
-
-        public int Cycle { get; }
-
-        public void Update(IFundingRate obj)
-        {
-            Rate = obj.Rate;
-            SettleDate = obj.SettleDate;
-
-            if (this.Symbol.Symbol == "BANUSDT")
-            {
-                return;
-            }
-
         }
     }
 

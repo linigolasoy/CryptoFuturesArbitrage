@@ -1,4 +1,5 @@
 ﻿using CoinEx.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,32 +10,16 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
-    internal class CoinexFundingRate : IFundingRate
+    internal class CoinexFundingRate : BaseFundingRate, IFundingRate
     {
 
-        public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFuturesTickerUpdate oData) 
+        public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFuturesTickerUpdate oData) :
+             base(oSymbol, oData.NextFundingRate, oData.LastFundingTime!.Value.ToLocalTime())
         { 
-            Symbol = oSymbol;
-            SettleDate = oData.LastFundingTime!.Value.ToLocalTime();
-            Rate = oData.NextFundingRate;
         }
-        public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFundingRateHistory oData)
+        public CoinexFundingRate(IFuturesSymbol oSymbol, CoinExFundingRateHistory oData):
+             base(oSymbol, oData.ActualFundingRate, oData.FundingTime!.Value.ToLocalTime())
         {
-            Symbol = oSymbol;
-            Rate = oData.ActualFundingRate;
-            SettleDate = oData.FundingTime!.Value.ToLocalTime();
-        }
-        public IFuturesSymbol Symbol { get; }
-
-        public decimal Rate { get; private set; }
-
-        public DateTime SettleDate { get; private set; }
-
-        public int Cycle { get => 8; }
-        public void Update(IFundingRate obj)
-        {
-            Rate = obj.Rate;
-            SettleDate = obj.SettleDate;
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using BingX.Net.Objects.Models;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -40,27 +41,12 @@ namespace Crypto.Exchanges.All.Bingx
         }
     }
 
-    internal class BingxFundingRate : IFundingRate
+    internal class BingxFundingRate : BaseFundingRate, IFundingRate
     {
 
-        public BingxFundingRate(IFuturesSymbol oSymbol, BingXFundingRateHistory oRate)
+        public BingxFundingRate(IFuturesSymbol oSymbol, BingXFundingRateHistory oRate):
+            base(oSymbol, oRate.FundingRate, oRate.FundingTime.ToLocalTime())
         {
-            Symbol = oSymbol;
-            SettleDate = oRate.FundingTime.ToLocalTime();
-            Rate = oRate.FundingRate;
-        }
-        public IFuturesSymbol Symbol { get; }
-
-        public decimal Rate { get; private set; }
-
-        public DateTime SettleDate { get; private set; }
-
-        public int Cycle { get => 8; }
-
-        public void Update(IFundingRate obj)
-        {
-            Rate = obj.Rate;
-            SettleDate = obj.SettleDate;
         }
     }
 }

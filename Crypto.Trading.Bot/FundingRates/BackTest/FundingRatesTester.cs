@@ -1,6 +1,7 @@
 ﻿using Crypto.Exchanges.All;
 using Crypto.Interface;
 using Crypto.Interface.Futures;
+using Crypto.Interface.Futures.History;
 using Crypto.Interface.Futures.Market;
 using Crypto.Trading.Bot.BackTest;
 using System;
@@ -14,6 +15,9 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
     internal class FundingRatesTester : IBackTester
     {
         private const string USDT = "USDT";
+        private const bool LOG = false;
+
+        private const decimal MAX_MONEY = 2000;
         public FundingRatesTester(ICryptoSetup oSetup, ICommonLogger oLogger, DateTime dFrom, DateTime dTo) 
         {
             Setup = oSetup;
@@ -26,12 +30,16 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
         public ICommonLogger Logger { get; }
         public DateTime From { get; }
         public DateTime To { get; }
-
+        private decimal m_nMoney = 0;
         public bool Ended { get; private set; } = true;
 
         private IFuturesExchange[] m_aExchanges = Array.Empty<IFuturesExchange>();  
 
-        private FundingRateDate[] m_aFundingDates = Array.Empty<FundingRateDate>(); 
+        private FundingRateDate[] m_aFundingDates = Array.Empty<FundingRateDate>();
+        private FundingRateChance? m_oActiveChange = null;
+        private FundingRateDate? m_oActiveDate = null;
+
+
         /// <summary>
         /// Create exchanges
         /// </summary>
@@ -42,6 +50,7 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
             Logger.Info("  Creating exchanges...");
             foreach ( var eType in Setup.ExchangeTypes )
             {
+                // if (eType == ExchangeType.CoinExFutures) continue;
                 Logger.Info($"     {eType.ToString()}");
                 IFuturesExchange? oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
                 if (oExchange == null) continue;
@@ -91,6 +100,7 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
                 DateTime dMin = oData.Value.Select(p=> p.SettleDate).Min();
                 if( dMin > dStart ) dStart = dMin;  
             }
+            dStart = dStart.Date.AddDays(1);    
 
             Dictionary<DateTime, Dictionary<string,List<IFundingRate>>> aDictDates = new Dictionary<DateTime, Dictionary<string, List<IFundingRate>>>();
             Logger.Info("      Split dates");
@@ -118,7 +128,7 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
             {
 
                 Dictionary<string, List<IFundingRate>> oDict = oDate.Value;
-                aResult.Add( new FundingRateDate(oDate.Key, oDate.Value) ); 
+                aResult.Add( new FundingRateDate(this.Setup, oDate.Key, oDate.Value, aCurrencies) ); 
             }
 
             m_aFundingDates = aResult.OrderBy(p=> p.DateTime).ToArray();    
@@ -189,20 +199,124 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
 
             CreateFundingDates(aCurrencies, aFundingRates);
             Logger.Info("FundingRatesTester Started.");
-
+            m_nMoney = Setup.Amount * 2.0M;
             await Task.Delay(1000);
             Ended = false;
             return true;
         }
 
+
+        /// <summary>
+        /// Find best chance on date next change
+        /// </summary>
+        /// <param name="oDate"></param>
+        /// <returns></returns>
+        private FundingRateChance? FindBestOnDate(FundingRateDate oDate)
+        {
+            FundingRateChance[] aChances = oDate.ToChances(m_nMoney);
+            if( aChances == null || aChances.Length <= 0 ) return null; 
+            return aChances.OrderByDescending(p=> p.ProfitPercent ).FirstOrDefault();   
+        }
+
+
+        private void LogChance( string strStep, FundingRateChance oChance)
+        {
+            if( oChance.PositionBuy == null || oChance.PositionSell == null ) return;
+            if (!LOG) return;
+            StringBuilder oBuild = new StringBuilder();
+
+            oBuild.Append($"   {strStep.PadRight(8)} {oChance.DateClose!.Value.ToShortDateString()} {oChance.DateClose!.Value.ToShortTimeString()} ({oChance.ProfitPercent} %)");
+            oBuild.Append( $" Buy {oChance.PositionBuy.Symbol.ToString()} ");
+            oBuild.Append( $" Sell {oChance.PositionSell.Symbol.ToString()} ");
+            oBuild.Append($" Profit = {oChance.ProfitRealized.ToString()} ({oChance.ProfitUnrealized.ToString()}) ");
+
+            Logger.Info(oBuild.ToString()); 
+
+        }
+
+        /// <summary>
+        /// Put chance data
+        /// </summary>
+        /// <param name="oChance"></param>
+        /// <returns></returns>
+        private async Task<bool> PutChanceData(FundingRateChance oChance)
+        {
+
+            if (oChance.PositionBuy == null || oChance.PositionSell == null) return false;
+            if (oChance.PositionBuy.FundingRate == null || oChance.PositionSell.FundingRate == null) return false; 
+            DateTime dFrom = oChance.FundingData.FundingDate.DateTime.AddHours(-1);
+            DateTime dTo = oChance.FundingData.FundingDate.DateTime.Date.AddDays(7);
+            Timeframe eFrame = Timeframe.M15;
+
+            IFuturesBar[]? aBarsBuy = await oChance.PositionBuy.Symbol.Exchange.History.GetBars(oChance.PositionBuy.Symbol, eFrame, dFrom, dTo);
+            if( aBarsBuy == null || aBarsBuy.Length <= 0 ) return false;
+            IFuturesBar[]? aBarsSell = await oChance.PositionSell.Symbol.Exchange.History.GetBars(oChance.PositionSell.Symbol, eFrame, dFrom, dTo);
+            if (aBarsSell == null || aBarsSell.Length <= 0) return false;
+
+            if( !oChance.Start(aBarsBuy, aBarsSell) ) return false;
+            LogChance("Started", oChance);
+
+            return true;
+        }
+
+
+        /// <summary>
+        /// Step to next funding rate
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
         public async Task<IBackTestResult?> Step()
         {
-            throw new NotImplementedException();
+            IBackTestResult? oResult = null;
+            while (true)
+            {
+                if( m_oActiveChange == null )
+                {
+                    // TODO: Find new chance
+                    FundingRateDate? oSelected = m_aFundingDates[0];    
+                    if( m_oActiveDate != null )
+                    {
+                        oSelected = m_aFundingDates.Where(p=> p.DateTime > m_oActiveDate.DateTime).FirstOrDefault();
+                        if (oSelected == null) break;
+                    }
+                    m_oActiveDate = oSelected;  
+                    FundingRateChance? oChance = FindBestOnDate(oSelected);
+                    if( oChance != null )
+                    {
+                        bool bOk = await PutChanceData(oChance);
+                        if( bOk )
+                        {
+                            m_oActiveChange = oChance;
+                        }
+                    }
+                }
+                else
+                {
+                    // TODO: Eval on next date
+                    m_oActiveChange.Step();
+                    LogChance((m_oActiveChange.Status == FundingRateChance.ChanceStatus.Open ? "Step":"Close"), m_oActiveChange);
+                    if( m_oActiveChange.Status == FundingRateChance.ChanceStatus.Closed )
+                    {
+                        Logger.Info($"     {m_oActiveChange.FundingData.Currency} {m_oActiveChange.ProfitRealized}");
+                        oResult = new BaseBackTestResult(this, m_oActiveChange.DateOpen!.Value, m_oActiveChange.DateClose!.Value, m_oActiveChange.ProfitRealized);
+                        m_nMoney += oResult.Profit;
+                        if( m_nMoney > MAX_MONEY )
+                        {
+                            m_nMoney = MAX_MONEY;   
+                        }
+                        m_oActiveChange = null; 
+                        break;
+                    }
+                }
+            }
+
+            await Task.Delay(1000);
+            return oResult;
         }
 
         public async Task<bool> Stop()
         {
-            throw new NotImplementedException();
+            await Task.Delay(2000); return true;    
         }
     }
 }

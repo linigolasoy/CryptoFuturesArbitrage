@@ -22,6 +22,15 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         public IFundingPair? GetBest()
         {
             if (m_aPairs.Count <= 0) return null;
+            /*
+            IFundingPair? oBest = null;
+            decimal nBestResult = -1000;
+            foreach( var oPair in m_aPairs.OrderByDescending(p => p.Percent).Take(10) )
+            {
+                oPair.
+            }
+            */
+
             return m_aPairs.OrderByDescending(p => p.Percent).FirstOrDefault();
 
         }

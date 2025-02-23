@@ -1,4 +1,5 @@
 ﻿using Bitget.Net.Objects.Models.V2;
+using Crypto.Exchanges.All.Common;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Market;
 using System;
@@ -9,35 +10,17 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Bitget
 {
-    internal class BitgetFuturesFundingRate : IFundingRate
+    internal class BitgetFuturesFundingRate : BaseFundingRate, IFundingRate
     {
 
-        public BitgetFuturesFundingRate( IFuturesSymbol oSymbol, BitgetFundingRate oParsed) 
+        public BitgetFuturesFundingRate( IFuturesSymbol oSymbol, BitgetFundingRate oParsed) :
+            base(oSymbol, oParsed.FundingRate, oParsed.FundingTime!.Value.ToLocalTime())
         {
-            Symbol = oSymbol;
-            Rate = oParsed.FundingRate;
-            SettleDate = oParsed.FundingTime!.Value.ToLocalTime();    
         }
 
-        public BitgetFuturesFundingRate(IFuturesSymbol oSymbol, BitgetFuturesTickerUpdate oTicker)
+        public BitgetFuturesFundingRate(IFuturesSymbol oSymbol, BitgetFuturesTickerUpdate oTicker):
+            base(oSymbol, oTicker.FundingRate!.Value, oTicker.NextFundingTime!.Value.ToLocalTime())
         {
-            Symbol = oSymbol;
-            Rate = oTicker.FundingRate!.Value;
-            SettleDate = oTicker.NextFundingTime!.Value.ToLocalTime();
-
-        }
-        public IFuturesSymbol Symbol { get; }
-
-        public decimal Rate { get; private set; }
-
-        public DateTime SettleDate { get; private set; }
-
-        public int Cycle { get => 8; }
-
-        public void Update(IFundingRate obj)
-        {
-            Rate = obj.Rate;
-            SettleDate = obj.SettleDate;
         }
 
     }

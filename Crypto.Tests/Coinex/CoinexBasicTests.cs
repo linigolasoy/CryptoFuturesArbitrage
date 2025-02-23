@@ -27,7 +27,7 @@ namespace Crypto.Tests.Coinex
             Assert.IsNotNull(oToFind);
 
 
-            DateTime dFrom = DateTime.Today.AddMonths(-2);
+            DateTime dFrom = DateTime.Today.AddMonths(-3);
             IFundingRate[]? aHistorySingle = await oExchange.History.GetFundingRatesHistory(oToFind, dFrom);
             Assert.IsNotNull(aHistorySingle);
             Assert.IsTrue(aHistorySingle.Length > 10);

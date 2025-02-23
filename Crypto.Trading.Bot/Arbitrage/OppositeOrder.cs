@@ -259,10 +259,10 @@ namespace Crypto.Trading.Bot.Arbitrage
             if( oPriceLong == null || oPriceShort == null ) return false;
 
 
-            decimal nPrice = Math.Max(oPriceLong.Price, oPriceShort.Price); 
-            decimal nPriceMin = Math.Min(oPriceLong.Price, oPriceShort.Price);
-            decimal nPercent = (nPrice - nPriceMin) * 100 / nPriceMin;
-            if( nPercent > 0.2M ) return false; 
+            decimal nPrice = Math.Max(oPriceLong.Price, oPriceShort.Price);
+            // decimal nPriceMin = Math.Min(oPriceLong.Price, oPriceShort.Price);
+            // decimal nPercent = (nPrice - nPriceMin) * 100 / nPriceMin;
+            // if( nPercent > 0.3M ) return false; 
             int nDecimals = Math.Min(LongData.Symbol.Decimals, ShortData.Symbol.Decimals);
             decimal nQuantity = Math.Round(nMoney /  nPrice, nDecimals);
 
