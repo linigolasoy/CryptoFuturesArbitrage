@@ -29,6 +29,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private BingxPositionManager m_oPositionManager;
 
         private string? m_strListenKey = null;
+
+        private Task? m_oRenewTask = null;
+        private DateTime m_dLastRenew = DateTime.Now;
         public BingxWebsocketPrivate(IFuturesAccount oAccount) : base(oAccount)
         {
             m_oExchange = oAccount.Exchange;
@@ -59,7 +62,8 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
             if (oResult == null || !oResult.Success) return false;
             m_strListenKey = oResult.Data;
-
+            // await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.KeepAliveUserStreamAsync(m_strListenKey);
+            m_dLastRenew = DateTime.Now;
             m_oAccountSocketClient = new BingXSocketClient();
             var oResultSubscribe = await m_oAccountSocketClient.PerpetualFuturesApi.SubscribeToUserDataUpdatesAsync(
                 m_strListenKey,
@@ -91,6 +95,17 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         }
 
         /// <summary>
+        /// Renew listen key
+        /// </summary>
+        /// <returns></returns>
+        private async Task RenewListenKey()
+        {
+            var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.KeepAliveUserStreamAsync(m_strListenKey!);
+            if( oResult  == null || !oResult.Success) return;
+            Console.WriteLine("Binance renew key");
+            return;
+        }
+        /// <summary>
         /// Account data update
         /// </summary>
         /// <param name="oUpdate"></param>
@@ -98,6 +113,18 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private void OnAccountUpdate(DataEvent<BingXFuturesAccountUpdate> oUpdate)
         {
             DateTime dDate = oUpdate.Timestamp.ToLocalTime();
+            if( m_oRenewTask != null )
+            {
+                if( m_oRenewTask.IsCompleted ) m_oRenewTask = null; 
+            }
+            int nMinutes = (int)(DateTime.Now - m_dLastRenew).TotalMinutes;
+            if( nMinutes >= 55 && m_oRenewTask == null )
+            {
+                m_dLastRenew = DateTime.Now;
+                m_oRenewTask = RenewListenKey();    
+            }
+
+
             if (oUpdate.Data == null) return;
             if (oUpdate.Data.Update == null) return;
             if (oUpdate.Data.Update.Balances != null)

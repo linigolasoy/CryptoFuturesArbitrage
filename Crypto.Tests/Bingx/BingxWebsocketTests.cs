@@ -20,7 +20,7 @@ namespace Crypto.Tests.Bingx
             bool bResultStart = await oExchange.Account.StartSockets();
             Assert.IsTrue(bResultStart);
 
-            await Task.Delay(10000);
+            await Task.Delay(30000);
             IFuturesBalance[] aBalances = oExchange.Account.BalanceManager.GetData();   
             Assert.IsTrue(aBalances.Length > 0);
             Assert.IsTrue(m_nReceived1 > 0);
