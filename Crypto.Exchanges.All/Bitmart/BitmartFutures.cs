@@ -20,9 +20,10 @@ namespace Crypto.Exchanges.All.Bitmart
         public const int TASK_COUNT = 20;
 
         private BitMartApiCredentials m_oCredentials;
-        public BitmartFutures( ICryptoSetup oSetup ) 
+        public BitmartFutures( ICryptoSetup oSetup , ICommonLogger? oLogger) 
         {
             Setup = oSetup;
+            Logger = oLogger;
             IApiKey? oKeyFound = oSetup.ApiKeys.FirstOrDefault(p => p.ExchangeType == this.ExchangeType);
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
@@ -46,6 +47,7 @@ namespace Crypto.Exchanges.All.Bitmart
             Trading = new BitmartTrading(this); 
         }
 
+        public ICommonLogger? Logger { get; }
         public IFuturesSymbolManager SymbolManager { get; }
         internal BitMartApiCredentials Credentials { get => m_oCredentials; }
         internal IApiKey ApiKey { get => m_oApiKey; }   

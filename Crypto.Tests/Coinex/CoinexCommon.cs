@@ -16,7 +16,7 @@ namespace Crypto.Tests.Coinex
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup, null);
             return oExchange;
         }
     }

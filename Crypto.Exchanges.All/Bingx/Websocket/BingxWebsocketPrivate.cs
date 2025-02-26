@@ -8,6 +8,7 @@ using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
 using CryptoExchange.Net.Objects.Sockets;
+using Serilog.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,7 +32,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private string? m_strListenKey = null;
 
         private Task? m_oRenewTask = null;
-        private DateTime m_dLastRenew = DateTime.Now;
         public BingxWebsocketPrivate(IFuturesAccount oAccount) : base(oAccount)
         {
             m_oExchange = oAccount.Exchange;
@@ -59,22 +59,9 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
             await StartLoop();  
 
             m_oCancelSource = new CancellationTokenSource();
-            var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
-            if (oResult == null || !oResult.Success) return false;
-            m_strListenKey = oResult.Data;
-            // await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.KeepAliveUserStreamAsync(m_strListenKey);
-            m_dLastRenew = DateTime.Now;
-            m_oAccountSocketClient = new BingXSocketClient();
-            var oResultSubscribe = await m_oAccountSocketClient.PerpetualFuturesApi.SubscribeToUserDataUpdatesAsync(
-                m_strListenKey,
-                OnAccountUpdate,
-                OnOrderUpdate,
-                OnConfigUpdate,
-                null
-                );
 
-            if (oResultSubscribe == null || !oResultSubscribe.Success) return false;
-            return true;
+            bool bResult = await RenewListenKey();
+            return bResult;
 
         }
 
@@ -98,12 +85,24 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         /// Renew listen key
         /// </summary>
         /// <returns></returns>
-        private async Task RenewListenKey()
+        private async Task<bool> RenewListenKey()
         {
-            var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.KeepAliveUserStreamAsync(m_strListenKey!);
-            if( oResult  == null || !oResult.Success) return;
-            Console.WriteLine("Binance renew key");
-            return;
+            var oResult = await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.StartUserStreamAsync(m_oCancelSource.Token);
+            if (oResult == null || !oResult.Success) return false;
+            m_strListenKey = oResult.Data;
+            // await ((BingxFutures)m_oExchange).GlobalClient.BingX.PerpetualFuturesApi.Account.KeepAliveUserStreamAsync(m_strListenKey);
+            if( m_oAccountSocketClient == null ) m_oAccountSocketClient = new BingXSocketClient();
+            var oResultSubscribe = await m_oAccountSocketClient.PerpetualFuturesApi.SubscribeToUserDataUpdatesAsync(
+                m_strListenKey,
+                OnAccountUpdate,
+                OnOrderUpdate,
+                OnConfigUpdate,
+                OnKeyExpired
+                );
+
+            if (oResultSubscribe == null || !oResultSubscribe.Success) return false;
+            if ( m_oExchange.Logger != null ) m_oExchange.Logger.Info("Bingx renew key");
+            return true;
         }
         /// <summary>
         /// Account data update
@@ -113,16 +112,6 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         private void OnAccountUpdate(DataEvent<BingXFuturesAccountUpdate> oUpdate)
         {
             DateTime dDate = oUpdate.Timestamp.ToLocalTime();
-            if( m_oRenewTask != null )
-            {
-                if( m_oRenewTask.IsCompleted ) m_oRenewTask = null; 
-            }
-            int nMinutes = (int)(DateTime.Now - m_dLastRenew).TotalMinutes;
-            if( nMinutes >= 55 && m_oRenewTask == null )
-            {
-                m_dLastRenew = DateTime.Now;
-                m_oRenewTask = RenewListenKey();    
-            }
 
 
             if (oUpdate.Data == null) return;
@@ -158,6 +147,11 @@ namespace Crypto.Exchanges.All.Bingx.Websocket
         {
             return;
             // throw new NotImplementedException();
+        }
+        private void OnKeyExpired(DataEvent<BingXListenKeyExpiredUpdate> oUpdate)
+        {
+            m_oRenewTask = RenewListenKey();
+            return;
         }
 
     }

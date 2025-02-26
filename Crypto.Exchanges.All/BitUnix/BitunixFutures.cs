@@ -35,6 +35,7 @@ namespace Crypto.Exchanges.All.BitUnix
             History = new BitunixHistory(this);
         }
         public ICryptoSetup Setup { get; }
+        public ICommonLogger? Logger { get; }
 
         public ExchangeType ExchangeType { get => ExchangeType.BitUnixFutures; }
 

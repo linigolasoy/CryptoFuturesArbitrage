@@ -29,9 +29,10 @@ namespace Crypto.Exchanges.All.Bingx
         private IExchangeRestClient m_oGlobalClient;
         public const int TASK_COUNT = 20;
 
-        public BingxFutures( ICryptoSetup oSetup ) 
+        public BingxFutures( ICryptoSetup oSetup, ICommonLogger? oLogger ) 
         {
             Setup = oSetup;
+            Logger = oLogger;
             IApiKey? oKeyFound = oSetup.ApiKeys.FirstOrDefault(p => p.ExchangeType == this.ExchangeType);
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
@@ -48,8 +49,10 @@ namespace Crypto.Exchanges.All.Bingx
             Account = new BingxAccount(this, m_oGlobalClient);
             Market = new BingxMarket(this);
             History = new BingxHistory(this);   
+            
         }
 
+        public ICommonLogger? Logger { get; }
         private IFuturesSymbol[]? GetSymbols()
         {
             Task<CryptoExchange.Net.Objects.WebCallResult<IEnumerable<BingXContract>>> oTask = m_oGlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetContractsAsync();

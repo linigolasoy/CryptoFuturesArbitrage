@@ -51,8 +51,10 @@ namespace CryptoFuturesArbitrage.Console
         /// <param name="oSetup"></param>
         /// <param name="oLogger"></param>
         /// <returns></returns>
-        private static async Task DoBot( ICryptoSetup oSetup, ICommonLogger oLogger )
+        private static async Task DoBot( ICryptoSetup oSetup )
         {
+            CancellationTokenSource oSource = new CancellationTokenSource();
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateTester", oSource.Token);
             try
             {
                 // ITradingBot oBot = BotFactory.CreateFuturesArbitrageBot(oSetup, oLogger);
@@ -76,6 +78,7 @@ namespace CryptoFuturesArbitrage.Console
             {
                 oLogger.Error("Error on main program", ex);
             }
+            oSource.Cancel();   
             await Task.Delay(2000);
 
         }
@@ -89,9 +92,11 @@ namespace CryptoFuturesArbitrage.Console
         /// <param name="oSetup"></param>
         /// <param name="oLogger"></param>
         /// <returns></returns>
-        private static async Task DoTester(ICryptoSetup oSetup, ICommonLogger oLogger)
+        private static async Task DoTester(ICryptoSetup oSetup)
         {
-            
+            CancellationTokenSource oSource = new CancellationTokenSource();    
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateTester", oSource.Token);
+
             DateTime dFrom = DateTime.Today.AddMonths(-1);
             DateTime dTo = DateTime.Today;
 
@@ -117,54 +122,8 @@ namespace CryptoFuturesArbitrage.Console
                 else break;
             }
             await oTester.Stop();
-            /*
-            IFundingTestData oTestData = TesterFactory.CreateFundingTestData(oSetup, oLogger, dFrom, dTo);
-
-            // Load symbols
-            bool bOk = await oTestData.LoadSymbols();
-            if (!bOk || NeedsCancel()) return;
-            // Load funding rates
-            bOk = await oTestData.LoadRates();  
-            if (!bOk || NeedsCancel()) return;
-
-            Dictionary<DateTime, decimal> aFound = new Dictionary<DateTime, decimal>();
-            // Start processing
-            IFundingDate? oDate = null;
-            while ( ( oDate = await oTestData.GetNext( (oDate == null ? null : oDate.DateTime) ) )!= null )
-            {
-                IFundingPair? oPair = oDate.GetBest();
-                string strBest = "NONE";
-                decimal nActual = 0;
-                if ( oPair != null && oPair.Percent > 0.1M )
-                {
-                    StringBuilder oBuild = new StringBuilder();
-                    oBuild.Append(" ");
-                    oBuild.Append(oPair.Percent.ToString("0.##"));
-                    oBuild.Append(" ");
-                    oBuild.Append(oPair.BuySymbol.Base);
-                    oBuild.Append(" Buy on ");
-                    oBuild.Append(oPair.BuySymbol.Exchange.ExchangeType.ToString());
-                    oBuild.Append(" Sell on ");
-                    oBuild.Append(oPair.SellSymbol.Exchange.ExchangeType.ToString());
-                    strBest = oBuild.ToString();
-                    nActual = oPair.Percent;
-                }
-                DateTime dActual = oDate.DateTime.Date;
-                if( !aFound.ContainsKey( dActual ) ) { aFound[dActual] = 0; }
-                aFound[dActual] += nActual;
-                oLogger.Info($"   Processing {oDate.DateTime.ToShortDateString()} {oDate.DateTime.ToShortTimeString()} {strBest}");
-            }
-
-
-            oLogger.Info($"==== RESULTS");
-            foreach ( DateTime dDate in aFound.Keys.OrderBy(p=> p))
-            {
-                oLogger.Info($"    {aFound[dDate].ToString("0.##")} {dDate.ToShortDateString()}");
-            }
-            decimal nAverage = aFound.Values.Average();
-            oLogger.Info($"==== AVERAGE : [{nAverage.ToString("0.##")}]");
-            await Task.Delay(2000);
-            */
+            oSource.Cancel();
+            await Task.Delay(1000);
         }
 
 
@@ -377,12 +336,10 @@ namespace CryptoFuturesArbitrage.Console
 
 
             ICryptoSetup oSetup = CommonFactory.CreateSetup(SETUP_FILE);
-            CancellationTokenSource oSource = new CancellationTokenSource();    
-            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateBot", oSource.Token);
 
             // await DoWebsocketFundingData(oSetup, oLogger);
-            await DoBot(oSetup, oLogger);
-            // await DoTester(oSetup, oLogger);
+            // await DoBot(oSetup, oLogger);
+            await DoTester(oSetup);
             // await DoSocketManager(oSetup, oLogger);
             /*
             if (TEST) 

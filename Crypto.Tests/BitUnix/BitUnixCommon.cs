@@ -16,7 +16,7 @@ namespace Crypto.Tests.BitUnix
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitUnixFutures, oSetup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitUnixFutures, oSetup, null);
             return oExchange;   
         }
     }

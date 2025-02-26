@@ -16,7 +16,7 @@ namespace Crypto.Tests.Bitmart
         {
             ICryptoSetup oSetup = CommonFactory.CreateSetup(TestConstants.SETUP_FILE);
 
-            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitmartFutures, oSetup);
+            IFuturesExchange oExchange = await ExchangeFactory.CreateExchange(ExchangeType.BitmartFutures, oSetup, null);
             return oExchange;
         }
     }

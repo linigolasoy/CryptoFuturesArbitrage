@@ -32,9 +32,10 @@ namespace Crypto.Exchanges.All.CoinEx
 
         private ApiCredentials m_oApiCredentials;
 
-        public CoinexFutures( ICryptoSetup oSetup ) 
+        public CoinexFutures( ICryptoSetup oSetup, ICommonLogger? oLogger ) 
         {
             Setup = oSetup;
+            Logger = oLogger;   
             IApiKey? oKeyFound = oSetup.ApiKeys.FirstOrDefault(p => p.ExchangeType == this.ExchangeType);
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
@@ -59,6 +60,7 @@ namespace Crypto.Exchanges.All.CoinEx
             History = new CoinexHistory(this);  
         }
 
+        public ICommonLogger? Logger { get; }
         public IFuturesSymbolManager SymbolManager { get; }
         public IFuturesHistory History { get; }
         public IFuturesMarket Market { get; }

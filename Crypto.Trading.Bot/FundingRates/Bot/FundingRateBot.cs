@@ -122,7 +122,15 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
                 }
             }
 
-            if (oLog == null) return oBest;
+            if (oLog == null)
+            {
+                if( (DateTime.Now - m_dLastInfo).TotalMinutes >= 5 )
+                {
+                    Logger.Info($"  ... Actual best {oActual.FundingDate.DateTime.ToShortTimeString()} {oActual.BuySymbol.Base} Buy on {oActual.BuySymbol.Exchange.ExchangeType.ToString()} Sell on {oActual.SellSymbol.Exchange.ExchangeType.ToString()} => {oActual.Percent} %");
+                    m_dLastInfo = DateTime.Now; 
+                }
+                return oBest;
+            }
             Logger.Info($"  {oLog.FundingDate.DateTime.ToShortTimeString()} {oLog.BuySymbol.Base} Buy on {oLog.BuySymbol.Exchange.ExchangeType.ToString()} Sell on {oLog.SellSymbol.Exchange.ExchangeType.ToString()} => {oLog.Percent} %");
 
             return oLog;
@@ -133,6 +141,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
         {
             double nMinutes = (oPair.FundingDate.DateTime - DateTime.Now).TotalMinutes;
             if (nMinutes < 0 || nMinutes >= 15) return null;
+            if( oPair.Percent < Setup.ThresHold ) return null;
             IOppositeOrder oResult = new OppositeOrder(oPair.BuySymbol, oPair.SellSymbol, this.Setup.Leverage, oPair.FundingDate.DateTime, this.Setup);
             // Put orderbooks
             if (oPair.BuySymbol.Exchange.Market.Websocket == null) return null;
@@ -142,6 +151,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             IOrderbook? oFoundSell = oPair.SellSymbol.Exchange.Market.Websocket.OrderbookManager.GetData().FirstOrDefault(p => p.Symbol.Symbol == oPair.SellSymbol.Symbol);
             if (oFoundSell == null) return null;
 
+            Logger.Info($"  Found chance on {oResult.LongData.Symbol.Base} Funding {oPair.Percent} %");
             oResult.LongData.Orderbook = oFoundBuy;
             oResult.ShortData.Orderbook = oFoundSell;
             return oResult;

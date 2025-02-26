@@ -48,7 +48,7 @@ namespace Crypto.Trading.Bot.Common
             foreach( ExchangeType eType in aTypes )
             {
                 Logger.Info($"                     {eType.ToString()}");
-                IFuturesExchange? oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
+                IFuturesExchange? oExchange = await ExchangeFactory.CreateExchange(eType, Setup, Logger);
                 if (oExchange == null)
                 {
                     Logger.Error("COULD NOT CREATE EXCHANGE!");

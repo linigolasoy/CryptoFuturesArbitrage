@@ -15,6 +15,7 @@ namespace Crypto.Interface.Futures
 
         public ICryptoSetup Setup { get; }
 
+        public ICommonLogger? Logger { get; }
         public ExchangeType ExchangeType { get; }
 
 

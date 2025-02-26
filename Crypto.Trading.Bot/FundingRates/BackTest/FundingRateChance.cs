@@ -75,7 +75,9 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
             }
 
             ProfitPercent = ((oSell == null ?  0 : oSell.Rate) - (oBuy == null? 0: oBuy.Rate)) * 100.0M;
-            ProfitPercent = Math.Round(ProfitPercent, 3);
+
+            decimal nFees = (PositionBuy.Symbol.FeeMaker + PositionBuy.Symbol.FeeTaker + PositionSell.Symbol.FeeMaker + PositionSell.Symbol.FeeTaker) * 100.0M;
+            ProfitPercent = Math.Round(ProfitPercent - nFees, 3);
             PositionBuy.FundingRate = oBuy;
             PositionSell.FundingRate = oSell;    
 

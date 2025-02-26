@@ -52,7 +52,7 @@ namespace Crypto.Trading.Bot.FundingRates.BackTest
             {
                 // if (eType == ExchangeType.CoinExFutures) continue;
                 Logger.Info($"     {eType.ToString()}");
-                IFuturesExchange? oExchange = await ExchangeFactory.CreateExchange(eType, Setup);
+                IFuturesExchange? oExchange = await ExchangeFactory.CreateExchange(eType, Setup, Logger);
                 if (oExchange == null) continue;
                 aExchanges.Add(oExchange);
             }

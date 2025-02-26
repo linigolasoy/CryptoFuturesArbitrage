@@ -22,8 +22,8 @@ namespace Crypto.Tests
 
             const string USDT = "USDT";
             const string CURRENCY = "VANA";
-            IFuturesExchange oExchangeLong = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup);
-            IFuturesExchange oExchangeShort = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup);
+            IFuturesExchange oExchangeLong = await ExchangeFactory.CreateExchange(ExchangeType.BitgetFutures, oSetup, null);
+            IFuturesExchange oExchangeShort = await ExchangeFactory.CreateExchange(ExchangeType.CoinExFutures, oSetup, null);
 
             IFuturesSymbol[]? aSymbolsLong = oExchangeLong.SymbolManager.GetAllValues();
             Assert.IsNotNull(aSymbolsLong);

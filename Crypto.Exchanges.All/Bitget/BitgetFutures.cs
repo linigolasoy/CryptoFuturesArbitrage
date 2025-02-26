@@ -34,9 +34,10 @@ namespace Crypto.Exchanges.All.Bitget
 
         private BitgetApiCredentials m_oApiCredentials;
 
-        public BitgetFutures( ICryptoSetup oSetup ) 
+        public BitgetFutures( ICryptoSetup oSetup, ICommonLogger? oLogger ) 
         {
             Setup = oSetup;
+            Logger = oLogger;
             IApiKey? oKeyFound = oSetup.ApiKeys.FirstOrDefault(p => p.ExchangeType == this.ExchangeType);
             if (oKeyFound == null) throw new Exception("No api key found");
             m_oApiKey = oKeyFound;
@@ -58,6 +59,7 @@ namespace Crypto.Exchanges.All.Bitget
             History = new BitgetHistory(this);  
         }
 
+        public ICommonLogger? Logger { get; }
         public IFuturesSymbolManager SymbolManager { get; }
         public IFuturesMarket Market { get; }
         public IFuturesHistory History { get; }

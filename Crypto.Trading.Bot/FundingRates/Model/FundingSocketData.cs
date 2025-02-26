@@ -28,7 +28,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
             foreach (var eType in oSetup.ExchangeTypes)
             {
                 // if (eType == ExchangeType.BitmartFutures) continue;
-                Task<IFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup);
+                Task<IFuturesExchange> oTask = ExchangeFactory.CreateExchange(eType, oSetup, Logger);
                 oTask.Wait();
                 IFuturesExchange oNew = oTask.Result;
                 aExchanges.Add(oNew);
@@ -205,7 +205,7 @@ namespace Crypto.Trading.Bot.FundingRates.Model
                     aOrderbooks.Add( oOrderbook );  
                     aRates.Add( oRate );    
                 }
-                if( !CheckPrices(aOrderbooks.ToArray()) )
+                if( bOk && !CheckPrices(aOrderbooks.ToArray()) )
                 {
                     bOk = false;
                 }
@@ -226,9 +226,11 @@ namespace Crypto.Trading.Bot.FundingRates.Model
         {
             for( int i = 0; i < aOrderbooks.Length; i++ )
             {
+                if(aOrderbooks[i].Bids == null || aOrderbooks[i].Bids.Length <= 0 ) return false;
                 IOrderbookPrice oPrice1 = aOrderbooks[i].Bids[0];    
                 for( int j = i+1; j < aOrderbooks.Length; j++ )
                 {
+                    if (aOrderbooks[j].Bids == null || aOrderbooks[j].Bids.Length <= 0) return false;
                     IOrderbookPrice oPrice2 = aOrderbooks[j].Bids[0];
                     decimal nDifference = oPrice1.Price - oPrice2.Price;
                     decimal nMin = Math.Min(oPrice1.Price, oPrice2.Price);
