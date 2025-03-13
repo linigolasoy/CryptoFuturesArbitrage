@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Exchanges.All.Common
 {
-    internal class TradingResult<T> : ITradingResult<T>
+    public class TradingResult<T> : ITradingResult<T>
     {
         public TradingResult( T oResult ) 
         { 

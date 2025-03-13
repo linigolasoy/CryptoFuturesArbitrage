@@ -308,5 +308,20 @@ namespace Crypto.Exchanges.All.Bitget
                 return new TradingResult<bool>(ex);
             }
         }
+
+        /// <summary>
+        /// SL and TP
+        /// </summary>
+        /// <param name="oPosition"></param>
+        /// <param name="nStopLoss"></param>
+        /// <param name="nTakeProfit"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<ITradingResult<bool>> SetStopLossTakeProfit(IFuturesPosition oPosition, decimal nStopLoss, decimal nTakeProfit)
+        {
+            throw new NotImplementedException();
+        }
+
+
     }
 }

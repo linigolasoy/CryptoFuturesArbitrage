@@ -1,4 +1,5 @@
 ﻿using Crypto.Exchanges.All.CoinEx.Websocket;
+using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
@@ -85,6 +86,10 @@ namespace Crypto.Exchanges.All.CoinEx
         {
             if (m_oWebsocketPrivate == null) return;
             await m_oWebsocketPrivate.Stop();
+        }
+        public async Task<ITradingResult<decimal>> Transfer(decimal nAmoun, bool bFromSpot)
+        {
+            throw new NotImplementedException();
         }
 
     }

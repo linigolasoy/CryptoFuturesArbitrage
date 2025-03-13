@@ -7,6 +7,7 @@ using Crypto.Interface.Futures.Trading;
 using Crypto.Interface.Futures.Websockets;
 using Crypto.Interface.Futures.Market;
 using static Crypto.Interface.Futures.Account.IFuturesAccount;
+using Crypto.Interface;
 
 namespace Crypto.Exchanges.All.Bitget
 {
@@ -82,5 +83,9 @@ namespace Crypto.Exchanges.All.Bitget
             await m_oWebsocketPrivate.Stop();   
         }
 
+        public async Task<ITradingResult<decimal>> Transfer(decimal nAmoun, bool bFromSpot)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

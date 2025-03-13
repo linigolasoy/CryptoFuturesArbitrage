@@ -27,5 +27,8 @@ namespace Crypto.Interface.Futures.Account
         public IWebsocketManager<IFuturesBalance> BalanceManager { get; }
         public IWebsocketManager<IFuturesOrder> OrderManager { get; }
         public IWebsocketManager<IFuturesPosition> PositionManager { get; }
+
+        // Money operations
+        public Task<ITradingResult<decimal>> Transfer(decimal nAmoun, bool bFromSpot);
     }
 }

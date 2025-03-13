@@ -95,7 +95,8 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         {
             if(oEvent == null) return;  
             if(oEvent.Data == null) return;
-            m_oOrderbookManager.Put(oEvent.Timestamp, oEvent.Data);
+            if (!oEvent.Data.IsFull) return;
+            m_oOrderbookManager.Put(oEvent.Timestamp, oEvent.Data, oEvent.Symbol);
         }
 
         /// <summary>

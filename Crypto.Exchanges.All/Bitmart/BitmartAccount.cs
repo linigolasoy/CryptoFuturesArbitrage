@@ -1,4 +1,5 @@
 ﻿using Crypto.Exchanges.All.Bitmart.Websocket;
+using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
@@ -70,6 +71,10 @@ namespace Crypto.Exchanges.All.Bitmart
         public async Task StopSockets()
         {
             await m_oWebsocket.Stop();
+        }
+        public async Task<ITradingResult<decimal>> Transfer(decimal nAmoun, bool bFromSpot)
+        {
+            throw new NotImplementedException();
         }
     }
 }

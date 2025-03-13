@@ -15,6 +15,8 @@ using Crypto.Interface.Futures.Market;
 using Crypto.Interface;
 using Crypto.Exchanges.All.Common;
 using CoinEx.Net.Objects.Models.V2;
+using CryptoExchange.Net.CommonObjects;
+using Newtonsoft.Json.Linq;
 
 namespace Crypto.Exchanges.All.CoinEx
 {
@@ -274,5 +276,24 @@ namespace Crypto.Exchanges.All.CoinEx
                 return new TradingResult<bool>(ex);
             }
         }
+
+        /// <summary>
+        /// SL and TP
+        /// </summary>
+        /// <param name="oPosition"></param>
+        /// <param name="nStopLoss"></param>
+        /// <param name="nTakeProfit"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public async Task<ITradingResult<bool>> SetStopLossTakeProfit(IFuturesPosition oPosition, decimal nStopLoss, decimal nTakeProfit)
+        {
+            var oTpResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.SetTakeProfitAsync(oPosition.Symbol.Symbol, PriceType.LastPrice, nTakeProfit);
+            if (oTpResult == null || !oTpResult.Success) return new TradingResult<bool>("Could not place take profit order");
+            var oSlResult = await m_oGlobalClient.CoinEx.FuturesApi.Trading.SetStopLossAsync(oPosition.Symbol.Symbol, PriceType.LastPrice, nStopLoss);
+            if (oSlResult == null || !oSlResult.Success) return new TradingResult<bool>("Could not place stoploss order");
+            return new TradingResult<bool>(true);
+        }
+
+
     }
 }

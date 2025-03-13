@@ -1,6 +1,7 @@
 ﻿using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Trading.Bot.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,8 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesSymbol Symbol { get; }
 
         public decimal Quantity { get; set; } = 0;
+
+        public ITrailingOrder? TrailingOrder { get; set; }
 
         public IFuturesOrder? OpenOrder { get; set; } = null;
 

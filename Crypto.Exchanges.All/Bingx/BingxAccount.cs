@@ -1,5 +1,6 @@
 ﻿using BingX.Net.Objects.Models;
 using Crypto.Exchanges.All.Bingx.Websocket;
+using Crypto.Interface;
 using Crypto.Interface.Futures;
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
@@ -85,6 +86,10 @@ namespace Crypto.Exchanges.All.Bingx
         {
             if (m_oWebsocket == null) return;
             await m_oWebsocket.Stop();  
+        }
+        public async Task<ITradingResult<decimal>> Transfer(decimal nAmoun, bool bFromSpot)
+        {
+            throw new NotImplementedException();
         }
     }
 }

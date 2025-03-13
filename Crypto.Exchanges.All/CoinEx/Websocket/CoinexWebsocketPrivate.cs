@@ -95,7 +95,7 @@ namespace Crypto.Exchanges.All.CoinEx.Websocket
         private void OnOrderUpdates(DataEvent<CoinExFuturesOrderUpdate> oEvent)
         {
             if( oEvent == null || oEvent.Data == null ) return;
-            m_oOrderManager.Put(oEvent.Data);
+            m_oOrderManager.Put(oEvent.Data, oEvent.Symbol);
         }
         private void OnPositionUpdates(DataEvent<CoinExPositionUpdate> oEvent)
         {

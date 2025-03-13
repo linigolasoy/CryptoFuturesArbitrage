@@ -197,7 +197,7 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             }
 
 
-            if( nSpread > oChance.Percent ) return;
+            // if( nSpread > oChance.Percent ) return;
             Logger.Info($"  Found !!!!! buy {oOrder.LongData.Symbol.Base} Spread {nSpread} %");
 
             // bool bOrder = await oOrder.TryOpenLimit(nMoney);
@@ -226,19 +226,25 @@ namespace Crypto.Trading.Bot.FundingRates.Bot
             decimal nProfitShort = Math.Round(oOrder.ShortData.Profit, 2);
 
             decimal nProfit = Math.Round(oOrder.Profit, 2);
+            decimal nProfitPercent = Math.Round( Math.Abs(oOrder.Profit * 100.0M / Setup.Amount), 2);
             if ((dNow - m_dLastInfo).TotalMinutes >= 1)
             {
-                Logger.Info($"  Waiting for close of funding {oOrder.LongData.Symbol.Base} Profit {nProfit} : {oOrder.LongData.Symbol.ToString()} => {nProfitLong} , {oOrder.ShortData.Symbol.ToString()} => {nProfitShort}");
+                Logger.Info($"  Waiting for close of funding {oOrder.LongData.Symbol.Base} Profit {nProfit} : {oOrder.LongData.Symbol.ToString()} => {nProfitLong} , {oOrder.ShortData.Symbol.ToString()} => {nProfitShort} ProfitPercent {nProfitPercent}%");
                 m_dLastInfo = dNow;
             }
 
             if( nProfit > m_nMaxProfit )
             {
                 m_nMaxProfit = nProfit;
-                Logger.Info($"  Maximum Profit  on {oOrder.LongData.Symbol.Base} : {nProfit} ");
+                Logger.Info($"  Maximum Profit  on {oOrder.LongData.Symbol.Base} : {nProfit}  ProfitPercent {nProfitPercent}%");
             }
             int nMinutes = (int)(DateTime.Now - oOrder.LimitDate).TotalMinutes;
             bool bForce = (nMinutes >= 15);
+            if( nMinutes >= 1 && nProfitPercent < oPair.Percent / 2.0M )
+            {
+                bForce = true;  
+            }
+
             if( oOrder.Profit > Setup.CloseOnProfit || bForce)
             {
                 Logger.Info($"  Trying to close of funding {oOrder.LongData.Symbol.Base} Profit {nProfit} ");

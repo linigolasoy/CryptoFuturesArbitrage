@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Crypto.Tests.Bingx
 {
-    internal class PoloniexCommon
+    internal class BingxCommon
     {
         public static async Task<IFuturesExchange> CreateExchange()
         {

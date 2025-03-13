@@ -13,7 +13,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxFundingAccountSocket()
         {
-            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             oExchange.Account.OnPrivateEvent += MyOnPrivateEvent;
             await Task.Delay(1000);
@@ -34,7 +34,7 @@ namespace Crypto.Tests.Bingx
         [TestMethod]
         public async Task BingxAllSymbolsSocket()
         {
-            IFuturesExchange oExchange = await PoloniexCommon.CreateExchange();
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
 
             await Task.Delay(1000);
             IFuturesSymbol[]? aSymbols = oExchange.SymbolManager.GetAllValues();
@@ -62,7 +62,26 @@ namespace Crypto.Tests.Bingx
             bool bResultStop = await oExchange.Market.EndSockets(); 
             Assert.IsTrue(bResultStop);
         }
-        
+
+
+        [TestMethod]
+        public async Task BingxSpreadTest()
+        {
+            IFuturesExchange oExchange = await BingxCommon.CreateExchange();
+
+
+            await Task.Delay(1000);
+            // bool bResultStart = await oExchange.Market.StartSockets();
+            // Assert.IsTrue(bResultStart);
+
+            // await Task.Delay(5000);
+
+            IFuturesTicker[]? aTickers = await oExchange.Market.GetTickers();
+            Assert.IsNotNull(aTickers);
+
+            IFuturesTicker? oBest = aTickers.Where(p=> p.BestBid > 0).OrderByDescending(p => (p.BestAsk - p.BestBid) / p.BestBid).FirstOrDefault();
+            Assert.IsNotNull(oBest);
+        }
 
         /*
         [TestMethod]

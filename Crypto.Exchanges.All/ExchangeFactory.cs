@@ -49,5 +49,7 @@ namespace Crypto.Exchanges.All
         { 
             return new MoneyTransfer(oFrom, oTo, nQuantity);
         }
+
+
     }
 }

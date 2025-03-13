@@ -11,5 +11,8 @@ namespace Crypto.Interface.Futures.Market
         public IFuturesSymbol Symbol { get; }
         public decimal Price { get; }
         public DateTime DateTime { get; }   
+
+        public decimal BestAsk { get; }
+        public decimal BestBid { get; }
     }
 }

@@ -54,11 +54,12 @@ namespace CryptoFuturesArbitrage.Console
         private static async Task DoBot( ICryptoSetup oSetup )
         {
             CancellationTokenSource oSource = new CancellationTokenSource();
-            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateTester", oSource.Token);
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "SpreadRateBot", oSource.Token);
             try
             {
                 // ITradingBot oBot = BotFactory.CreateFuturesArbitrageBot(oSetup, oLogger);
-                ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
+                // ITradingBot oBot = BotFactory.CreateFundingRatesBot(oSetup, oLogger);
+                ITradingBot oBot = BotFactory.CreateSpreadBot(oSetup, oLogger);
                 // ITradingBot oBot = new OppositeOrderTester(oSetup, oLogger);
 
                 oLogger.Info("Enter main program");
@@ -97,7 +98,7 @@ namespace CryptoFuturesArbitrage.Console
             CancellationTokenSource oSource = new CancellationTokenSource();    
             ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingRateTester", oSource.Token);
 
-            DateTime dFrom = DateTime.Today.AddMonths(-1);
+            DateTime dFrom = DateTime.Today.AddDays(-7);
             DateTime dTo = DateTime.Today;
 
 
@@ -163,8 +164,11 @@ namespace CryptoFuturesArbitrage.Console
             return nResult;
         }
 
-        private static async Task DoWebsocketFundingData(ICryptoSetup oSetup, ICommonLogger oLogger)
+        private static async Task DoWebsocketFundingData(ICryptoSetup oSetup)
         {
+            CancellationTokenSource oSource = new CancellationTokenSource();
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "FundingSocket", oSource.Token);
+
             IFundingSocketData oSocketData = BotFactory.CreateFundingSocket(oSetup, oLogger);
 
             try
@@ -331,16 +335,30 @@ namespace CryptoFuturesArbitrage.Console
 
         }
 
+        private static async Task DoMoney(ICryptoSetup oSetup)
+        {
+            CancellationTokenSource oSource = new CancellationTokenSource();
+            ICommonLogger oLogger = CommonFactory.CreateLogger(oSetup, "MoneyTester", oSource.Token);
+
+            MoneyTester oTester = new MoneyTester(oSetup, oLogger);
+
+            await oTester.Run();
+
+            oSource.Cancel();
+            await Task.Delay(1000);
+
+        }
         public static async Task<int> Main(string[] args)
         {
 
 
             ICryptoSetup oSetup = CommonFactory.CreateSetup(SETUP_FILE);
 
-            // await DoWebsocketFundingData(oSetup, oLogger);
-            // await DoBot(oSetup, oLogger);
-            await DoTester(oSetup);
+            // await DoWebsocketFundingData(oSetup);
+            await DoBot(oSetup);
+            // await DoTester(oSetup);
             // await DoSocketManager(oSetup, oLogger);
+            // await DoMoney(oSetup);
             /*
             if (TEST) 
             else

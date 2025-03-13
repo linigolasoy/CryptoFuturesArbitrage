@@ -257,5 +257,11 @@ namespace Crypto.Exchanges.All.Bingx
             }
 
         }
+
+
+        public async Task<ITradingResult<bool>> SetStopLossTakeProfit(IFuturesPosition oPosition, decimal nStopLoss, decimal nTakeProfit)
+        {
+            throw new NotImplementedException();    
+        }
     }
 }

@@ -221,5 +221,17 @@ namespace Crypto.Exchanges.All.Bitmart
                 return new TradingResult<bool>(ex);
             }
         }
+        /// <summary>
+        /// SL and take profit
+        /// </summary>
+        /// <param name="oPosition"></param>
+        /// <param name="nStopLoss"></param>
+        /// <param name="nTakeProfit"></param>
+        /// <returns></returns>
+        public async Task<ITradingResult<bool>> SetStopLossTakeProfit(IFuturesPosition oPosition, decimal nStopLoss, decimal nTakeProfit)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

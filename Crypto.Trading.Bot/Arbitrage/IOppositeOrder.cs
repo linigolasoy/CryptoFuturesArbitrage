@@ -2,6 +2,7 @@
 using Crypto.Interface.Futures.Account;
 using Crypto.Interface.Futures.Market;
 using Crypto.Interface.Futures.Trading;
+using Crypto.Trading.Bot.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +21,7 @@ namespace Crypto.Trading.Bot.Arbitrage
         public IFuturesOrder? OpenOrder { get; set; }
         public IFuturesOrder? CloseOrder { get; set; }
 
+        public ITrailingOrder? TrailingOrder { get; set; }
         public IFuturesPosition? Position { get; set; }
 
         public IOrderbook? Orderbook { get; set; }   

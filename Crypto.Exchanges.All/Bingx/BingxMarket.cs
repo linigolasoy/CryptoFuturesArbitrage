@@ -54,15 +54,17 @@ namespace Crypto.Exchanges.All.Bingx
         /// <returns></returns>
         public async Task<IFuturesTicker[]?> GetTickers()
         {
-            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetLastTradePricesAsync();
+            DateTime dNow = DateTime.Now;   
+            var oResult = await m_oExchange.GlobalClient.BingX.PerpetualFuturesApi.ExchangeData.GetTickersAsync(); //.GetLastTradePricesAsync();
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
             List<IFuturesTicker> aResult = new List<IFuturesTicker>();  
+
             foreach( var oData in oResult.Data )
             {
                 IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
-                aResult.Add(new BaseTicker(oSymbol, oData.Price, oData.Timestamp.ToLocalTime()));
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, dNow, oData.BestAskPrice, oData.BestBidPrice));
             }
             return aResult.ToArray();   
         }

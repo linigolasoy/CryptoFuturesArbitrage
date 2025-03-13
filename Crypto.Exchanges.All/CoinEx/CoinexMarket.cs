@@ -79,7 +79,7 @@ namespace Crypto.Exchanges.All.CoinEx
             {
                 IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
-                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, dNow));
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, dNow, 0,0));
             }
             return aResult.ToArray();
         }

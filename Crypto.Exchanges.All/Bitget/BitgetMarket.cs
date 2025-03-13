@@ -90,7 +90,8 @@ namespace Crypto.Exchanges.All.Bitget
             {
                 IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
-                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, oData.Timestamp.ToLocalTime()));
+                if (oData.BestAskPrice == null || oData.BestBidPrice == null) continue;
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice, oData.Timestamp.ToLocalTime(), oData.BestAskPrice!.Value, oData.BestBidPrice!.Value));
             }
             return aResult.ToArray();
         }

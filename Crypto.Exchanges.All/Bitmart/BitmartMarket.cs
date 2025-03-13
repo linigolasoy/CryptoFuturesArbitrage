@@ -41,6 +41,8 @@ namespace Crypto.Exchanges.All.Bitmart
         /// <returns></returns>
         public async Task<IFuturesTicker[]?> GetTickers()
         {
+            throw new NotImplementedException();
+            /*
             var oResult = await m_oGlobalClient.BitMart.UsdFuturesApi.ExchangeData.GetContractsAsync();
             if (oResult == null || !oResult.Success) return null;
             if (oResult.Data == null) return null;
@@ -50,9 +52,10 @@ namespace Crypto.Exchanges.All.Bitmart
             {
                 IFuturesSymbol? oSymbol = Exchange.SymbolManager.GetSymbol(oData.Symbol);
                 if (oSymbol == null) continue;
-                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice!.Value, dNow));
+                aResult.Add(new BaseTicker(oSymbol, oData.LastPrice!.Value, dNow, oData.ask));
             }
             return aResult.ToArray();
+            */
         }
 
 

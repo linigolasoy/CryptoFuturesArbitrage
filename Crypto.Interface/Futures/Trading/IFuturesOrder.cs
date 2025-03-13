@@ -18,7 +18,8 @@ namespace Crypto.Interface.Futures.Trading
     public enum FuturesOrderType
     {
         Limit,
-        Market
+        Market,
+        Stop
     }
 
     public enum FuturesPositionDirection

@@ -17,6 +17,11 @@ namespace Crypto.Interface.Futures.Trading
         public Task<ITradingResult<IFuturesOrder?>> CreateLimitOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity, decimal nPrice);
         public Task<ITradingResult<IFuturesOrder?>> CreateMarketOrder(IFuturesSymbol oSymbol, bool bLong, decimal nQuantity);
 
+
+        public Task<ITradingResult<bool>> SetStopLossTakeProfit(IFuturesPosition oPosition, decimal nStopLoss, decimal nTakeProfit);
+        // public Task<ITradingResult<bool>> SetTakeProfit(IFuturesPosition oPosition, decimal nValue);
+        // public Task<ITradingResult<bool>> SetStopLoss(IFuturesPosition oPosition, decimal nValue);
+
         public Task<ITradingResult<bool>> ClosePosition(IFuturesPosition oPosition, decimal? nPrice = null);
 
         public Task<ITradingResult<bool>> CancelOrder(IFuturesOrder oOrded);
